@@ -1,0 +1,12 @@
+{
+  "name": "ensamblaje-ccs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Espacio de trabajo del Departamento de Ensamblaje · Suspensiones CCS",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "dev": "vercel dev",
+    "hash-password": "node scripts/hash-password.mjs"
+  }
+}
