@@ -22,7 +22,8 @@ Inicio
 | Nodos: lectura en vivo, indicadores, filtros, tabla/tarjetas, fichas, actualización manual y automática | ✅ Funciona (probado con la hoja real) |
 | Nodos: error con «Reintentar» y datos de demostración solo bajo demanda | ✅ Funciona |
 | Máquinas: interfaz completa (tarjetas, tabla, filtros, ficha, formularios, validación, advertencias, conflictos) | ✅ Probada en el navegador con un servidor simulado |
-| Máquinas: lectura y escritura en Google Sheets (`/api/machines`) | ⚠️ Código escrito, **no probado contra Google**. Faltan la cuenta de servicio y las variables de entorno |
+| Máquinas: lectura directa de la hoja pública (igual que Nodos, sin servidor). Lee «Hoja 1» y, si existe, la pestaña `App_Maquinas` | ✅ Funciona (solo lectura) |
+| Máquinas: escritura en Google Sheets (`/api/machines`) | ⚠️ Código escrito, **no probado contra Google**. Faltan la cuenta de servicio y las variables de entorno |
 | Inicio de sesión (`/api/auth`) | ⚠️ Código escrito, **no probado en Vercel**. Faltan `SESSION_SECRET` y `APP_USERS` |
 | Subida de imágenes | ❌ No implementada. Por ahora se guarda un enlace duradero (ver «Imágenes») |
 

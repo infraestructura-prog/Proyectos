@@ -7,9 +7,10 @@ import { esc, ICON, store, openModal, confirmDialog, toast, alertBox, fmtDate } 
 import { MAQUINAS as CFG } from '../config.js';
 import {
   CATEGORIAS, LADOS, CONDICIONES, TAB_APP, validateMachine, findDuplicates, consistencyWarnings,
-  normalizeCategoria, normalizeLado, trimSpaces, codeKey, COLUMNS
+  normalizeCategoria, normalizeLado, trimSpaces, codeKey, COLUMNS, rowToRecord
 } from '/shared/machines-core.js';
-import { REFERENCE_ROWS, SNAPSHOT_DATE } from '/shared/reference-snapshot.js';
+import { REFERENCE_ROWS, SNAPSHOT_DATE, referenceFromValues } from '/shared/reference-snapshot.js';
+import { readPublicSheet } from '../sheets-public.js';
 
 const TABS = [
   { id: 'vendidas', title: 'Máquinas vendidas', short: 'Vendidas', condicion: 'Vendida' },
@@ -19,7 +20,7 @@ const TABS = [
 
 /* Estado compartido entre subventanas (se conserva al cambiar de pestaña o de vista). */
 const S = {
-  records: [], status: 'idle', error: null, fetchedAt: null, loadedAt: 0,
+  records: [], status: 'idle', error: null, fetchedAt: null, loadedAt: 0, source: null, // 'api' | 'public'
   ref: null, refSource: null, refError: null,
   view: store.get('maq-view') === 'table' ? 'table' : 'grid',
   filters: {
@@ -54,20 +55,50 @@ async function loadRecords(force = false) {
   // Reutiliza los datos si se leyeron hace menos de 60 s (al cambiar de subventana); si no, vuelve a leer.
   if (!force && S.status === 'ready' && Date.now() - S.loadedAt < 60000) return;
   S.status = 'loading'; S.error = null;
-  inflight = api('/api/machines').then(d => {
-    S.records = d.records || []; S.fetchedAt = d.fetchedAt || new Date().toISOString(); S.status = 'ready'; S.loadedAt = Date.now();
-  }).catch(e => { S.status = 'error'; S.error = e; }).finally(() => { inflight = null; });
+  inflight = (async () => {
+    try {
+      const d = await api('/api/machines');
+      S.records = d.records || []; S.source = 'api';
+    } catch (e) {
+      // Sin servidor configurado: se lee la hoja pública directamente (solo lectura), como en Nodos.
+      if (!SERVER_MISSING.includes(e.code)) throw e;
+      S.source = 'public';
+      S.records = await readPublicRecords();
+    }
+    S.fetchedAt = new Date().toISOString(); S.status = 'ready'; S.loadedAt = Date.now();
+  })().catch(e => { S.status = 'error'; S.error = e; }).finally(() => { inflight = null; });
   return inflight;
+}
+
+const SERVER_MISSING = ['NOT_CONFIGURED', 'NO_API'];
+
+async function readPublicRecords() {
+  const rows = await readPublicSheet(CFG.SPREADSHEET_ID, { tab: TAB_APP });
+  const header = (rows[0] || []).map(h => String(h).trim());
+  // Si la pestaña no existe Google devuelve la primera, por eso se exigen los encabezados exactos.
+  if (COLUMNS.some((c, i) => header[i] !== c))
+    throw Object.assign(new Error(`La pestaña ${TAB_APP} no existe o sus encabezados no coinciden.`), { code: 'TABLE_MISSING_PUBLIC' });
+  return rows.slice(1).filter(r => r.some(c => String(c).trim())).map(rowToRecord).filter(r => r.id)
+    .map(({ request_id, ...r }) => r);
 }
 
 async function loadReference() {
   try {
     const d = await api('/api/reference');
     S.ref = d.rows; S.refSource = { kind: 'live', at: d.fetchedAt }; S.refError = null;
+    return;
+  } catch (e) { S.refError = e; }
+  try {
+    const values = await readPublicSheet(CFG.SPREADSHEET_ID, { tab: CFG.SOURCE_TAB, range: 'A2:J' });
+    const head = (values[0] || []).map(v => String(v).trim().toUpperCase());
+    if (!head.includes('SERIAL')) throw new Error(`La pestaña «${CFG.SOURCE_TAB}» no tiene los encabezados esperados.`);
+    S.ref = referenceFromValues(values); S.refSource = { kind: 'live', at: new Date().toISOString() }; S.refError = null;
   } catch (e) {
     S.ref = REFERENCE_ROWS; S.refSource = { kind: 'snapshot', at: SNAPSHOT_DATE }; S.refError = e;
   }
 }
+
+const canWrite = ctx => S.source === 'api' && ctx.canEdit();
 
 /* ═════════ Módulo ═════════ */
 export function mount(root, ctx) {
@@ -103,7 +134,12 @@ export function mount(root, ctx) {
     const loading = S.status === 'loading';
     btn.disabled = loading;
     btn.innerHTML = loading ? '<span class="spinner"></span><span>Actualizando…</span>' : `${ICON.refresh}<span>Actualizar</span>`;
-    if (S.status === 'ready') { el.className = 'chip chip-ok'; el.innerHTML = `<span class="dot pulse"></span><span>Sheets · ${TAB_APP}</span>`; el.title = 'Última lectura: ' + fmtDate(S.fetchedAt); }
+    if (S.status === 'ready') {
+      el.className = 'chip chip-ok';
+      el.innerHTML = `<span class="dot pulse"></span><span>Sheets · ${TAB_APP}${S.source === 'public' ? ' · solo lectura' : ''}</span>`;
+      el.title = 'Última lectura: ' + fmtDate(S.fetchedAt);
+    }
+    else if (S.status === 'error' && S.error && S.error.code === 'TABLE_MISSING_PUBLIC') { el.className = 'chip chip-upd'; el.innerHTML = `<span class="dot"></span><span>Sheets · solo lectura · sin ${TAB_APP}</span>`; el.title = ''; }
     else if (S.status === 'error') { el.className = 'chip chip-err'; el.innerHTML = `<span class="dot"></span><span>Sin conexión</span>`; el.title = ''; }
     else { el.className = 'chip chip-other'; el.innerHTML = `<span class="dot"></span><span>Cargando…</span>`; }
   }
@@ -118,6 +154,19 @@ export function mount(root, ctx) {
          Al inicializarla se crea esa pestaña con sus encabezados. <b style="display:inline">No se modifica «Hoja 1» ni se copia ningún registro.</b></p>`,
         ctx.canEdit() ? `<button class="btn btn-sm btn-primary" data-act="init">Inicializar tabla ${TAB_APP}</button>${retry}`
           : `<button class="btn btn-sm" data-act="login">${ICON.lock}Inicia sesión como editor para inicializarla</button>${retry}`);
+    }
+    if (code === 'TABLE_MISSING_PUBLIC') {
+      return alertBox('info', `Todavía no hay máquinas registradas`,
+        `<p>La hoja se lee correctamente, pero las máquinas vendidas y en stock se guardan en una pestaña aparte llamada
+         <b class="mono" style="display:inline">${TAB_APP}</b>, que aún no existe. «Hoja 1» no indica qué máquinas están vendidas o en stock, así que no se clasifica sola.</p>
+         <p style="margin-top:8px">Para empezar, crea en la hoja una pestaña <b class="mono" style="display:inline">${TAB_APP}</b> y pega en la fila 1 estos encabezados (uno por columna, desde A):</p>
+         <p class="mono" style="margin-top:6px;font-size:12px;user-select:all;overflow-wrap:anywhere">${COLUMNS.join('\t')}</p>
+         <p class="muted" style="margin-top:6px">Cada máquina va en una fila con al menos <span class="mono">id</span> (cualquier código único, ej. MQ-001), codificacion, categoria, escalera y condicion («En stock» o «Vendida»).
+         Agregar y editar desde la app requiere activar la conexión de escritura.</p>`,
+        `${retry}<button class="btn btn-sm" data-act="copy-headers">Copiar encabezados</button><a class="btn btn-sm" href="${esc(CFG.SHEET_URL)}" target="_blank" rel="noopener">Abrir la hoja</a>`);
+    }
+    if (code === 'NOT_PUBLIC') {
+      return alertBox('warn', 'La hoja de máquinas no es pública', `<p>${esc(e.message)}</p>`, retry);
     }
     if (code === 'NOT_CONFIGURED') {
       const miss = (e.data && e.data.missing) || [];
@@ -176,6 +225,10 @@ export function mount(root, ctx) {
   function renderAddButton() {
     const el = $('[data-add]'); if (!el) return;
     const disabled = S.status !== 'ready';
+    if (S.source === 'public') {
+      el.innerHTML = `<button class="btn" disabled title="La app lee la hoja pública. Para agregar y editar falta activar la conexión de escritura.">${ICON.lock}<span>Solo lectura</span></button>`;
+      return;
+    }
     el.innerHTML = ctx.canEdit()
       ? `<button class="btn btn-primary" data-act="add" ${disabled ? 'disabled title="Disponible cuando la tabla esté conectada"' : ''}>${ICON.plus}<span>Agregar máquina</span></button>`
       : `<button class="btn" data-act="login" title="Agregar y editar requiere una cuenta de editor">${ICON.lock}<span>Inicia sesión para agregar</span></button>`;
@@ -195,7 +248,7 @@ export function mount(root, ctx) {
     if (!all.length) {
       list.innerHTML = `<div class="state"><h3>Todavía no hay ${tab.id === 'vendidas' ? 'máquinas vendidas' : 'máquinas en stock'}</h3>
         <p>Agrega una máquina e indica su condición comercial, o regístrala desde la pestaña «Referencia del archivo».</p>
-        <div class="alert-actions">${ctx.canEdit() ? `<button class="btn btn-primary btn-sm" data-act="add">${ICON.plus}Agregar máquina</button>` : ''}
+        <div class="alert-actions">${canWrite(ctx) ? `<button class="btn btn-primary btn-sm" data-act="add">${ICON.plus}Agregar máquina</button>` : ''}
         <a class="btn btn-sm" href="${ctx.base}/referencia">Ver referencia del archivo</a></div></div>`;
       return;
     }
@@ -273,11 +326,11 @@ export function mount(root, ctx) {
             <td>${changed(r.escalera, lado)}</td>
             <td class="muted" style="font-size:13px;white-space:nowrap">${r.imagen ? '<span title="Imagen incrustada en la columna A; su asociación con esta fila no está verificada">Incrustada · por verificar</span>' : none('Sin imagen')}</td>
             <td>${reg ? `<a href="${ctx.base}/${reg.condicion === 'Vendida' ? 'vendidas' : 'stock'}" data-open="${esc(reg.id)}">${condChip(reg.condicion)}</a>` : none('Sin registrar')}</td>
-            <td>${!reg && ctx.canEdit() && S.status === 'ready' ? `<button class="btn btn-sm" data-ref="${rows.indexOf(r)}">${ICON.plus}Registrar</button>` : ''}</td>
+            <td>${!reg && canWrite(ctx) && S.status === 'ready' ? `<button class="btn btn-sm" data-ref="${rows.indexOf(r)}">${ICON.plus}Registrar</button>` : ''}</td>
           </tr>`; }).join('')}</tbody></table></div>`
         : `<div class="state"><h3>Sin resultados</h3><p>Ninguna entrada coincide con la búsqueda.</p></div>`}
       ${S.status === 'error' ? `<div style="margin-top:16px">${errorState()}</div>` : ''}
-      ${!ctx.canEdit() ? `<p class="count" style="margin-top:12px">Para registrar entradas en la aplicación inicia sesión con una cuenta de editor.</p>` : ''}`;
+      ${S.source === 'public' ? `<p class="count" style="margin-top:12px">Modo solo lectura: registrar entradas requiere la conexión de escritura.</p>` : !ctx.canEdit() ? `<p class="count" style="margin-top:12px">Para registrar entradas en la aplicación inicia sesión con una cuenta de editor.</p>` : ''}`;
 
     const body = $('[data-body]');
     const qInput = body.querySelector('#rf-q');
@@ -321,7 +374,7 @@ export function mount(root, ctx) {
         </div></section>
       </div>
       <div class="modal-foot">
-        ${ctx.canEdit() ? `<div class="left">${r.condicion === 'En stock' ? `<button class="btn btn-mint" data-act="sell">${ICON.tag}Marcar como vendida</button>` : ''}</div>
+        ${canWrite(ctx) ? `<div class="left">${r.condicion === 'En stock' ? `<button class="btn btn-mint" data-act="sell">${ICON.tag}Marcar como vendida</button>` : ''}</div>
           <button class="btn" data-close>Cerrar</button><button class="btn btn-primary" data-act="edit">${ICON.edit}Editar</button>`
           : `<button class="btn" data-close>Cerrar</button>`}
       </div>` });
@@ -499,6 +552,10 @@ export function mount(root, ctx) {
       if (act === 'login') ctx.openLogin('Agregar y editar máquinas requiere una cuenta de editor.');
       if (act === 'clear') { Object.assign(S.filters[tab.id], { q: '', cat: '', lado: '', warn: false }); $('[data-body]').innerHTML = ''; render(); }
       if (act === 'init') initTable(b);
+      if (act === 'copy-headers') {
+        try { await navigator.clipboard.writeText(COLUMNS.join('\t')); toast('Encabezados copiados. Pégalos en la celda A1 de la pestaña App_Maquinas.'); }
+        catch { toast('No se pudo copiar automáticamente; selecciona el texto de los encabezados y cópialo.', 'err'); }
+      }
       return;
     }
     const row = e.target.closest('.row');

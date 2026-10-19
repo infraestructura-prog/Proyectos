@@ -15,6 +15,9 @@ export const NODOS = {
 };
 
 export const MAQUINAS = {
-  // Enlace a la hoja original (solo para mostrarlo; la conexión real la hace el servidor).
+  // Hoja «Codificación de Máquinas de Simulación». Compartida como lector público, la app la lee
+  // directamente (como Nodos). Agregar y editar requiere además la conexión de servidor (/api).
+  SPREADSHEET_ID: '1PuXWlmC_ZQOBHYAk-OT1Z73gAqF8FtGctp-CYoqPsDk',
+  SOURCE_TAB: 'Hoja 1',
   SHEET_URL: 'https://docs.google.com/spreadsheets/d/1PuXWlmC_ZQOBHYAk-OT1Z73gAqF8FtGctp-CYoqPsDk/edit'
 };
