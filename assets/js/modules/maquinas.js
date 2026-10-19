@@ -7,7 +7,7 @@ import { esc, ICON, store, openModal, confirmDialog, toast, alertBox, fmtDate } 
 import { MAQUINAS as CFG } from '../config.js';
 import {
   CATEGORIAS, LADOS, CONDICIONES, TAB_APP, validateMachine, findDuplicates, consistencyWarnings,
-  normalizeCategoria, normalizeLado, trimSpaces, codeKey, COLUMNS, rowToRecord
+  normalizeCategoria, normalizeLado, trimSpaces, codeKey, COLUMNS
 } from '/shared/machines-core.js';
 import { REFERENCE_ROWS, SNAPSHOT_DATE, referenceFromValues } from '/shared/reference-snapshot.js';
 import { readPublicSheet } from '../sheets-public.js';
@@ -72,14 +72,70 @@ async function loadRecords(force = false) {
 
 const SERVER_MISSING = ['NOT_CONFIGURED', 'NO_API'];
 
+/* Pestaña sencilla que se llena a mano en Google Sheets. Encabezados en la fila 1, en cualquier orden;
+   se aceptan con o sin tildes y mayúsculas. Obligatorios: Codificación y Condición. */
+export const SIMPLE_HEADERS = ['Codificación', 'Categoría', 'Serial', 'Escalera', 'Condición', 'Imagen'];
+const HEADER_ALIASES = {
+  id: ['id', 'identificador'],
+  codificacion: ['codificacion', 'codigo'],
+  categoria: ['categoria'],
+  serial: ['serial'],
+  escalera: ['escalera', 'lado de la escalera', 'lado escalera', 'lado'],
+  condicion: ['condicion', 'condicion comercial', 'estado'],
+  imagen_url: ['imagen', 'imagen_url', 'imagen url', 'foto'],
+  creado: ['creado'], modificado: ['modificado'], version: ['version'],
+  creado_por: ['creado_por'], modificado_por: ['modificado_por'], origen: ['origen'], valor_original: ['valor_original']
+};
+const headerKey = h => String(h || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+const normalizeCondicion = v => {
+  const s = headerKey(v);
+  if (/^(en )?stock$|^disponible$/.test(s)) return 'En stock';
+  if (/^vendid[ao]$/.test(s)) return 'Vendida';
+  return '';
+};
+
 async function readPublicRecords() {
   const rows = await readPublicSheet(CFG.SPREADSHEET_ID, { tab: TAB_APP });
-  const header = (rows[0] || []).map(h => String(h).trim());
-  // Si la pestaña no existe Google devuelve la primera, por eso se exigen los encabezados exactos.
-  if (COLUMNS.some((c, i) => header[i] !== c))
-    throw Object.assign(new Error(`La pestaña ${TAB_APP} no existe o sus encabezados no coinciden.`), { code: 'TABLE_MISSING_PUBLIC' });
-  return rows.slice(1).filter(r => r.some(c => String(c).trim())).map(rowToRecord).filter(r => r.id)
-    .map(({ request_id, ...r }) => r);
+  const header = (rows[0] || []).map(headerKey);
+  const col = {};
+  for (const [field, names] of Object.entries(HEADER_ALIASES)) {
+    const i = header.findIndex(h => names.includes(h));
+    if (i >= 0) col[field] = i;
+  }
+  // Si la pestaña no existe, Google devuelve la primera (Hoja 1); por eso se exigen Codificación y Condición.
+  if (col.codificacion === undefined || col.condicion === undefined)
+    throw Object.assign(new Error(`La pestaña ${TAB_APP} no existe o no tiene las columnas Codificación y Condición.`), { code: 'TABLE_MISSING_PUBLIC' });
+
+  const out = [];
+  S.unclassified = [];
+  rows.slice(1).forEach((row, i) => {
+    const get = f => (col[f] === undefined ? '' : String(row[col[f]] ?? ''));
+    if (!trimSpaces(get('codificacion'))) return;
+    const fila = i + 2;
+    const original = {};
+    const cat = normalizeCategoria(get('categoria')), lado = normalizeLado(get('escalera')), cond = normalizeCondicion(get('condicion'));
+    if (get('categoria') && get('categoria') !== cat) original.categoria = get('categoria');
+    if (get('escalera') && get('escalera') !== lado) original.escalera = get('escalera');
+    const r = {
+      // Sin columna id se usa la fila como referencia (cambia si se insertan filas encima).
+      id: trimSpaces(get('id')) || `FILA-${fila}`,
+      codificacion: trimSpaces(get('codificacion')), categoria: cat || trimSpaces(get('categoria')), serial: trimSpaces(get('serial')),
+      escalera: lado || trimSpaces(get('escalera')), condicion: cond, imagen_url: trimSpaces(get('imagen_url')),
+      origen: trimSpaces(get('origen')) || `${TAB_APP}!fila ${fila}`,
+      valor_original: get('valor_original') || (Object.keys(original).length ? JSON.stringify(original) : ''),
+      creado: get('creado'), modificado: get('modificado'), version: Number(get('version')) || 1,
+      creado_por: get('creado_por'), modificado_por: get('modificado_por')
+    };
+    if (!cond) S.unclassified.push({ fila, codificacion: r.codificacion, valor: get('condicion') });
+    out.push(r);
+  });
+  return out;
+}
+
+/* Las 14 entradas de Hoja 1, normalizadas y con Condición VACÍA, listas para pegar en la celda A1. */
+function referenceAsTsv() {
+  const rows = (S.ref || REFERENCE_ROWS).map(r => [trimSpaces(r.codificacion), normalizeCategoria(r.categoria), trimSpaces(r.serial), normalizeLado(r.escalera), '', '']);
+  return [SIMPLE_HEADERS, ...rows].map(r => r.join('\t')).join('\n');
 }
 
 async function loadReference() {
@@ -156,14 +212,19 @@ export function mount(root, ctx) {
           : `<button class="btn btn-sm" data-act="login">${ICON.lock}Inicia sesión como editor para inicializarla</button>${retry}`);
     }
     if (code === 'TABLE_MISSING_PUBLIC') {
-      return alertBox('info', `Todavía no hay máquinas registradas`,
-        `<p>La hoja se lee correctamente, pero las máquinas vendidas y en stock se guardan en una pestaña aparte llamada
-         <b class="mono" style="display:inline">${TAB_APP}</b>, que aún no existe. «Hoja 1» no indica qué máquinas están vendidas o en stock, así que no se clasifica sola.</p>
-         <p style="margin-top:8px">Para empezar, crea en la hoja una pestaña <b class="mono" style="display:inline">${TAB_APP}</b> y pega en la fila 1 estos encabezados (uno por columna, desde A):</p>
-         <p class="mono" style="margin-top:6px;font-size:12px;user-select:all;overflow-wrap:anywhere">${COLUMNS.join('\t')}</p>
-         <p class="muted" style="margin-top:6px">Cada máquina va en una fila con al menos <span class="mono">id</span> (cualquier código único, ej. MQ-001), codificacion, categoria, escalera y condicion («En stock» o «Vendida»).
-         Agregar y editar desde la app requiere activar la conexión de escritura.</p>`,
-        `${retry}<button class="btn btn-sm" data-act="copy-headers">Copiar encabezados</button><a class="btn btn-sm" href="${esc(CFG.SHEET_URL)}" target="_blank" rel="noopener">Abrir la hoja</a>`);
+      return alertBox('info', `Falta la pestaña «${TAB_APP}» en la hoja`,
+        `<p>«Hoja 1» no dice qué máquinas están vendidas o en stock, por eso las máquinas se anotan en una pestaña aparte. La app la lee sola, igual que Nodos.</p>
+         <ol style="margin:8px 0 0;padding-left:20px;display:grid;gap:4px">
+           <li>Pulsa <b style="display:inline">Copiar las 14 entradas de Hoja 1</b>.</li>
+           <li>En la hoja, crea una pestaña nueva (botón <b style="display:inline">+</b> abajo a la izquierda) y nómbrala exactamente <b class="mono" style="display:inline">${TAB_APP}</b>.</li>
+           <li>Haz clic en la celda <b style="display:inline">A1</b> y pega (Ctrl+V).</li>
+           <li>En la columna <b style="display:inline">Condición</b> escribe <b style="display:inline">En stock</b> o <b style="display:inline">Vendida</b> en cada máquina, y borra las filas que no correspondan a una máquina real.</li>
+           <li>Vuelve aquí y pulsa <b style="display:inline">Reintentar</b>.</li>
+         </ol>
+         <p class="muted" style="margin-top:8px">Columnas: ${SIMPLE_HEADERS.join(' · ')}. Imagen es opcional (un enlace https). Para agregar o corregir máquinas más adelante, edita esa pestaña.</p>`,
+        `<button class="btn btn-sm btn-primary" data-act="copy-ref">Copiar las 14 entradas de Hoja 1</button>
+         <button class="btn btn-sm" data-act="copy-headers">Copiar solo encabezados</button>
+         <a class="btn btn-sm" href="${esc(CFG.SHEET_URL)}" target="_blank" rel="noopener">Abrir la hoja</a>${retry}`);
     }
     if (code === 'NOT_PUBLIC') {
       return alertBox('warn', 'La hoja de máquinas no es pública', `<p>${esc(e.message)}</p>`, retry);
@@ -226,7 +287,7 @@ export function mount(root, ctx) {
     const el = $('[data-add]'); if (!el) return;
     const disabled = S.status !== 'ready';
     if (S.source === 'public') {
-      el.innerHTML = `<button class="btn" disabled title="La app lee la hoja pública. Para agregar y editar falta activar la conexión de escritura.">${ICON.lock}<span>Solo lectura</span></button>`;
+      el.innerHTML = `<a class="btn btn-primary" href="${esc(CFG.SHEET_URL)}" target="_blank" rel="noopener" title="Las máquinas se agregan y editan en la pestaña ${TAB_APP} de Google Sheets">${ICON.plus}<span>Agregar en Google Sheets</span></a>`;
       return;
     }
     el.innerHTML = ctx.canEdit()
@@ -330,7 +391,7 @@ export function mount(root, ctx) {
           </tr>`; }).join('')}</tbody></table></div>`
         : `<div class="state"><h3>Sin resultados</h3><p>Ninguna entrada coincide con la búsqueda.</p></div>`}
       ${S.status === 'error' ? `<div style="margin-top:16px">${errorState()}</div>` : ''}
-      ${S.source === 'public' ? `<p class="count" style="margin-top:12px">Modo solo lectura: registrar entradas requiere la conexión de escritura.</p>` : !ctx.canEdit() ? `<p class="count" style="margin-top:12px">Para registrar entradas en la aplicación inicia sesión con una cuenta de editor.</p>` : ''}`;
+      ${S.source === 'public' ? `<p class="count" style="margin-top:12px">Para registrar una entrada, agrégala en la pestaña ${TAB_APP} de la hoja con su condición. «Copiar las 14 entradas» está en las pestañas Vendidas / En stock mientras ${TAB_APP} no exista.</p>` : !ctx.canEdit() ? `<p class="count" style="margin-top:12px">Para registrar entradas en la aplicación inicia sesión con una cuenta de editor.</p>` : ''}`;
 
     const body = $('[data-body]');
     const qInput = body.querySelector('#rf-q');
@@ -340,7 +401,10 @@ export function mount(root, ctx) {
 
   function render() {
     renderTabs(); renderSource();
-    $('[data-banner]').innerHTML = '';
+    const pend = S.status === 'ready' && S.source === 'public' ? (S.unclassified || []) : [];
+    $('[data-banner]').innerHTML = pend.length ? `<div style="margin-bottom:16px">${alertBox('warn', `${pend.length} ${pend.length === 1 ? 'máquina sin condición' : 'máquinas sin condición'} en ${TAB_APP}`,
+      `<p>No aparecen en Vendidas ni En stock hasta que su columna Condición diga «En stock» o «Vendida»: ${pend.slice(0, 8).map(p => `<span class="mono">${esc(p.codificacion)}</span> (fila ${p.fila}${p.valor ? `, «${esc(p.valor)}»` : ''})`).join(', ')}${pend.length > 8 ? '…' : ''}.</p>`,
+      `<a class="btn btn-sm" href="${esc(CFG.SHEET_URL)}" target="_blank" rel="noopener">Abrir la hoja</a>`)}</div>` : '';
     if (tab.id === 'referencia') renderReference();
     else { if (!$('[data-list]')) renderListShell(); renderAddButton(); renderList(); }
   }
@@ -366,8 +430,8 @@ export function mount(root, ctx) {
           ${f('Condición comercial', esc(r.condicion))}</div></section>
         <section class="sec"><h3 class="sec-title">${ICON.history}Registro y trazabilidad</h3><div class="detail-grid">
           ${f('Identificador interno', `<span class="mono" style="font-size:13px">${esc(r.id)}</span>`)}
-          ${f('Creado', `${esc(fmtDate(r.creado))}${r.creado_por ? `<br><span class="dim">por ${esc(r.creado_por)}</span>` : ''}`)}
-          ${f('Última modificación', `${esc(fmtDate(r.modificado))}${r.modificado_por ? `<br><span class="dim">por ${esc(r.modificado_por)}</span>` : ''}`)}
+          ${f('Creado', `${esc(fmtDate(r.creado)) || none('Sin fecha')}${r.creado_por ? `<br><span class="dim">por ${esc(r.creado_por)}</span>` : ''}`)}
+          ${f('Última modificación', `${esc(fmtDate(r.modificado)) || none('Sin fecha')}${r.modificado_por ? `<br><span class="dim">por ${esc(r.modificado_por)}</span>` : ''}`)}
           ${f('Versión', esc(r.version))}
           ${f('Origen', r.origen ? `<span class="mono" style="font-size:13px">${esc(r.origen)}</span>` : 'Registro creado en la aplicación')}
           ${orig ? f('Valores originales', Object.entries(orig).map(([k, v]) => `${esc(k)}: «${esc(v)}»`).join('<br>')) : ''}
@@ -376,6 +440,7 @@ export function mount(root, ctx) {
       <div class="modal-foot">
         ${canWrite(ctx) ? `<div class="left">${r.condicion === 'En stock' ? `<button class="btn btn-mint" data-act="sell">${ICON.tag}Marcar como vendida</button>` : ''}</div>
           <button class="btn" data-close>Cerrar</button><button class="btn btn-primary" data-act="edit">${ICON.edit}Editar</button>`
+          : S.source === 'public' ? `<a class="btn" href="${esc(CFG.SHEET_URL)}" target="_blank" rel="noopener">${ICON.edit}Editar en Google Sheets</a><button class="btn btn-primary" data-close>Cerrar</button>`
           : `<button class="btn" data-close>Cerrar</button>`}
       </div>` });
     m.el.addEventListener('click', async e => {
@@ -552,9 +617,11 @@ export function mount(root, ctx) {
       if (act === 'login') ctx.openLogin('Agregar y editar máquinas requiere una cuenta de editor.');
       if (act === 'clear') { Object.assign(S.filters[tab.id], { q: '', cat: '', lado: '', warn: false }); $('[data-body]').innerHTML = ''; render(); }
       if (act === 'init') initTable(b);
-      if (act === 'copy-headers') {
-        try { await navigator.clipboard.writeText(COLUMNS.join('\t')); toast('Encabezados copiados. Pégalos en la celda A1 de la pestaña App_Maquinas.'); }
-        catch { toast('No se pudo copiar automáticamente; selecciona el texto de los encabezados y cópialo.', 'err'); }
+      if (act === 'copy-headers' || act === 'copy-ref') {
+        if (act === 'copy-ref' && !S.ref) await loadReference();
+        const text = act === 'copy-ref' ? referenceAsTsv() : SIMPLE_HEADERS.join('\t');
+        try { await navigator.clipboard.writeText(text); toast(`Copiado. Pégalo en la celda A1 de la pestaña ${TAB_APP}.`); }
+        catch { toast('No se pudo copiar automáticamente. Inténtalo de nuevo o copia los encabezados a mano.', 'err'); }
       }
       return;
     }

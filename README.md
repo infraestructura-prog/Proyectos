@@ -78,7 +78,7 @@ vercel dev
 
 El Excel por sí solo **no** es una conexión en vivo. La aplicación trabaja con la hoja de Google **«Codificación de Máquinas de Simulación»** de tres maneras:
 
-- **Solo lectura, sin configurar nada más:** si la hoja está compartida como «Cualquier persona con el enlace · Lector», el navegador la lee igual que Nodos. Agregar y editar quedan desactivados.
+- **Modo sencillo, sin configurar nada más (el que está en uso):** la hoja está compartida como «Cualquier persona con el enlace · Lector» y el navegador la lee igual que Nodos. Las máquinas se agregan y editan **directamente en Google Sheets**, en una pestaña `App_Maquinas` con las columnas `Codificación · Categoría · Serial · Escalera · Condición · Imagen` (en cualquier orden). Condición debe decir «En stock» o «Vendida»; las filas sin condición se avisan y no se clasifican. La app trae un botón para copiar las 14 entradas de Hoja 1 con la condición vacía. Sin columna `id`, cada máquina se identifica por su número de fila.
 - **Lectura y escritura con Apps Script (recomendada):** la app (Vercel) llama a un script instalado en la propia hoja. No hace falta Google Cloud.
 - **Lectura y escritura con cuenta de servicio:** la alternativa con Google Cloud que se describe más abajo.
 
