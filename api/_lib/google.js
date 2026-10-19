@@ -40,7 +40,8 @@ async function accessToken(cfg) {
 }
 
 export class SheetsError extends Error {
-  constructor(message, status = 502, code = 'SHEETS_ERROR') { super(message); this.status = status; this.code = code; }
+  // extra: datos adicionales que se envían al navegador (p. ej. fields o current).
+  constructor(message, status = 502, code = 'SHEETS_ERROR', extra = null) { super(message); this.status = status; this.code = code; this.extra = extra; }
 }
 
 async function call(cfg, path, { method = 'GET', body } = {}) {

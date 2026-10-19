@@ -22,6 +22,6 @@ export async function readJson(req) {
 
 export function handleError(res, e) {
   console.error('[api]', e);
-  if (e && e.code && e.status) return fail(res, e.status, e.code, e.message);
+  if (e && e.code && e.status) return fail(res, e.status, e.code, e.message, e.extra || {});
   return fail(res, 500, 'SERVER_ERROR', 'Error interno del servidor. Inténtalo de nuevo.');
 }

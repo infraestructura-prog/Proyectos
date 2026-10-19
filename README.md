@@ -23,7 +23,7 @@ Inicio
 | Nodos: error con «Reintentar» y datos de demostración solo bajo demanda | ✅ Funciona |
 | Máquinas: interfaz completa (tarjetas, tabla, filtros, ficha, formularios, validación, advertencias, conflictos) | ✅ Probada en el navegador con un servidor simulado |
 | Máquinas: lectura directa de la hoja pública (igual que Nodos, sin servidor). Lee «Hoja 1» y, si existe, la pestaña `App_Maquinas` | ✅ Funciona (solo lectura) |
-| Máquinas: escritura en Google Sheets (`/api/machines`) | ⚠️ Código escrito, **no probado contra Google**. Faltan la cuenta de servicio y las variables de entorno |
+| Máquinas: escritura en Google Sheets (`/api/machines` → Apps Script) | ⚠️ Código escrito, **no probado contra Google**. Falta instalar `apps-script/Code.gs` y cargar las variables |
 | Inicio de sesión (`/api/auth`) | ⚠️ Código escrito, **no probado en Vercel**. Faltan `SESSION_SECRET` y `APP_USERS` |
 | Subida de imágenes | ❌ No implementada. Por ahora se guarda un enlace duradero (ver «Imágenes») |
 
@@ -44,7 +44,10 @@ shared/reference-snapshot.js  Copia de Hoja 1 para cuando no hay conexión
 api/machines.js               Leer, crear, editar e inicializar la tabla App_Maquinas
 api/reference.js              Leer Hoja 1 (solo lectura)
 api/auth.js                   Iniciar y cerrar sesión
-api/_lib/                     Google Sheets (JWT de cuenta de servicio), sesiones, HTTP
+api/_lib/store.js             Conexión con la hoja: Apps Script o cuenta de servicio
+api/_lib/                     Cliente de Google Sheets, sesiones, HTTP
+apps-script/Code.gs           Script que se pega en la hoja (Extensiones → Apps Script)
+assets/js/sheets-public.js    Lectura de la hoja pública (como Nodos)
 scripts/hash-password.ps1     Genera el hash de una contraseña (Windows, sin Node)
 scripts/hash-password.mjs     Igual, con Node
 .env.example                  Variables de entorno (sin secretos)
@@ -73,7 +76,37 @@ vercel dev
 
 ## Google Sheets: conexión de lectura y escritura
 
-El Excel por sí solo **no** es una conexión en vivo. La aplicación trabaja con la hoja de Google **«Codificación de Máquinas de Simulación»** a través de la API de Google Sheets. Usa una **cuenta de servicio** cuyas credenciales están solo en el servidor (Vercel). El navegador nunca ve claves ni tokens.
+El Excel por sí solo **no** es una conexión en vivo. La aplicación trabaja con la hoja de Google **«Codificación de Máquinas de Simulación»** de tres maneras:
+
+- **Solo lectura, sin configurar nada más:** si la hoja está compartida como «Cualquier persona con el enlace · Lector», el navegador la lee igual que Nodos. Agregar y editar quedan desactivados.
+- **Lectura y escritura con Apps Script (recomendada):** la app (Vercel) llama a un script instalado en la propia hoja. No hace falta Google Cloud.
+- **Lectura y escritura con cuenta de servicio:** la alternativa con Google Cloud que se describe más abajo.
+
+En los dos casos de escritura, las claves están solo en Vercel. El navegador nunca las ve.
+
+### Opción A: Apps Script
+
+1. Abre la hoja y entra en **Extensiones → Apps Script**.
+2. Borra lo que haya en `Code.gs`, pega el contenido completo de [`apps-script/Code.gs`](apps-script/Code.gs) y guarda.
+3. Genera una clave aleatoria en PowerShell. Cópiala; no la compartas ni la subas a GitHub:
+
+```bash
+powershell -Command "[Convert]::ToBase64String((1..32|%{[byte](Get-Random -Max 256)}))"
+```
+
+4. En el editor de Apps Script ve a **Configuración del proyecto** (engranaje) → **Propiedades de la secuencia de comandos** → **Agregar propiedad**. Nombre: `APP_SECRET`. Valor: la clave del paso 3.
+5. Pulsa **Implementar → Nueva implementación**. En el engranaje elige **Aplicación web**, con **Ejecutar como: Yo** y **Quién tiene acceso: Cualquier usuario**. Pulsa **Implementar** y autoriza los permisos. Google mostrará «Google no ha verificado esta aplicación»: pulsa *Configuración avanzada → Ir a … (no seguro)*, porque el script es tuyo.
+6. Copia la **URL de la aplicación web**, que termina en `/exec`.
+7. En Vercel, crea las variables `APPS_SCRIPT_URL` (la URL) y `APPS_SCRIPT_SECRET` (la misma clave del paso 3). Crea también `SESSION_SECRET` y `APP_USERS` (ver «Autenticación»). Después vuelve a desplegar.
+8. En la app, inicia sesión como editor y pulsa **Inicializar tabla App_Maquinas**.
+
+Si después cambias `Code.gs`, entra en **Implementar → Gestionar implementaciones → Editar (lápiz) → Versión: Nueva versión**. Así la URL no cambia.
+
+Si tu cuenta es de Google Workspace (por ejemplo `@suspensionesccs.com`) y la opción «Cualquier usuario» no aparece, la tiene bloqueada el administrador del dominio. Pídele que la permita, o crea el script con una cuenta que sí la tenga. Con «Solo usuarios de tu dominio», Vercel no puede llamar al script.
+
+Seguridad: la URL del script es pública, pero sin `APP_SECRET` no devuelve datos ni escribe. El script solo lee «Hoja 1» y solo escribe en `App_Maquinas`. Las escrituras usan `LockService`, así que dos guardados simultáneos no pueden duplicar una codificación ni pisarse.
+
+### Opción B: cuenta de servicio
 
 1. En [console.cloud.google.com](https://console.cloud.google.com), crea un proyecto o usa uno existente y activa la **Google Sheets API**.
 2. En *IAM y administración → Cuentas de servicio*, crea una cuenta. En *Claves → Agregar clave → JSON*, descarga el archivo. Guárdalo en un lugar seguro y no lo subas a GitHub.
@@ -134,7 +167,7 @@ powershell -ExecutionPolicy Bypass -File scripts/hash-password.ps1
 - Cambios simultáneos: si otra persona modificó la máquina, el servidor responde con un conflicto. La app muestra la versión actual y te deja descartar tus cambios o sobrescribirlos de forma explícita.
 - «Marcar como vendida» conserva el id, el serial y el historial.
 - Las incoherencias entre codificación, categoría y escalera muestran una advertencia y **no modifican el dato**.
-- Límite conocido: Google Sheets no tiene transacciones. Si dos personas crean la misma codificación en el mismo segundo, podría pasar un duplicado. El riesgo es bajo con pocos usuarios.
+- Con Apps Script, la comprobación de duplicados y de versión se repite dentro de un bloqueo (`LockService`) justo antes de escribir. Con la cuenta de servicio no hay bloqueo: si dos personas crean la misma codificación en el mismo segundo podría pasar un duplicado (riesgo bajo con pocos usuarios).
 
 ## Imágenes
 
@@ -149,12 +182,12 @@ Asocia una imagen a una máquina solo cuando hayas verificado la correspondencia
 
 ## Ampliaciones posibles (no implementadas, no son columnas existentes)
 
-Cliente, fecha de venta, importe y observaciones. Se agregarían como columnas nuevas al final de `App_Maquinas`, actualizando `COLUMNS` en `shared/machines-core.js`.
+Cliente, fecha de venta, importe y observaciones. Se agregarían como columnas nuevas al final de `App_Maquinas`, actualizando `COLUMNS` en `shared/machines-core.js` y en `apps-script/Code.gs`.
 
 ## Pendientes de configurar
 
-1. Crear la cuenta de servicio y compartir la hoja con ella como Editor.
-2. Crear las variables de entorno en Vercel (`.env.example`).
+1. Instalar `apps-script/Code.gs` en la hoja y crear su propiedad `APP_SECRET` (Opción A).
+2. Crear las variables de entorno en Vercel: `APPS_SCRIPT_URL`, `APPS_SCRIPT_SECRET`, `SESSION_SECRET` y `APP_USERS`.
 3. Generar los usuarios con `scripts/hash-password.ps1` y cargarlos en `APP_USERS`.
 4. Desplegar y probar `/api/auth` y `/api/machines` (el código no se ha ejecutado contra Google).
 5. Inicializar `App_Maquinas` desde la app.
