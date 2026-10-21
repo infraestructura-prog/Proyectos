@@ -18,6 +18,11 @@ export const TREE = {
               id: 'ordenes', title: 'Control de órdenes de fabricación', icon: 'list',
               desc: 'Estado, especificaciones, pendientes y demoras leídos desde Google Sheets.',
               load: () => import('./modules/nodos.js')
+            },
+            {
+              id: 'actividades', title: 'Tablero de actividades', icon: 'kanban',
+              desc: 'Vista kanban de las actividades pendientes de cada nodo, por estado o por responsable.',
+              load: () => import('./modules/nodos-kanban.js')
             }
           ]
         }

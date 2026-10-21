@@ -15,6 +15,7 @@ export const ICON = {
   case: svg('<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>'),
   machine: svg('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M7 20h10M12 16v4M7 9h4M7 12h7"/><circle cx="17" cy="9" r="1.5"/>'),
   list: svg('<path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/>'),
+  kanban: svg('<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M5.5 7h2M11.5 7h2M17.5 7h2M11.5 11h2M5.5 11h2"/>'),
   arrow: svg('<path d="M5 12h14M13 6l6 6-6 6"/>'),
   back: svg('<path d="M19 12H5M11 18l-6-6 6-6"/>'),
   refresh: svg('<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>'),
