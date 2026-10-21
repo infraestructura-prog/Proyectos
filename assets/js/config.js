@@ -19,5 +19,8 @@ export const MAQUINAS = {
   // directamente (como Nodos). Agregar y editar requiere además la conexión de servidor (/api).
   SPREADSHEET_ID: '1PuXWlmC_ZQOBHYAk-OT1Z73gAqF8FtGctp-CYoqPsDk',
   SOURCE_TAB: 'Hoja 1',
+  // Pestañas donde están las máquinas con su condición (se usa la primera que tenga las columnas
+  // Codificación y Condición). Si renombras la pestaña en la hoja, cambia el nombre aquí.
+  MACHINES_TABS: ['Hoja 5', 'App_Maquinas'],
   SHEET_URL: 'https://docs.google.com/spreadsheets/d/1PuXWlmC_ZQOBHYAk-OT1Z73gAqF8FtGctp-CYoqPsDk/edit'
 };

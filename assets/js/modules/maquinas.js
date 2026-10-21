@@ -95,16 +95,22 @@ const normalizeCondicion = v => {
 };
 
 async function readPublicRecords() {
-  const rows = await readPublicSheet(CFG.SPREADSHEET_ID, { tab: TAB_APP });
-  const header = (rows[0] || []).map(headerKey);
-  const col = {};
-  for (const [field, names] of Object.entries(HEADER_ALIASES)) {
-    const i = header.findIndex(h => names.includes(h));
-    if (i >= 0) col[field] = i;
+  // Se prueba cada pestaña configurada. Si una no existe, Google devuelve la primera (Hoja 1);
+  // por eso solo se acepta la que tenga las columnas Codificación y Condición.
+  let rows = null, col = null, tabName = '';
+  for (const tab of CFG.MACHINES_TABS) {
+    const data = await readPublicSheet(CFG.SPREADSHEET_ID, { tab });
+    const header = (data[0] || []).map(headerKey);
+    const c = {};
+    for (const [field, names] of Object.entries(HEADER_ALIASES)) {
+      const i = header.findIndex(h => names.includes(h));
+      if (i >= 0) c[field] = i;
+    }
+    if (c.codificacion !== undefined && c.condicion !== undefined) { rows = data; col = c; tabName = tab; break; }
   }
-  // Si la pestaña no existe, Google devuelve la primera (Hoja 1); por eso se exigen Codificación y Condición.
-  if (col.codificacion === undefined || col.condicion === undefined)
-    throw Object.assign(new Error(`La pestaña ${TAB_APP} no existe o no tiene las columnas Codificación y Condición.`), { code: 'TABLE_MISSING_PUBLIC' });
+  if (!rows)
+    throw Object.assign(new Error(`No se encontró una pestaña de máquinas (${CFG.MACHINES_TABS.join(', ')}) con las columnas Codificación y Condición.`), { code: 'TABLE_MISSING_PUBLIC' });
+  S.publicTab = tabName;
 
   const out = [];
   S.unclassified = [];
@@ -119,9 +125,9 @@ async function readPublicRecords() {
     const r = {
       // Sin columna id se usa la fila como referencia (cambia si se insertan filas encima).
       id: trimSpaces(get('id')) || `FILA-${fila}`,
-      codificacion: trimSpaces(get('codificacion')), categoria: cat || trimSpaces(get('categoria')), serial: trimSpaces(get('serial')),
+      codificacion: trimSpaces(get('codificacion')), categoria: cat || trimSpaces(get('categoria')), serial: /^[-–—]+$/.test(trimSpaces(get('serial'))) ? '' : trimSpaces(get('serial')), // «-» = sin serial
       escalera: lado || trimSpaces(get('escalera')), condicion: cond, imagen_url: trimSpaces(get('imagen_url')),
-      origen: trimSpaces(get('origen')) || `${TAB_APP}!fila ${fila}`,
+      origen: trimSpaces(get('origen')) || `${tabName}!fila ${fila}`,
       valor_original: get('valor_original') || (Object.keys(original).length ? JSON.stringify(original) : ''),
       creado: get('creado'), modificado: get('modificado'), version: Number(get('version')) || 1,
       creado_por: get('creado_por'), modificado_por: get('modificado_por')
@@ -192,7 +198,7 @@ export function mount(root, ctx) {
     btn.innerHTML = loading ? '<span class="spinner"></span><span>Actualizando…</span>' : `${ICON.refresh}<span>Actualizar</span>`;
     if (S.status === 'ready') {
       el.className = 'chip chip-ok';
-      el.innerHTML = `<span class="dot pulse"></span><span>Sheets · ${TAB_APP}${S.source === 'public' ? ' · solo lectura' : ''}</span>`;
+      el.innerHTML = `<span class="dot pulse"></span><span>Sheets · ${S.source === 'public' ? S.publicTab + ' · solo lectura' : TAB_APP}</span>`;
       el.title = 'Última lectura: ' + fmtDate(S.fetchedAt);
     }
     else if (S.status === 'error' && S.error && S.error.code === 'TABLE_MISSING_PUBLIC') { el.className = 'chip chip-upd'; el.innerHTML = `<span class="dot"></span><span>Sheets · solo lectura · sin ${TAB_APP}</span>`; el.title = ''; }
@@ -287,7 +293,7 @@ export function mount(root, ctx) {
     const el = $('[data-add]'); if (!el) return;
     const disabled = S.status !== 'ready';
     if (S.source === 'public') {
-      el.innerHTML = `<a class="btn btn-primary" href="${esc(CFG.SHEET_URL)}" target="_blank" rel="noopener" title="Las máquinas se agregan y editan en la pestaña ${TAB_APP} de Google Sheets">${ICON.plus}<span>Agregar en Google Sheets</span></a>`;
+      el.innerHTML = `<a class="btn btn-primary" href="${esc(CFG.SHEET_URL)}" target="_blank" rel="noopener" title="Las máquinas se agregan y editan en la pestaña ${S.publicTab} de Google Sheets">${ICON.plus}<span>Agregar en Google Sheets</span></a>`;
       return;
     }
     el.innerHTML = ctx.canEdit()
@@ -391,7 +397,7 @@ export function mount(root, ctx) {
           </tr>`; }).join('')}</tbody></table></div>`
         : `<div class="state"><h3>Sin resultados</h3><p>Ninguna entrada coincide con la búsqueda.</p></div>`}
       ${S.status === 'error' ? `<div style="margin-top:16px">${errorState()}</div>` : ''}
-      ${S.source === 'public' ? `<p class="count" style="margin-top:12px">Para registrar una entrada, agrégala en la pestaña ${TAB_APP} de la hoja con su condición. «Copiar las 14 entradas» está en las pestañas Vendidas / En stock mientras ${TAB_APP} no exista.</p>` : !ctx.canEdit() ? `<p class="count" style="margin-top:12px">Para registrar entradas en la aplicación inicia sesión con una cuenta de editor.</p>` : ''}`;
+      ${S.source === 'public' ? `<p class="count" style="margin-top:12px">Para registrar una entrada, agrégala en la pestaña ${S.publicTab || CFG.MACHINES_TABS[0]} de la hoja con su condición.</p>` : !ctx.canEdit() ? `<p class="count" style="margin-top:12px">Para registrar entradas en la aplicación inicia sesión con una cuenta de editor.</p>` : ''}`;
 
     const body = $('[data-body]');
     const qInput = body.querySelector('#rf-q');
@@ -402,7 +408,7 @@ export function mount(root, ctx) {
   function render() {
     renderTabs(); renderSource();
     const pend = S.status === 'ready' && S.source === 'public' ? (S.unclassified || []) : [];
-    $('[data-banner]').innerHTML = pend.length ? `<div style="margin-bottom:16px">${alertBox('warn', `${pend.length} ${pend.length === 1 ? 'máquina sin condición' : 'máquinas sin condición'} en ${TAB_APP}`,
+    $('[data-banner]').innerHTML = pend.length ? `<div style="margin-bottom:16px">${alertBox('warn', `${pend.length} ${pend.length === 1 ? 'máquina sin condición' : 'máquinas sin condición'} en ${S.publicTab}`,
       `<p>No aparecen en Vendidas ni En stock hasta que su columna Condición diga «En stock» o «Vendida»: ${pend.slice(0, 8).map(p => `<span class="mono">${esc(p.codificacion)}</span> (fila ${p.fila}${p.valor ? `, «${esc(p.valor)}»` : ''})`).join(', ')}${pend.length > 8 ? '…' : ''}.</p>`,
       `<a class="btn btn-sm" href="${esc(CFG.SHEET_URL)}" target="_blank" rel="noopener">Abrir la hoja</a>`)}</div>` : '';
     if (tab.id === 'referencia') renderReference();
