@@ -24,7 +24,13 @@ export async function readPublicSheet(sheetId, { tab = '', range = '' } = {}) {
   if (range) p.set('range', range);
   let res;
   try { res = await fetch(`https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/gviz/tq?${p}`, { cache: 'no-store' }); }
-  catch { throw Object.assign(new Error('No se pudo contactar con Google Sheets. Revisa tu conexión a internet.'), { code: 'NETWORK' }); }
+  catch {
+    // Una hoja privada responde con una redirección al inicio de sesión que el navegador bloquea (sin CORS),
+    // así que con conexión activa el fallo casi siempre significa que la hoja no está compartida.
+    if (navigator.onLine === false) throw Object.assign(new Error('No hay conexión a internet.'), { code: 'NETWORK' });
+    throw Object.assign(new Error('No se pudo leer la hoja. Compártela como «Cualquier persona con el enlace · Lector» (si ya lo está, revisa tu conexión).'), { code: 'NOT_PUBLIC' });
+  }
+  if (res.status === 401 || res.status === 403) throw Object.assign(new Error('La hoja no es pública. Compártela como «Cualquier persona con el enlace · Lector».'), { code: 'NOT_PUBLIC' });
   if (!res.ok) throw Object.assign(new Error(`Google Sheets respondió HTTP ${res.status}.`), { code: 'SHEETS_HTTP' });
   const text = await res.text();
   if (/^\s*<(!doctype|html)/i.test(text))

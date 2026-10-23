@@ -15,16 +15,19 @@ export const NODOS = {
 };
 
 export const MAQUINAS = {
-  // Hoja «Codificación de Máquinas de Simulación». Compartida como lector público, la app la lee
-  // directamente (como Nodos). Agregar y editar requiere además la conexión de servidor (/api).
-  SPREADSHEET_ID: '1PuXWlmC_ZQOBHYAk-OT1Z73gAqF8FtGctp-CYoqPsDk',
-  SOURCE_TAB: 'Hoja 1',
-  // Pestañas donde están las máquinas con su condición (se usa la primera que tenga las columnas
-  // Codificación y Condición). Si renombras la pestaña en la hoja, cambia el nombre aquí.
-  MACHINES_TABS: ['Hoja 5', 'App_Maquinas'],
+  // Hoja «Máquinas de Simulación · Ensamblaje CCS» (Drive de infraestructura@suspensionesccs.com).
+  // Compartida como «Cualquier persona con el enlace · Lector», la página la lee directamente (como Nodos).
+  SPREADSHEET_ID: '1oxlXnTYC5uGsPfzo2-rDTG-YrFskh9KE1Z2KxZQ8Elo',
+  SHEET_URL: 'https://docs.google.com/spreadsheets/d/1oxlXnTYC5uGsPfzo2-rDTG-YrFskh9KE1Z2KxZQ8Elo/edit',
+  // Pestañas donde buscar las máquinas ('' = la primera pestaña). Se usa la primera que tenga
+  // las columnas Codificación y Condición.
+  MACHINES_TABS: [''],
   // URL de la «Aplicación web» del Apps Script de edición (apps-script/Code.gs), termina en /exec.
   // Vacía = la página solo muestra; las máquinas se editan en Google Sheets.
   // No es secreta: sin la clave de edición el script no modifica nada.
   EDIT_URL: '',
-  SHEET_URL: 'https://docs.google.com/spreadsheets/d/1PuXWlmC_ZQOBHYAk-OT1Z73gAqF8FtGctp-CYoqPsDk/edit'
+  // Tabla original de codificación (solo consulta, pestaña «Referencia del archivo»).
+  REFERENCE_SPREADSHEET_ID: '1PuXWlmC_ZQOBHYAk-OT1Z73gAqF8FtGctp-CYoqPsDk',
+  REFERENCE_URL: 'https://docs.google.com/spreadsheets/d/1PuXWlmC_ZQOBHYAk-OT1Z73gAqF8FtGctp-CYoqPsDk/edit',
+  SOURCE_TAB: 'Hoja 1'
 };

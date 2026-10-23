@@ -98,9 +98,9 @@ async function readRecords() {
       Object.keys(HEADER_ALIASES).forEach(f => { raw[f] = col[f] === undefined ? '' : String(row[col[f]] ?? ''); });
       if (trimSpaces(raw.codificacion)) out.push(toRecord(raw));
     });
-    return { tab, records: out };
+    return { tab: tab || 'Máquinas', records: out };
   }
-  throw Object.assign(new Error(`No se encontró una pestaña de máquinas (${CFG.MACHINES_TABS.join(', ')}) con las columnas Codificación y Condición.`), { code: 'TABLE_MISSING' });
+  throw Object.assign(new Error(`No se encontró una pestaña de máquinas (${CFG.MACHINES_TABS.map(t => t || 'primera pestaña').join(', ')}) con las columnas Codificación y Condición.`), { code: 'TABLE_MISSING' });
 }
 
 let inflight = null;
@@ -118,7 +118,7 @@ async function loadRecords(force = false) {
 
 async function loadReference() {
   try {
-    const values = await readPublicSheet(CFG.SPREADSHEET_ID, { tab: CFG.SOURCE_TAB, range: 'A2:J' });
+    const values = await readPublicSheet(CFG.REFERENCE_SPREADSHEET_ID, { tab: CFG.SOURCE_TAB, range: 'A2:J' });
     const head = (values[0] || []).map(v => String(v).trim().toUpperCase());
     if (!head.includes('SERIAL')) throw new Error(`La pestaña «${CFG.SOURCE_TAB}» no tiene los encabezados esperados.`);
     S.ref = referenceFromValues(values); S.refSource = { kind: 'live', at: new Date().toISOString() }; S.refError = null;
@@ -221,7 +221,9 @@ export function mount(root, ctx) {
 
   function errorState() {
     const e = S.error, retry = `<button class="btn btn-sm" data-act="reload">${ICON.refresh}Reintentar</button>`;
-    if (e && e.code === 'NOT_PUBLIC') return alertBox('warn', 'La hoja de máquinas no es pública', `<p>${esc(e.message)}</p>`, retry);
+    if (e && e.code === 'NOT_PUBLIC') return alertBox('warn', 'La hoja de máquinas no es pública', `<p>${esc(e.message)}</p>
+      <p class="muted" style="margin-top:4px">En la hoja: <b style="display:inline">Compartir → Acceso general → Cualquier persona con el enlace · Lector</b>.</p>`,
+      `${retry}<a class="btn btn-sm" href="${esc(CFG.SHEET_URL)}" target="_blank" rel="noopener">Abrir la hoja</a>`);
     if (e && e.code === 'TABLE_MISSING') return alertBox('warn', 'No se encontró la pestaña de máquinas',
       `<p>${esc(e.message)}</p><p class="muted" style="margin-top:4px">Si renombraste la pestaña, hay que actualizar el nombre en la configuración de la página.</p>`,
       `${retry}<a class="btn btn-sm" href="${esc(CFG.SHEET_URL)}" target="_blank" rel="noopener">Abrir la hoja</a>`);
@@ -353,7 +355,7 @@ export function mount(root, ctx) {
     $('[data-body]').innerHTML = `
       <div style="margin-bottom:16px">${alertBox('info', `Referencia original · ${esc(CFG.SOURCE_TAB)}`,
         `<p>La tabla original de codificación, con el bloque «Con Chapa» (con serial e imágenes incrustadas) y el bloque «Sin Chapa». Solo consulta: las máquinas de la página se leen de «${esc(S.tab || CFG.MACHINES_TABS[0])}».</p>
-         <p class="muted" style="margin-top:6px">${srcNote} · <a href="${esc(CFG.SHEET_URL)}" target="_blank" rel="noopener">Abrir hoja</a></p>`)}</div>
+         <p class="muted" style="margin-top:6px">${srcNote} · <a href="${esc(CFG.REFERENCE_URL)}" target="_blank" rel="noopener">Abrir hoja</a></p>`)}</div>
       <section class="panel toolbar" aria-label="Filtros de referencia">
         <div class="search">${ICON.search}<label class="sr-only" for="rf-q">Buscar en la referencia</label>
           <input id="rf-q" type="search" placeholder="Buscar codificación o serial…" value="${esc(f.q)}"></div>
@@ -429,9 +431,9 @@ export function mount(root, ctx) {
       <div class="modal-head"><div><p class="kicker">Edición desde la página</p><h2 data-modal-title>Activar la edición</h2></div>
         <button class="btn btn-ghost icon-btn" data-close aria-label="Cerrar">${ICON.close}</button></div>
       <div class="modal-body">
-        <p>Google solo permite modificar la hoja con permiso de su dueño. Se hace una vez, con un pequeño script en tu cuenta de Google:</p>
+        <p>Google solo permite modificar la hoja con permiso de su dueño. Se hace una vez, con un pequeño script dentro de la propia hoja:</p>
         <ol style="margin:10px 0 0;padding-left:20px;display:grid;gap:6px">
-          <li>Entra en <b>script.google.com</b> con la cuenta que edita la hoja y crea un <b>Nuevo proyecto</b>.</li>
+          <li>Abre la hoja de máquinas con la cuenta <b>infraestructura@</b> y entra en <b>Extensiones → Apps Script</b>.</li>
           <li>Pega el código (botón de abajo) y escribe tu clave de edición en la primera línea. Guarda.</li>
           <li><b>Implementar → Nueva implementación → Aplicación web</b>, con «Ejecutar como: Yo» y «Cualquier usuario». Autoriza.</li>
           <li>Envía la URL que termina en <span class="mono">/exec</span> para conectarla a la página.</li>

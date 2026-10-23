@@ -21,7 +21,7 @@ Inicio
 | Bienvenida, navegación, migas de pan, cambio de área | ✅ Funciona |
 | Nodos: lectura en vivo, indicadores, filtros, tabla/tarjetas, fichas, actualización manual y automática | ✅ Funciona (probado con la hoja real) |
 | Nodos: error con «Reintentar» y datos de demostración solo bajo demanda | ✅ Funciona |
-| Máquinas: lectura de «Hoja 5» (pública), tarjetas por parejas | ✅ Funciona (probado con la hoja real) |
+| Máquinas: lectura de la hoja «Máquinas de Simulación · Ensamblaje CCS» (pública), tarjetas por parejas | ✅ Probado con una copia; falta compartir la hoja nueva como lector público |
 | Máquinas: editar y agregar desde la página (Apps Script) | ⚠️ Probado con una copia simulada de la hoja. Falta instalar el script en la hoja y poner su URL en `EDIT_URL` |
 | Subida de imágenes | ❌ No implementada. Por ahora se guarda un enlace duradero (ver «Imágenes») |
 
@@ -74,20 +74,20 @@ vercel dev
 
 ## Máquinas de simulación: Google Sheets
 
-**Modo en uso.** La página lee la pestaña **«Hoja 5»** de la hoja «Codificación de Máquinas de Simulación», compartida como «Cualquier persona con el enlace · Lector». Las columnas se reconocen por su nombre, en cualquier orden y con o sin tildes: **Codificación · Categoría · SERIAL · Escalera · Condición · Imagen**. Un serial «-» se muestra como «Sin serial». La pestaña se configura en `assets/js/config.js` (`MACHINES_TABS`).
+**Modo en uso.** La página lee la primera pestaña de la hoja [«Máquinas de Simulación · Ensamblaje CCS»](https://docs.google.com/spreadsheets/d/1oxlXnTYC5uGsPfzo2-rDTG-YrFskh9KE1Z2KxZQ8Elo/edit), en el Drive de infraestructura@suspensionesccs.com y compartida como «Cualquier persona con el enlace · Lector». Las columnas se reconocen por su nombre, en cualquier orden y con o sin tildes: **Codificación · Categoría · Serial · Escalera · Condición · Imagen**. Un serial «-» se muestra como «Sin serial». La hoja se configura en `assets/js/config.js` (`SPREADSHEET_ID`, `MACHINES_TABS`). La hoja original «Codificación de Máquinas de Simulación» solo se usa para la pestaña «Referencia del archivo».
 
 **Parejas.** Las máquinas se venden en parejas: una con chapa y otra sin chapa, unidas por la letra inicial del código (A - CC - DER + A - SC - IZQ). Cada tarjeta muestra una pareja. La página avisa si falta una de las dos, si hay más de dos máquinas con la misma letra o si la pareja tiene condiciones distintas. El botón «Marcar pareja como vendida» cambia las dos filas en una sola operación.
 
 **Editar desde la página (Apps Script).** Google solo deja escribir en la hoja con permiso de su dueño. Para eso se usa [`apps-script/Code.gs`](apps-script/Code.gs), que se instala una vez en tu cuenta de Google y abre la hoja por su ID (`HOJA_ID`):
 
-1. Entra en [script.google.com](https://script.google.com) con la cuenta que puede editar la hoja y crea un **Nuevo proyecto**. No uses *Extensiones → Apps Script* de la hoja: como la hoja pertenece a otra cuenta, Google no deja implementarlo («No tienes permiso para realizar esta acción»).
+1. Abre la hoja de máquinas con la cuenta dueña (infraestructura@) y entra en **Extensiones → Apps Script**. Tiene que ser la cuenta dueña: si la hoja pertenece a otra cuenta, Google no deja implementar («No tienes permiso para realizar esta acción»).
 2. Borra lo que haya y pega el contenido de `apps-script/Code.gs`. También puedes copiarlo con el botón «Copiar código del script» de la ficha de cualquier máquina.
 3. En la primera línea, cambia `ESCRIBE-AQUI-TU-CLAVE` por tu **clave de edición** (la eliges tú). Guarda.
 4. Ve a **Implementar → Nueva implementación → Aplicación web**, con **Ejecutar como: Yo** y **Quién tiene acceso: Cualquier usuario**. Autoriza los permisos: el aviso «Google no ha verificado esta aplicación» se acepta con *Configuración avanzada → Ir a…*.
 5. Copia la URL que termina en `/exec` y ponla en `EDIT_URL` de `assets/js/config.js`. Esa URL no es secreta, porque sin la clave el script no modifica nada.
 
 Al guardar, la página pide la clave una vez y la recuerda solo mientras la pestaña del navegador está abierta. El script:
-- solo modifica las columnas de máquinas de «Hoja 5» y solo las celdas que cambian; si no existe la columna «Imagen», la agrega al final;
+- solo modifica las columnas de máquinas de la primera pestaña y solo las celdas que cambian; si no existe la columna «Imagen», la agrega al final;
 - valida los campos y rechaza codificaciones o seriales repetidos;
 - usa `LockService` para que dos guardados no se pisen;
 - si la fila cambió en la hoja después de abrir el formulario, avisa y deja elegir entre ver lo actual o sobrescribir.
@@ -179,12 +179,12 @@ Cliente, fecha de venta, importe y observaciones. Se agregarían como columnas n
 
 1. Instalar `apps-script/Code.gs` en la hoja de máquinas con tu clave de edición e implementarlo como aplicación web.
 2. Poner la URL `/exec` en `EDIT_URL` (`assets/js/config.js`) y probar una edición real.
-3. No renombrar la pestaña «Hoja 5», o actualizar `MACHINES_TABS` si se renombra.
+3. Mantener las columnas en la fila 1 de la primera pestaña de la hoja de máquinas (se pueden reordenar, no renombrar).
 
 ## Interpretación confirmada
 
 - Las máquinas se venden en parejas (con chapa + sin chapa); la letra inicial del código define la pareja.
-- La condición (vendida / en stock) se registra en la columna Condición de «Hoja 5».
+- La condición (vendida / en stock) se registra en la columna Condición de la hoja de máquinas.
 
 ## Nodos
 
