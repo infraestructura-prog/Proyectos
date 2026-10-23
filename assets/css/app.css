@@ -293,6 +293,33 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .toast.ok { border-color: rgba(34,255,160,.5); color: #d1fae5; } .toast.ok svg { color: var(--mint); }
 .toast.err { border-color: rgba(248,113,113,.5); color: #fee2e2; } .toast.err svg { color: var(--red); }
 
+/* ── Parejas de máquinas ── */
+.pair-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr)); }
+.pair-card { border: 1px solid var(--edge); background: rgba(13,20,36,.85); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 14px; min-width: 0; }
+.pair-card.sold { border-color: rgba(0,229,255,.28); }
+.pair-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.pair-letter { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0;
+  font-family: var(--mono); font-weight: 700; font-size: 18px; color: var(--bg); background: linear-gradient(135deg, var(--neon), var(--mint)); }
+.pair-letter.sm { width: 30px; height: 30px; font-size: 15px; border-radius: 8px; }
+.pair-title { display: flex; flex-direction: column; line-height: 1.2; margin-right: auto; }
+.pair-title .dim { font-size: 12px; }
+.pair-body { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; position: relative; }
+.pair-half { display: flex; flex-direction: column; text-align: left; min-width: 0; padding: 10px; border-radius: 12px; border: 1px solid var(--edge);
+  background: var(--panel-2); color: var(--text); cursor: pointer; transition: transform .15s, box-shadow .15s, border-color .15s; }
+button.pair-half:hover, button.pair-half:focus-visible { transform: translateY(-2px); border-color: rgba(0,229,255,.45); box-shadow: 0 0 22px -8px rgba(0,229,255,.5); }
+.pair-half .thumb { margin-bottom: 8px; }
+.pair-half .half-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+.pair-half .cell-id { overflow-wrap: anywhere; white-space: normal; }
+.pair-half .kv { font-size: 12px; margin-top: 6px; }
+.pair-half.missing { cursor: default; border-style: dashed; background: transparent; gap: 8px; align-items: flex-start; }
+.pair-extra { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.pair-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--edge); }
+.pair-table tr.pair-first td, .pair-table tr.pair-first th { border-top: 2px solid var(--edge-2); }
+.pair-table .pair-cell { vertical-align: middle; background: rgba(7,11,20,.35); }
+/* En teléfonos la pareja sigue lado a lado (se lee como unidad); solo se apila en pantallas muy angostas. */
+@media (max-width: 480px) { .pair-half { padding: 8px; } .pair-half .kv { grid-template-columns: 1fr; gap: 0; } .pair-half .kv dd { margin-bottom: 4px; } }
+@media (max-width: 330px) { .pair-body { grid-template-columns: 1fr; } }
+
 /* ── Kanban ── */
 .kanban { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(280px, 1fr); gap: 14px; overflow-x: auto; padding-bottom: 8px;
   scroll-snap-type: x mandatory; align-items: start; }

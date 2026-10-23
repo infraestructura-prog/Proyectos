@@ -1,172 +1,194 @@
 /**
- * Ensamblaje CCS · Máquinas de simulación — puente entre la aplicación (Vercel) y esta hoja.
+ * Ensamblaje CCS · Máquinas de simulación — edición desde la página.
  *
- * INSTALACIÓN (una sola vez):
- *  1. En la hoja «Codificación de Máquinas de Simulación»: Extensiones → Apps Script.
- *  2. Borra el contenido de Code.gs y pega este archivo completo. Guarda.
- *  3. Configuración del proyecto (engranaje) → Propiedades de la secuencia de comandos →
- *     Agregar propiedad:  APP_SECRET = <una clave larga y aleatoria>  (la misma que APPS_SCRIPT_SECRET en Vercel).
- *  4. Implementar → Nueva implementación → Tipo: Aplicación web.
- *       Ejecutar como: Yo   ·   Quién tiene acceso: Cualquier usuario
- *     Autoriza los permisos y copia la URL que termina en /exec (va en APPS_SCRIPT_URL en Vercel).
- *  Si cambias este código: Implementar → Gestionar implementaciones → Editar → Versión nueva.
+ * ┌──────────────────────────────────────────────────────────────────────┐
+ * │  ÚNICO CAMBIO NECESARIO: escribe tu clave de edición en la línea de  │
+ * │  abajo (entre las comillas). Es la que pedirá la página al guardar.  │
+ * └──────────────────────────────────────────────────────────────────────┘
+ */
+var CLAVE_EDICION = 'ESCRIBE-AQUI-TU-CLAVE';
+
+/* Pestaña donde están las máquinas (la misma que lee la página). */
+var PESTANA = 'Hoja 5';
+
+/*
+ * INSTALACIÓN (una sola vez, unos 5 minutos):
+ *  1. En la hoja de máquinas: Extensiones → Apps Script.
+ *  2. Borra lo que haya, pega este archivo completo y cambia CLAVE_EDICION. Guarda (icono de disquete).
+ *  3. Implementar → Nueva implementación → engranaje → «Aplicación web».
+ *       Ejecutar como: Yo      Quién tiene acceso: Cualquier usuario
+ *     Pulsa Implementar, autoriza los permisos y copia la URL que termina en /exec.
+ *  4. Envía esa URL para colocarla en la página (assets/js/config.js → EDIT_URL).
+ *  Si más adelante cambias este código o la clave: Implementar → Gestionar implementaciones →
+ *  lápiz → Versión: «Nueva versión» → Implementar (la URL no cambia).
  *
- * QUÉ HACE: solo lee «Hoja 1» y lee/escribe la pestaña «App_Maquinas». Nunca modifica «Hoja 1».
- * Toda petición debe traer APP_SECRET; sin ella no responde datos. Las escrituras usan un bloqueo
- * para que dos usuarios no guarden a la vez la misma codificación o pisen la misma fila.
+ * QUÉ HACE: solo modifica la pestaña indicada en PESTANA, y solo las columnas Codificación, Categoría,
+ * Serial, Escalera, Condición e Imagen (si no existe la columna Imagen, la agrega al final de la fila 1).
+ * Sin la clave correcta no escribe nada. No devuelve datos de la hoja salvo las filas que modifica.
  */
 
-var TAB_APP = 'App_Maquinas';
-var TAB_SOURCE = 'Hoja 1';
-var COLUMNS = ['id', 'codificacion', 'categoria', 'serial', 'escalera', 'condicion', 'imagen_url',
-  'origen', 'valor_original', 'creado', 'modificado', 'version', 'creado_por', 'modificado_por', 'request_id'];
-var EDITABLE = ['codificacion', 'categoria', 'serial', 'escalera', 'condicion', 'imagen_url', 'modificado', 'modificado_por'];
+var CAMPOS = {
+  codificacion: ['codificacion', 'codigo'],
+  categoria: ['categoria'],
+  serial: ['serial'],
+  escalera: ['escalera', 'lado de la escalera', 'lado escalera', 'lado'],
+  condicion: ['condicion', 'condicion comercial', 'estado'],
+  imagen: ['imagen', 'imagen url', 'imagen_url', 'foto']
+};
+var ORDEN = ['codificacion', 'categoria', 'serial', 'escalera', 'condicion', 'imagen'];
 
 function doGet() {
-  // Comprobación de que la implementación responde; no devuelve datos.
-  return json_({ ok: true, service: 'ensamblaje-ccs-maquinas' });
+  return json_({ ok: true, servicio: 'ensamblaje-ccs-maquinas' });
 }
 
 function doPost(e) {
   var req;
-  try { req = JSON.parse(e.postData.contents); } catch (err) { return fail_('BAD_REQUEST', 'La solicitud no es JSON válido.'); }
-  var secret = PropertiesService.getScriptProperties().getProperty('APP_SECRET');
-  if (!secret) return fail_('SCRIPT_NOT_CONFIGURED', 'Falta la propiedad APP_SECRET en el Apps Script.');
-  if (!req || req.secret !== secret) return fail_('UNAUTHORIZED', 'La clave del Apps Script no coincide (APPS_SCRIPT_SECRET).');
+  try { req = JSON.parse(e.postData.contents); } catch (x) { return json_(err_('BAD_REQUEST', 'La solicitud no es válida.')); }
+  if (!CLAVE_EDICION || CLAVE_EDICION === 'ESCRIBE-AQUI-TU-CLAVE')
+    return json_(err_('SCRIPT_NOT_CONFIGURED', 'Falta escribir la clave de edición en la primera línea del Apps Script.'));
+  if (String(req.clave || '') !== CLAVE_EDICION) {
+    Utilities.sleep(800); // frena intentos repetidos
+    return json_(err_('UNAUTHORIZED', 'La clave de edición no es correcta.'));
+  }
   try {
-    switch (req.action) {
-      case 'read': return json_(read_());
-      case 'reference': return json_(reference_());
-      case 'init': return json_(withLock_(init_));
-      case 'create': return json_(withLock_(function () { return create_(req.record); }));
-      case 'update': return json_(withLock_(function () { return update_(req.id, req.version, req.changes); }));
-      default: return fail_('BAD_REQUEST', 'Acción desconocida.');
-    }
-  } catch (err) {
-    return fail_('SCRIPT_ERROR', String(err && err.message || err));
+    if (req.accion === 'verificar') return json_({ ok: true });
+    var lock = LockService.getScriptLock();
+    if (!lock.tryLock(20000)) return json_(err_('BUSY', 'La hoja está ocupada con otro guardado. Inténtalo de nuevo.'));
+    try {
+      if (req.accion === 'editar') return json_(editar_(req.cambios || []));
+      if (req.accion === 'agregar') return json_(agregar_(req.datos || {}));
+      return json_(err_('BAD_REQUEST', 'Acción desconocida.'));
+    } finally { lock.releaseLock(); }
+  } catch (x) {
+    return json_(err_('SCRIPT_ERROR', String(x && x.message || x)));
   }
 }
 
 /* ── Utilidades ── */
-function json_(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
-function fail_(code, error, extra) { var o = { ok: false, code: code, error: error }; for (var k in (extra || {})) o[k] = extra[k]; return json_(o); }
+function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function err_(code, error, extra) { var o = { ok: false, code: code, error: error }; for (var k in (extra || {})) o[k] = extra[k]; return o; }
-
-function withLock_(fn) {
-  var lock = LockService.getScriptLock();
-  if (!lock.tryLock(20000)) return err_('BUSY', 'La hoja está ocupada con otro guardado. Inténtalo de nuevo.');
-  try { return fn(); } finally { lock.releaseLock(); }
-}
-
+function key_(s) { return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(); }
 function spaces_(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); }
+function noSerial_(s) { var t = spaces_(s); return /^[-–—]*$/.test(t) ? '' : t; }
 function codeKey_(s) { return spaces_(s).toUpperCase().replace(/\s+/g, ''); }
-function serialKey_(s) { return spaces_(s).toUpperCase(); }
+function serialKey_(s) { return noSerial_(s).toUpperCase(); }
+function safe_(v) { var s = String(v == null ? '' : v); return /^[=+@]/.test(s) || /^-[^-\s]/.test(s) ? "'" + s : s; } // evita fórmulas
 
-// Evita que un texto que empiece por = + - @ se interprete como fórmula.
-function safe_(v) { var s = String(v == null ? '' : v); return /^[=+\-@]/.test(s) ? "'" + s : s; }
-
-function rowToRecord_(row) {
-  var r = {};
-  for (var i = 0; i < COLUMNS.length; i++) r[COLUMNS[i]] = row[i] == null ? '' : String(row[i]);
-  r.version = Number(r.version) || 1;
-  return r;
+/* Compara dos valores como los ve la página (sin importar espacios ni mayúsculas; «-» = sin serial). */
+function igual_(campo, a, b) {
+  if (campo === 'serial') return serialKey_(a) === serialKey_(b);
+  if (campo === 'codificacion') return codeKey_(a) === codeKey_(b);
+  if (campo === 'escalera') return lado_(a) === lado_(b) || key_(a) === key_(b);
+  return key_(a) === key_(b);
 }
-function recordToRow_(r) { return COLUMNS.map(function (c) { return safe_(r[c]); }); }
-function publicRecord_(r) { var o = {}; for (var k in r) if (k !== 'request_id' && k !== '_row') o[k] = r[k]; return o; }
+function categoria_(v) { var s = key_(v); return s === 'con chapa' ? 'Con Chapa' : s === 'sin chapa' ? 'Sin Chapa' : ''; }
+function lado_(v) { var s = key_(v); return /^derech[ao]$/.test(s) ? 'Derecha' : /^izquierd[ao]$/.test(s) ? 'Izquierda' : ''; }
+function condicion_(v) { var s = key_(v); return /^(en )?stock$/.test(s) ? 'En stock' : /^vendid[ao]$/.test(s) ? 'Vendida' : ''; }
 
-/* Lee App_Maquinas. Devuelve { sheet, records } o un error. */
-function table_() {
-  var sheet = SpreadsheetApp.getActive().getSheetByName(TAB_APP);
-  if (!sheet) return err_('TABLE_MISSING', 'La pestaña ' + TAB_APP + ' no existe todavía.');
-  var last = sheet.getLastRow();
-  if (last < 1) return err_('TABLE_MISSING', 'La pestaña ' + TAB_APP + ' está vacía: falta la fila de encabezados.');
-  var values = sheet.getRange(1, 1, last, COLUMNS.length).getDisplayValues();
-  for (var i = 0; i < COLUMNS.length; i++) {
-    if (String(values[0][i]).trim() !== COLUMNS[i])
-      return err_('TABLE_MISMATCH', 'Los encabezados de ' + TAB_APP + ' no coinciden con los esperados (' + COLUMNS.join(', ') + '). No se escribirá para no dañar datos.');
-  }
-  var records = [];
-  for (var r = 1; r < values.length; r++) {
-    var rec = rowToRecord_(values[r]);
-    if (!rec.id) continue;
-    rec._row = r + 1;
-    records.push(rec);
-  }
-  return { ok: true, sheet: sheet, records: records };
+function hoja_() {
+  var sh = SpreadsheetApp.getActive().getSheetByName(PESTANA);
+  if (!sh) throw new Error('No existe la pestaña «' + PESTANA + '». Revisa la variable PESTANA del Apps Script.');
+  return sh;
 }
 
-function duplicates_(records, rec, excludeId) {
-  var fields = {};
-  var ck = codeKey_(rec.codificacion), sk = serialKey_(rec.serial);
-  records.forEach(function (o) {
-    if (o.id === excludeId) return;
-    if (ck && codeKey_(o.codificacion) === ck && !fields.codificacion) fields.codificacion = 'La codificación ya está registrada (' + (o.condicion || 'sin condición') + ': ' + o.codificacion + ').';
-    if (sk && serialKey_(o.serial) === sk && !fields.serial) fields.serial = 'El serial ya está registrado en la máquina ' + o.codificacion + '.';
+function columnas_(sh, crearImagen) {
+  var last = Math.max(sh.getLastColumn(), 1);
+  var head = sh.getRange(1, 1, 1, last).getDisplayValues()[0].map(key_);
+  var c = {};
+  for (var f in CAMPOS) for (var i = 0; i < head.length; i++) if (CAMPOS[f].indexOf(head[i]) >= 0) { c[f] = i + 1; break; }
+  if (!c.codificacion || !c.condicion) throw new Error('La pestaña «' + PESTANA + '» no tiene las columnas Codificación y Condición en la fila 1.');
+  if (!c.imagen && crearImagen) { c.imagen = last + 1; sh.getRange(1, c.imagen).setValue('Imagen'); }
+  return c;
+}
+
+function filas_(sh, c) {
+  var n = sh.getLastRow() - 1, out = [];
+  if (n < 1) return out;
+  var width = sh.getLastColumn();
+  var values = sh.getRange(2, 1, n, width).getDisplayValues();
+  for (var r = 0; r < values.length; r++) {
+    var o = { fila: r + 2 };
+    ORDEN.forEach(function (f) { o[f] = c[f] ? values[r][c[f] - 1] : ''; });
+    if (spaces_(o.codificacion)) out.push(o);
+  }
+  return out;
+}
+
+function validar_(d) {
+  var e = {}, v = {};
+  v.codificacion = spaces_(d.codificacion);
+  if (!v.codificacion) e.codificacion = 'Escribe la codificación de la máquina.';
+  else if (v.codificacion.length > 40) e.codificacion = 'La codificación no puede superar 40 caracteres.';
+  v.categoria = categoria_(d.categoria); if (!v.categoria) e.categoria = 'Selecciona con chapa o sin chapa.';
+  v.escalera = lado_(d.escalera); if (!v.escalera) e.escalera = 'Selecciona el lado de la escalera.';
+  v.condicion = condicion_(d.condicion); if (!v.condicion) e.condicion = 'Indica si la máquina está en stock o vendida.';
+  v.serial = noSerial_(d.serial);
+  if (v.serial.length > 40) e.serial = 'El serial no puede superar 40 caracteres.';
+  v.imagen = spaces_(d.imagen);
+  if (v.imagen && (!/^https:\/\//i.test(v.imagen) || v.imagen.length > 1000)) e.imagen = 'La imagen debe ser un enlace que empiece por https://';
+  return { valor: v, errores: e };
+}
+
+function duplicados_(todas, v, excluirFila) {
+  var f = {};
+  todas.forEach(function (o) {
+    if (o.fila === excluirFila) return;
+    if (!f.codificacion && codeKey_(o.codificacion) === codeKey_(v.codificacion)) f.codificacion = 'La codificación ' + spaces_(o.codificacion) + ' ya existe (fila ' + o.fila + ').';
+    if (!f.serial && v.serial && serialKey_(o.serial) === serialKey_(v.serial)) f.serial = 'El serial ya está registrado en ' + spaces_(o.codificacion) + '.';
   });
-  return fields;
+  return f;
 }
 
-function writeRow_(sheet, rowNumber, rec) {
-  var range = sheet.getRange(rowNumber, 1, 1, COLUMNS.length);
-  range.setNumberFormat('@'); // texto plano: fechas, versiones y seriales no se convierten
-  range.setValues([recordToRow_(rec)]);
+function escribir_(sh, c, fila, actual, v) {
+  ORDEN.forEach(function (f) {
+    if (!c[f] || v[f] === undefined) return;
+    var nuevo = f === 'serial' && !v.serial ? '-' : v[f];
+    if (actual && igual_(f, actual[f], nuevo) && String(actual[f]).trim() !== '') return; // solo se escriben las celdas que cambian
+    sh.getRange(fila, c[f]).setValue(safe_(nuevo));
+  });
 }
 
-/* ── Acciones ── */
-function read_() {
-  var t = table_();
-  if (!t.ok) return t;
-  return { ok: true, records: t.records.map(publicRecord_) };
+function leer_(sh, c, fila) {
+  var width = sh.getLastColumn(), row = sh.getRange(fila, 1, 1, width).getDisplayValues()[0], o = { fila: fila };
+  ORDEN.forEach(function (f) { o[f] = c[f] ? row[c[f] - 1] : ''; });
+  return o;
 }
 
-function reference_() {
-  var sheet = SpreadsheetApp.getActive().getSheetByName(TAB_SOURCE);
-  if (!sheet) return err_('SOURCE_MISSING', 'No existe la pestaña «' + TAB_SOURCE + '».');
-  var last = Math.max(sheet.getLastRow(), 2);
-  return { ok: true, values: sheet.getRange(2, 1, last - 1, 10).getDisplayValues() };
-}
-
-function init_() {
-  var ss = SpreadsheetApp.getActive();
-  var sheet = ss.getSheetByName(TAB_APP);
-  if (sheet && sheet.getLastRow() > 0) return err_('TABLE_EXISTS', 'La pestaña ' + TAB_APP + ' ya existe y tiene contenido; no se modificó.');
-  if (!sheet) sheet = ss.insertSheet(TAB_APP);
-  sheet.getRange(1, 1, 1, COLUMNS.length).setValues([COLUMNS]).setFontWeight('bold');
-  sheet.setFrozenRows(1);
-  return { ok: true, tab: TAB_APP };
-}
-
-function create_(rec) {
-  if (!rec || !rec.id || !rec.request_id) return err_('BAD_REQUEST', 'Registro incompleto.');
-  var t = table_();
-  if (!t.ok) return t;
-  for (var i = 0; i < t.records.length; i++) {
-    if (t.records[i].request_id === rec.request_id) return { ok: true, record: publicRecord_(t.records[i]), repeated: true };
+/* Edita una o varias filas a la vez (p. ej. vender una pareja). Si una falla, no se escribe ninguna. */
+function editar_(cambios) {
+  if (!cambios.length) return err_('BAD_REQUEST', 'No hay cambios.');
+  var sh = hoja_();
+  var c = columnas_(sh, cambios.some(function (x) { return x.datos && spaces_(x.datos.imagen); }));
+  var todas = filas_(sh, c), plan = [];
+  for (var i = 0; i < cambios.length; i++) {
+    var x = cambios[i], o = x.original || {};
+    var actual = todas.filter(function (r) { return r.fila === Number(x.fila) && codeKey_(r.codificacion) === codeKey_(o.codificacion); })[0]
+      || todas.filter(function (r) { return codeKey_(r.codificacion) === codeKey_(o.codificacion); })[0];
+    if (!actual) return err_('NOT_FOUND', 'La máquina ' + spaces_(o.codificacion) + ' ya no está en la hoja.');
+    for (var k in o) if (ORDEN.indexOf(k) >= 0 && !igual_(k, actual[k], o[k]))
+      return err_('CONFLICT', 'La máquina ' + spaces_(o.codificacion) + ' cambió en la hoja después de que la abrieras.', { actual: actual });
+    var datos = {};
+    ORDEN.forEach(function (f) { datos[f] = x.datos && x.datos[f] !== undefined ? x.datos[f] : actual[f]; });
+    var r = validar_(datos);
+    if (Object.keys(r.errores).length) return err_('VALIDATION', 'Hay campos con errores en ' + spaces_(o.codificacion) + '.', { fields: r.errores });
+    var dup = duplicados_(todas, r.valor, actual.fila);
+    if (Object.keys(dup).length) return err_('DUPLICATE', Object.keys(dup).map(function (k) { return dup[k]; }).join(' '), { fields: dup });
+    plan.push({ actual: actual, valor: r.valor });
   }
-  var dup = duplicates_(t.records, rec);
-  if (Object.keys(dup).length) return err_('DUPLICATE', Object.keys(dup).map(function (k) { return dup[k]; }).join(' '), { fields: dup });
-  var clean = {};
-  COLUMNS.forEach(function (c) { clean[c] = rec[c] == null ? '' : rec[c]; });
-  clean.version = 1;
-  writeRow_(t.sheet, t.sheet.getLastRow() + 1, clean);
-  return { ok: true, record: publicRecord_(clean) };
+  plan.forEach(function (p) { escribir_(sh, c, p.actual.fila, p.actual, p.valor); });
+  SpreadsheetApp.flush();
+  return { ok: true, registros: plan.map(function (p) { return leer_(sh, c, p.actual.fila); }) };
 }
 
-function update_(id, version, changes) {
-  if (!id || !changes) return err_('BAD_REQUEST', 'Faltan datos para editar.');
-  var t = table_();
-  if (!t.ok) return t;
-  var cur = null;
-  for (var i = 0; i < t.records.length; i++) if (t.records[i].id === id) { cur = t.records[i]; break; }
-  if (!cur) return err_('NOT_FOUND', 'La máquina ya no existe en la tabla.');
-  if (Number(version) !== cur.version)
-    return err_('VERSION_CONFLICT', 'Otro usuario modificó esta máquina después de que la abrieras.', { current: publicRecord_(cur) });
-  var next = {};
-  COLUMNS.forEach(function (c) { next[c] = cur[c]; });
-  EDITABLE.forEach(function (c) { if (changes[c] !== undefined) next[c] = changes[c]; });
-  var dup = duplicates_(t.records, next, id);
+function agregar_(datos) {
+  var sh = hoja_();
+  var r = validar_(datos);
+  if (Object.keys(r.errores).length) return err_('VALIDATION', 'Hay campos con errores.', { fields: r.errores });
+  var c = columnas_(sh, !!r.valor.imagen);
+  var dup = duplicados_(filas_(sh, c), r.valor, 0);
   if (Object.keys(dup).length) return err_('DUPLICATE', Object.keys(dup).map(function (k) { return dup[k]; }).join(' '), { fields: dup });
-  next.version = cur.version + 1;
-  writeRow_(t.sheet, cur._row, next);
-  return { ok: true, record: publicRecord_(next) };
+  var fila = sh.getLastRow() + 1;
+  escribir_(sh, c, fila, null, r.valor);
+  SpreadsheetApp.flush();
+  return { ok: true, registro: leer_(sh, c, fila) };
 }

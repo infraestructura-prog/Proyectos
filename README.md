@@ -21,10 +21,8 @@ Inicio
 | Bienvenida, navegación, migas de pan, cambio de área | ✅ Funciona |
 | Nodos: lectura en vivo, indicadores, filtros, tabla/tarjetas, fichas, actualización manual y automática | ✅ Funciona (probado con la hoja real) |
 | Nodos: error con «Reintentar» y datos de demostración solo bajo demanda | ✅ Funciona |
-| Máquinas: interfaz completa (tarjetas, tabla, filtros, ficha, formularios, validación, advertencias, conflictos) | ✅ Probada en el navegador con un servidor simulado |
-| Máquinas: lectura directa de la hoja pública (igual que Nodos, sin servidor). Lee «Hoja 1» y, si existe, la pestaña `App_Maquinas` | ✅ Funciona (solo lectura) |
-| Máquinas: escritura en Google Sheets (`/api/machines` → Apps Script) | ⚠️ Código escrito, **no probado contra Google**. Falta instalar `apps-script/Code.gs` y cargar las variables |
-| Inicio de sesión (`/api/auth`) | ⚠️ Código escrito, **no probado en Vercel**. Faltan `SESSION_SECRET` y `APP_USERS` |
+| Máquinas: lectura de «Hoja 5» (pública), tarjetas por parejas | ✅ Funciona (probado con la hoja real) |
+| Máquinas: editar y agregar desde la página (Apps Script) | ⚠️ Probado con una copia simulada de la hoja. Falta instalar el script en la hoja y poner su URL en `EDIT_URL` |
 | Subida de imágenes | ❌ No implementada. Por ahora se guarda un enlace duradero (ver «Imágenes») |
 
 ## Estructura de archivos
@@ -74,38 +72,31 @@ vercel dev
 3. En *Settings → Environment Variables*, crea las variables de `.env.example`.
 4. Vuelve a desplegar. Cada `git push` despliega automáticamente.
 
-## Google Sheets: conexión de lectura y escritura
+## Máquinas de simulación: Google Sheets
 
-El Excel por sí solo **no** es una conexión en vivo. La aplicación trabaja con la hoja de Google **«Codificación de Máquinas de Simulación»** de tres maneras:
+**Modo en uso.** La página lee la pestaña **«Hoja 5»** de la hoja «Codificación de Máquinas de Simulación», compartida como «Cualquier persona con el enlace · Lector». Las columnas se reconocen por su nombre, en cualquier orden y con o sin tildes: **Codificación · Categoría · SERIAL · Escalera · Condición · Imagen**. Un serial «-» se muestra como «Sin serial». La pestaña se configura en `assets/js/config.js` (`MACHINES_TABS`).
 
-- **Modo sencillo, sin configurar nada más (el que está en uso):** la hoja está compartida como «Cualquier persona con el enlace · Lector» y el navegador la lee igual que Nodos. Las máquinas se agregan y editan **directamente en Google Sheets**, en una pestaña `App_Maquinas` con las columnas `Codificación · Categoría · Serial · Escalera · Condición · Imagen` (en cualquier orden). Condición debe decir «En stock» o «Vendida»; las filas sin condición se avisan y no se clasifican. La app trae un botón para copiar las 14 entradas de Hoja 1 con la condición vacía. Sin columna `id`, cada máquina se identifica por su número de fila.
-- **Lectura y escritura con Apps Script (recomendada):** la app (Vercel) llama a un script instalado en la propia hoja. No hace falta Google Cloud.
-- **Lectura y escritura con cuenta de servicio:** la alternativa con Google Cloud que se describe más abajo.
+**Parejas.** Las máquinas se venden en parejas: una con chapa y otra sin chapa, unidas por la letra inicial del código (A - CC - DER + A - SC - IZQ). Cada tarjeta muestra una pareja. La página avisa si falta una de las dos, si hay más de dos máquinas con la misma letra o si la pareja tiene condiciones distintas. El botón «Marcar pareja como vendida» cambia las dos filas en una sola operación.
 
-En los dos casos de escritura, las claves están solo en Vercel. El navegador nunca las ve.
+**Editar desde la página (Apps Script).** Google solo deja escribir en la hoja con permiso de su dueño. Para eso se usa [`apps-script/Code.gs`](apps-script/Code.gs), que se instala una vez dentro de la hoja:
 
-### Opción A: Apps Script
+1. En la hoja, abre **Extensiones → Apps Script**.
+2. Borra lo que haya y pega el contenido de `apps-script/Code.gs`. También puedes copiarlo con el botón «Copiar código del script» de la ficha de cualquier máquina.
+3. En la primera línea, cambia `ESCRIBE-AQUI-TU-CLAVE` por tu **clave de edición** (la eliges tú). Guarda.
+4. Ve a **Implementar → Nueva implementación → Aplicación web**, con **Ejecutar como: Yo** y **Quién tiene acceso: Cualquier usuario**. Autoriza los permisos: el aviso «Google no ha verificado esta aplicación» se acepta con *Configuración avanzada → Ir a…*.
+5. Copia la URL que termina en `/exec` y ponla en `EDIT_URL` de `assets/js/config.js`. Esa URL no es secreta, porque sin la clave el script no modifica nada.
 
-1. Abre la hoja y entra en **Extensiones → Apps Script**.
-2. Borra lo que haya en `Code.gs`, pega el contenido completo de [`apps-script/Code.gs`](apps-script/Code.gs) y guarda.
-3. Genera una clave aleatoria en PowerShell. Cópiala; no la compartas ni la subas a GitHub:
+Al guardar, la página pide la clave una vez y la recuerda solo mientras la pestaña del navegador está abierta. El script:
+- solo modifica las columnas de máquinas de «Hoja 5» y solo las celdas que cambian; si no existe la columna «Imagen», la agrega al final;
+- valida los campos y rechaza codificaciones o seriales repetidos;
+- usa `LockService` para que dos guardados no se pisen;
+- si la fila cambió en la hoja después de abrir el formulario, avisa y deja elegir entre ver lo actual o sobrescribir.
 
-```bash
-powershell -Command "[Convert]::ToBase64String((1..32|%{[byte](Get-Random -Max 256)}))"
-```
+Las ediciones hechas directamente en Google Sheets se ven en la página al pulsar «Actualizar». Si cambias `Code.gs`, entra en *Implementar → Gestionar implementaciones → lápiz → Nueva versión*; así la URL no cambia.
 
-4. En el editor de Apps Script ve a **Configuración del proyecto** (engranaje) → **Propiedades de la secuencia de comandos** → **Agregar propiedad**. Nombre: `APP_SECRET`. Valor: la clave del paso 3.
-5. Pulsa **Implementar → Nueva implementación**. En el engranaje elige **Aplicación web**, con **Ejecutar como: Yo** y **Quién tiene acceso: Cualquier usuario**. Pulsa **Implementar** y autoriza los permisos. Google mostrará «Google no ha verificado esta aplicación»: pulsa *Configuración avanzada → Ir a … (no seguro)*, porque el script es tuyo.
-6. Copia la **URL de la aplicación web**, que termina en `/exec`.
-7. En Vercel, crea las variables `APPS_SCRIPT_URL` (la URL) y `APPS_SCRIPT_SECRET` (la misma clave del paso 3). Crea también `SESSION_SECRET` y `APP_USERS` (ver «Autenticación»). Después vuelve a desplegar.
-8. En la app, inicia sesión como editor y pulsa **Inicializar tabla App_Maquinas**.
+> Las funciones de servidor de `api/` (cuenta de servicio, usuarios y sesiones) son una alternativa anterior que la página ya no usa para Máquinas.
 
-Si después cambias `Code.gs`, entra en **Implementar → Gestionar implementaciones → Editar (lápiz) → Versión: Nueva versión**. Así la URL no cambia.
-
-Si tu cuenta es de Google Workspace (por ejemplo `@suspensionesccs.com`) y la opción «Cualquier usuario» no aparece, la tiene bloqueada el administrador del dominio. Pídele que la permita, o crea el script con una cuenta que sí la tenga. Con «Solo usuarios de tu dominio», Vercel no puede llamar al script.
-
-Seguridad: la URL del script es pública, pero sin `APP_SECRET` no devuelve datos ni escribe. El script solo lee «Hoja 1» y solo escribe en `App_Maquinas`. Las escrituras usan `LockService`, así que dos guardados simultáneos no pueden duplicar una codificación ni pisarse.
-
+## Alternativa con servidor (no se usa)
 ### Opción B: cuenta de servicio
 
 1. En [console.cloud.google.com](https://console.cloud.google.com), crea un proyecto o usa uno existente y activa la **Google Sheets API**.
@@ -186,19 +177,14 @@ Cliente, fecha de venta, importe y observaciones. Se agregarían como columnas n
 
 ## Pendientes de configurar
 
-1. Instalar `apps-script/Code.gs` en la hoja y crear su propiedad `APP_SECRET` (Opción A).
-2. Crear las variables de entorno en Vercel: `APPS_SCRIPT_URL`, `APPS_SCRIPT_SECRET`, `SESSION_SECRET` y `APP_USERS`.
-3. Generar los usuarios con `scripts/hash-password.ps1` y cargarlos en `APP_USERS`.
-4. Desplegar y probar `/api/auth` y `/api/machines` (el código no se ha ejecutado contra Google).
-5. Inicializar `App_Maquinas` desde la app.
-6. Responder las dudas de interpretación antes de registrar el inventario.
+1. Instalar `apps-script/Code.gs` en la hoja de máquinas con tu clave de edición e implementarlo como aplicación web.
+2. Poner la URL `/exec` en `EDIT_URL` (`assets/js/config.js`) y probar una edición real.
+3. No renombrar la pestaña «Hoja 5», o actualizar `MACHINES_TABS` si se renombra.
 
-## Pendientes de confirmar (interpretación de Hoja 1)
+## Interpretación confirmada
 
-- ¿Qué relación hay entre el bloque izquierdo (Con Chapa, C:F) y el derecho (Sin Chapa, H:J)? ¿Son 14 máquinas, 7 máquinas en dos configuraciones u otra cosa? En el archivo, cada letra tiene la escalera **opuesta** en un bloque y en el otro (A: DER / IZQ, C: IZQ / DER…).
-- ¿La regla «Letra - CC/SC - DER/IZQ» es oficial?
-- ¿Las 7 imágenes corresponden a las filas 3 a 9 del bloque izquierdo, en ese orden?
-- ¿Cuáles están vendidas y cuáles en stock?
+- Las máquinas se venden en parejas (con chapa + sin chapa); la letra inicial del código define la pareja.
+- La condición (vendida / en stock) se registra en la columna Condición de «Hoja 5».
 
 ## Nodos
 

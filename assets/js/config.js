@@ -22,5 +22,9 @@ export const MAQUINAS = {
   // Pestañas donde están las máquinas con su condición (se usa la primera que tenga las columnas
   // Codificación y Condición). Si renombras la pestaña en la hoja, cambia el nombre aquí.
   MACHINES_TABS: ['Hoja 5', 'App_Maquinas'],
+  // URL de la «Aplicación web» del Apps Script de edición (apps-script/Code.gs), termina en /exec.
+  // Vacía = la página solo muestra; las máquinas se editan en Google Sheets.
+  // No es secreta: sin la clave de edición el script no modifica nada.
+  EDIT_URL: '',
   SHEET_URL: 'https://docs.google.com/spreadsheets/d/1PuXWlmC_ZQOBHYAk-OT1Z73gAqF8FtGctp-CYoqPsDk/edit'
 };

@@ -71,9 +71,12 @@ function renderSession() {
     el.innerHTML = `<span class="who" title="Rol: ${esc(auth.role)}">${esc(auth.user)} · ${auth.role === 'editor' ? 'editor' : 'lector'}</span>
       <button class="btn btn-sm" id="btn-logout">${ICON.logout}<span>Salir</span></button>`;
     el.querySelector('#btn-logout').onclick = logout;
-  } else {
-    el.innerHTML = `<button class="btn btn-sm" id="btn-login" ${auth.configured ? '' : 'title="El inicio de sesión requiere el servidor configurado"'}>${ICON.lock}<span>Iniciar sesión</span></button>`;
+  } else if (auth.configured) {
+    el.innerHTML = `<button class="btn btn-sm" id="btn-login">${ICON.lock}<span>Iniciar sesión</span></button>`;
     el.querySelector('#btn-login').onclick = () => openLogin();
+  } else {
+    // Sin usuarios configurados en el servidor no se muestra el botón (la edición de máquinas usa su propia clave).
+    el.innerHTML = '';
   }
 }
 
