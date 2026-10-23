@@ -186,6 +186,15 @@ Cliente, fecha de venta, importe y observaciones. Se agregarían como columnas n
 - Las máquinas se venden en parejas (con chapa + sin chapa); la letra inicial del código define la pareja.
 - La condición (vendida / en stock) se registra en la columna Condición de la hoja de máquinas.
 
+## Identidad visual de Infraestructura
+
+Infraestructura usa una identidad propia de «taller todoterreno»: carbón, grafito y acero, con naranja de seguridad y verde oliva. Los estilos están en `assets/css/infra.css` y solo se aplican cuando la ruta está dentro de Infraestructura (`body[data-area="infraestructura"]`, que fija `app.js`). La única excepción es la tarjeta de Infraestructura en el inicio. Neotropya conserva su estética.
+
+- **Variables de diseño:** al inicio de `infra.css` (`--in-*`: colores, tipografía, bordes, sombras).
+- **Tipografía:** Barlow Condensed para títulos, Inter para textos y formularios, JetBrains Mono para códigos y seriales.
+- **Cabecera:** `assets/js/infra-theme.js` (`infraHero`). Lleva un plano técnico en SVG (todoterreno, amortiguador y cotas) y no depende de imágenes externas.
+- **Foto de cabecera (opcional):** guarda una foto panorámica del taller en `assets/img/infraestructura-hero.jpg` y descomenta la línea `--in-hero-image` al inicio de `infra.css`. Se le aplica una capa oscura para que el título se lea.
+
 ## Nodos
 
 Mantiene la lógica original: lee por CSV con respaldo JSONP de gviz, detecta los bloques MALETAS y BOLSOS, interpreta las columnas según su posición respecto al ID y en BOLSOS une «Responsable / Observaciones». Se configura en `assets/js/config.js`. La hoja debe estar compartida como «Cualquier persona con el enlace · Lector».

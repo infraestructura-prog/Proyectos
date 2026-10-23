@@ -11,6 +11,7 @@ import {
 } from '/shared/machines-core.js';
 import { REFERENCE_ROWS, SNAPSHOT_DATE, referenceFromValues } from '/shared/reference-snapshot.js';
 import { readPublicSheet } from '../sheets-public.js';
+import { infraHero } from '../infra-theme.js';
 
 const TABS = [
   { id: 'vendidas', title: 'Máquinas vendidas', short: 'Vendidas', condicion: 'Vendida' },
@@ -217,14 +218,12 @@ export function mount(root, ctx) {
   let alive = true;
 
   root.innerHTML = `<div class="maquinas">
-    <div class="section-head">
-      <div><p class="eyebrow">Infraestructura</p><h1>Máquinas de simulación</h1>
-        <p>Las máquinas se venden en parejas (con chapa + sin chapa); la letra del código las une.</p></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <span class="chip chip-other" data-src><span class="dot"></span><span>Cargando…</span></span>
-        <button class="btn" data-act="reload">${ICON.refresh}<span>Actualizar</span></button>
-      </div>
-    </div>
+    ${infraHero({
+      compact: true, kicker: 'Infraestructura · Maquinaria', title: 'Máquinas de simulación',
+      subtitle: 'Se venden en parejas (con chapa + sin chapa); la letra del código las une.',
+      actions: `<span class="chip chip-other" data-src><span class="dot"></span><span>Cargando…</span></span>
+        <button class="btn" data-act="reload">${ICON.refresh}<span>Actualizar</span></button>`
+    })}
     <nav class="tabs" aria-label="Subventanas de máquinas" data-tabs></nav>
     <div data-banner></div>
     <div data-body></div>

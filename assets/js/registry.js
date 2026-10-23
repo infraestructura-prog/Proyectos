@@ -29,11 +29,11 @@ export const TREE = {
       ]
     },
     {
-      id: 'infraestructura', title: 'Infraestructura', icon: 'build', tone: 'mint',
-      desc: 'Equipos e infraestructura del departamento.',
+      id: 'infraestructura', title: 'Infraestructura', icon: 'wrench', tone: 'mint',
+      desc: 'Mantenimiento, taller y desarrollo de proyectos: maquinaria, equipos e intervenciones en las oficinas.',
       children: [
         {
-          id: 'maquinas', title: 'Máquinas de simulación', icon: 'machine',
+          id: 'maquinas', title: 'Máquinas de simulación', icon: 'gear',
           desc: 'Registro de máquinas vendidas y en stock con sus características.',
           load: () => import('./modules/maquinas.js')
         }

@@ -2,6 +2,7 @@
 import { TREE, resolve, pathOf } from './registry.js';
 import { esc, ICON, openModal, closeAllModals, toast, alertBox } from './ui.js';
 import { api } from './api.js';
+import { infraHero } from './infra-theme.js';
 
 /* ═════════ Sesión ═════════ */
 export const auth = { user: null, role: null, configured: null, checked: false };
@@ -101,10 +102,15 @@ function renderAreaSwitch(chain) {
     TREE.children.map(a => `<a href="#/${a.id}" ${a.id === active ? 'aria-current="true"' : ''}>${esc(a.title)}</a>`).join('');
 }
 
-const card = (n, href, cls = '') => `<a class="area-card ${n.tone === 'mint' ? 'mint' : ''} ${cls}" href="${href}">
+const card = (n, href, cls = '') => {
+  // La tarjeta de Infraestructura en el inicio adelanta su identidad de taller (estilos en infra.css).
+  const infra = n.id === 'infraestructura';
+  return `<a class="area-card ${n.tone === 'mint' && !infra ? 'mint' : ''} ${infra ? 'infra-card' : ''} ${cls}" href="${href}">
   <span class="ic">${ICON[n.icon] || ICON.list}</span>
+  ${infra ? '<span class="infra-tag">Taller · Maquinaria · Oficinas</span>' : ''}
   <h2>${esc(n.title)}</h2><p>${esc(n.desc || '')}</p>
   <span class="go">Abrir ${ICON.arrow.replace('<svg', '<svg width="16" height="16"')}</span></a>`;
+};
 
 function renderHome() {
   main.innerHTML = `<section class="hero fade-in">
@@ -119,8 +125,11 @@ function renderHome() {
 
 function renderBranch(chain) {
   const node = chain[chain.length - 1], parent = chain[chain.length - 2];
-  main.innerHTML = `<div class="section-head fade-in"><div><h1>${esc(node.title)}</h1><p>${esc(node.desc || '')}</p></div>
-      <a class="btn" href="${pathOf(chain.slice(0, -1))}">${ICON.back}<span>Volver a ${esc(parent.title)}</span></a></div>
+  const back = `<a class="btn" href="${pathOf(chain.slice(0, -1))}">${ICON.back}<span>Volver a ${esc(parent.title)}</span></a>`;
+  const head = node.id === 'infraestructura'
+    ? infraHero({ tags: ['Taller', 'Maquinaria', 'Oficinas', 'Proyectos'], actions: back })
+    : `<div class="section-head fade-in"><div><h1>${esc(node.title)}</h1><p>${esc(node.desc || '')}</p></div>${back}</div>`;
+  main.innerHTML = `${head}
     <section class="child-cards fade-in" aria-label="Secciones de ${esc(node.title)}">
       ${(node.children || []).map(c => card(c, pathOf(chain) + '/' + c.id, chain[1].tone === 'mint' ? 'mint' : '')).join('')}
     </section>`;
@@ -137,6 +146,8 @@ async function route() {
   if (cleanup) { try { cleanup(); } catch (e) { console.error(e); } cleanup = null; }
 
   const { chain, rest, notFound } = resolve(segmentsOf());
+  // El área activa define el tema visual (infra.css solo aplica con data-area="infraestructura").
+  document.body.dataset.area = (chain[1] && chain[1].id) || 'inicio';
   renderAreaSwitch(chain);
   const node = chain[chain.length - 1];
 
