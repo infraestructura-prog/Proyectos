@@ -1,59 +1,77 @@
-/* Cabecera de Infraestructura con identidad de taller todoterreno.
+/* Cabecera de Infraestructura con identidad de taller.
    Si existe una foto en assets/img/infraestructura-hero.jpg y se activa --in-hero-image en infra.css,
    se muestra como fondo; si no, se ve esta composición técnica en SVG (no depende de enlaces externos). */
 import { esc, ICON } from './ui.js';
 
-/* Plano técnico decorativo: todoterreno con suspensión elevada, amortiguador coilover y cotas. */
+/* Contorno de un engranaje: dientes trapezoidales alrededor de (cx, cy). */
+function gearPath(cx, cy, r, teeth, phase = 0) {
+  const root = r - Math.max(5, r * 0.14), step = (Math.PI * 2) / teeth, pts = [];
+  for (let i = 0; i < teeth; i++) {
+    const a = phase + i * step;
+    [[root, 0], [r, 0.2], [r, 0.46], [root, 0.66]].forEach(([rad, f]) => {
+      const t = a + f * step;
+      pts.push(`${(cx + rad * Math.cos(t)).toFixed(1)} ${(cy + rad * Math.sin(t)).toFixed(1)}`);
+    });
+  }
+  return `M${pts.join(' L')} Z`;
+}
+
+/* Engranaje completo: dientes, aro, cubo, eje, aligeramientos y ejes de referencia de plano. */
+function gear({ cx, cy, r, teeth, phase = 0, accent = false, holes = 5, label = '' }) {
+  const stroke = accent ? '#F28C28' : '#7A857B';
+  const holesSvg = Array.from({ length: holes }, (_, i) => {
+    const t = (i / holes) * Math.PI * 2 + phase;
+    return `<circle cx="${(cx + r * 0.5 * Math.cos(t)).toFixed(1)}" cy="${(cy + r * 0.5 * Math.sin(t)).toFixed(1)}" r="${(r * 0.11).toFixed(1)}"/>`;
+  }).join('');
+  return `<g>
+    <path d="M${cx - r - 14} ${cy} H${cx + r + 14} M${cx} ${cy - r - 14} V${cy + r + 14}" stroke="#454D46" stroke-dasharray="6 3 1 3"/>
+    <path d="${gearPath(cx, cy, r, teeth, phase)}" stroke="${stroke}" stroke-width="${accent ? 2.2 : 1.8}"/>
+    <circle cx="${cx}" cy="${cy}" r="${(r * 0.74).toFixed(1)}" stroke="#5C665D" stroke-dasharray="3 4"/>
+    <circle cx="${cx}" cy="${cy}" r="${(r * 0.28).toFixed(1)}" stroke="${stroke}"/>
+    <circle cx="${cx}" cy="${cy}" r="${Math.max(3, r * 0.1).toFixed(1)}" stroke="#7A857B"/>
+    <g stroke="#5C665D">${holesSvg}</g>
+    ${label ? `<text x="${cx + r * 0.32}" y="${cy - r * 0.34}" fill="#8E978F" stroke="none" font-family="JetBrains Mono, monospace" font-size="10">${label}</text>` : ''}
+  </g>`;
+}
+
+/* Plano técnico decorativo: tren de engranajes engranados, amortiguador en despiece y cotas. */
 const ART = `<svg viewBox="0 0 720 260" preserveAspectRatio="xMaxYMid slice" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+  <g stroke-width="1.4">
+    ${gear({ cx: 520, cy: 132, r: 78, teeth: 20, phase: 0.1, holes: 6, label: 'Z20' })}
+    ${gear({ cx: 609, cy: 62, r: 44, teeth: 11, phase: 0.42, accent: true, holes: 4, label: 'Z11' })}
+    ${gear({ cx: 595, cy: 199, r: 30, teeth: 8, phase: 0.2, holes: 0 })}
+    ${gear({ cx: 671, cy: 85, r: 26, teeth: 7, phase: 0.05, holes: 0 })}
+    ${gear({ cx: 424, cy: 87, r: 36, teeth: 9, phase: 0.3, accent: true, holes: 3, label: 'Z9' })}
+  </g>
+  <!-- flechas de giro -->
+  <g stroke="#F28C28" stroke-width="2" opacity=".9">
+    <path d="M452 214 A 92 92 0 0 1 430 170"/><path d="M430 170 l-2 10 M430 170 l8 6"/>
+    <path d="M646 32 A 52 52 0 0 1 662 50"/><path d="M662 50 l-9 -3 M662 50 l1 -9"/>
+  </g>
   <g stroke="#5C665D" stroke-width="1.4">
-    <!-- suelo y cota de batalla -->
-    <path d="M300 226 H712" stroke-dasharray="2 6"/>
-    <path d="M392 244 H566 M392 238 V250 M566 238 V250"/>
-    <!-- carrocería pick-up elevada -->
-    <path d="M330 156 V116 H460 L466 76 L528 73 L566 110 L626 114 L640 130 V156 Z" stroke="#7A857B" stroke-width="2"/>
-    <path d="M476 110 L480 84 L524 82 L548 110 Z"/>
-    <path d="M470 66 H530 M478 66 V74 M522 66 V74" />
-    <path d="M330 124 H460 M566 128 H640"/>
-    <path d="M636 132 h10 v14 h-10" stroke="#7A857B"/>
-    <path d="M330 156 H640" stroke="#7A857B" stroke-width="2"/>
-    <!-- chasis y brazos de suspensión -->
-    <path d="M368 172 H596" stroke-width="2.2"/>
-    <path d="M392 192 L420 172 M566 192 L540 172"/>
-    <!-- ruedas todoterreno -->
-    <g stroke="#7A857B" stroke-width="2">
-      <circle cx="392" cy="192" r="34"/><circle cx="566" cy="192" r="34"/>
-    </g>
-    <circle cx="392" cy="192" r="28" stroke-dasharray="5 4"/><circle cx="566" cy="192" r="28" stroke-dasharray="5 4"/>
-    <circle cx="392" cy="192" r="13"/><circle cx="566" cy="192" r="13"/>
-    <circle cx="392" cy="192" r="3"/><circle cx="566" cy="192" r="3"/>
-    <!-- amortiguador grande en despiece (izquierda) -->
+    <!-- amortiguador en despiece (izquierda) -->
     <circle cx="150" cy="44" r="10"/>
     <path d="M150 54 V112"/>
     <rect x="134" y="112" width="32" height="88" rx="3" stroke="#7A857B" stroke-width="2"/>
     <path d="M134 132 H166 M134 186 H166"/>
     <circle cx="150" cy="216" r="9"/>
     <path d="M150 200 V207"/>
-    <!-- cotas del amortiguador -->
+    <!-- cotas -->
     <path d="M196 34 V226 M190 34 H202 M190 226 H202"/>
     <path d="M104 112 H124 M104 200 H124 M110 112 V200"/>
-    <!-- engranaje -->
-    <circle cx="252" cy="84" r="20"/><circle cx="252" cy="84" r="7"/>
-    <circle cx="252" cy="84" r="25" stroke-width="7" stroke-dasharray="5.2 4.6" opacity=".8"/>
+    <path d="M520 236 H609 M520 230 V242 M609 230 V242" stroke-dasharray="2 3"/>
     <!-- llave -->
-    <path d="M236 168 l34 -34 m-4 -10 a10 10 0 1 0 14 14 l-6 -2 -2 -6 z" />
+    <path d="M250 196 l34 -34 m-4 -10 a10 10 0 1 0 14 14 l-6 -2 -2 -6 z"/>
   </g>
-  <!-- detalles naranjas: resortes y marcas de cota -->
   <g stroke="#F28C28" stroke-width="2.2">
     <path d="M136 60 L164 68 L136 76 L164 84 L136 92 L164 100 L136 108"/>
-    <path d="M404 120 L420 126 L404 132 L420 138 L404 144 L420 150 L404 156" opacity=".9"/>
-    <path d="M552 120 L568 126 L552 132 L568 138 L552 144 L568 150 L552 156" opacity=".9"/>
     <circle cx="196" cy="34" r="2.5" fill="#F28C28"/><circle cx="196" cy="226" r="2.5" fill="#F28C28"/>
   </g>
   <g fill="#8E978F" font-family="JetBrains Mono, monospace" font-size="11" stroke="none">
     <text x="204" y="134">L 510</text>
     <text x="74" y="160">Ø 2.5"</text>
-    <text x="452" y="257">WB 2850</text>
-    <text x="566" y="60" fill="#A3B07F">CCS-4X4</text>
+    <text x="536" y="252">a 113.5</text>
+    <text x="300" y="40" fill="#A3B07F">M 2.5 · CCS</text>
   </g>
 </svg>`;
 
