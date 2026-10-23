@@ -1,0 +1,256 @@
+/* ░░ Neotropya · laboratorio creativo, luminoso y humano ░░
+   Todo está aislado bajo body[data-area="neotropya"] (lo fija app.js según la ruta),
+   salvo la tarjeta .neo-card de la página de inicio. Infraestructura y el inicio no se ven afectados. */
+
+:root {
+  --neo-bg: #F7F8F2;        /* fondo general, blanco cálido */
+  --neo-card: #FFFFFF;      /* tarjetas y formularios */
+  --neo-soft: #EAF1E8;      /* superficies secundarias */
+  --neo-forest: #315C49;    /* color principal */
+  --neo-forest-hi: #3D6F59;
+  --neo-forest-dk: #254838;
+  --neo-sage: #A8C3A0;      /* secundario (decoración, fondos) */
+  --neo-peach: #F3C5A5;     /* acento cálido (decoración, fondos) */
+  --neo-blue: #DCEAF0;      /* acento complementario (decoración, fondos) */
+  --neo-text: #263B32;
+  --neo-text-2: #53665B;
+  --neo-text-3: #5F7266;
+  --neo-border: #D9E2D7;
+  --neo-border-hi: #BFCFBC;
+  /* Estados legibles sobre blanco (texto oscuro + fondo pastel) */
+  --neo-ok: #22704A;     --neo-ok-bg: #E3F1E6;
+  --neo-upd: #8A5300;    --neo-upd-bg: #FCEFD9;
+  --neo-todo: #2B5D78;   --neo-todo-bg: #DCEAF0;
+  --neo-warn: #9A4A1C;   --neo-warn-bg: #FBE7DA;
+  --neo-err: #A8321F;    --neo-err-bg: #FBE3DE;
+  /* Forma */
+  --neo-radius: 18px;
+  --neo-radius-sm: 12px;
+  --neo-radius-xs: 8px;
+  --neo-shadow: 0 1px 2px rgba(38,59,50,.06), 0 6px 18px -10px rgba(38,59,50,.18);
+  --neo-shadow-hi: 0 2px 4px rgba(38,59,50,.06), 0 16px 30px -14px rgba(38,59,50,.28);
+  --neo-font: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ═════════ Tokens dentro de Neotropya ═════════ */
+body[data-area="neotropya"] {
+  color-scheme: light;
+  --bg: var(--neo-card); --bg-2: var(--neo-soft); --panel: var(--neo-card); --panel-2: var(--neo-soft);
+  --edge: var(--neo-border); --edge-2: var(--neo-border-hi);
+  --neon: var(--neo-forest); --mint: var(--neo-ok); --amber: var(--neo-upd); --orange: var(--neo-warn); --red: var(--neo-err);
+  --text: var(--neo-text); --text-2: #33473D; --muted: var(--neo-text-2); --dim: var(--neo-text-3); --faint: #6F8076;
+  --radius: var(--neo-radius-sm); --radius-lg: var(--neo-radius);
+  --shadow: var(--neo-shadow); --glow: none;
+  --font: var(--neo-font);
+  font-family: var(--neo-font);
+  color: var(--neo-text);
+  /* Formas orgánicas suaves en los bordes; el centro queda despejado para leer */
+  background:
+    radial-gradient(520px 380px at 104% 6%, rgba(220,234,240,.9), transparent 70%),
+    radial-gradient(460px 340px at -6% 38%, rgba(234,241,232,.95), transparent 70%),
+    radial-gradient(420px 320px at 96% 92%, rgba(243,197,165,.28), transparent 70%),
+    var(--neo-bg);
+  background-attachment: fixed;
+}
+/* Puntos y curvas de «conexión» en lugar de la retícula */
+body[data-area="neotropya"] .grid-bg {
+  opacity: 1;
+  background-image:
+    radial-gradient(circle, rgba(49,92,73,.13) 1.2px, transparent 1.6px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600' fill='none' stroke='%23A8C3A0' stroke-opacity='.45' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M-20 420 C 120 340, 220 520, 380 430 S 560 300, 640 360' stroke-dasharray='1 9'/%3E%3Cpath d='M-20 120 C 90 60, 180 200, 300 140' /%3E%3Ccircle cx='300' cy='140' r='5' fill='%23F3C5A5' stroke='none'/%3E%3Ccircle cx='380' cy='430' r='4' fill='%23A8C3A0' stroke='none'/%3E%3C/svg%3E");
+  background-size: 26px 26px, 900px 900px;
+  background-position: 0 0, 100% 100%;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, transparent 35%, #000 85%);
+          mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, transparent 35%, #000 85%);
+}
+
+/* ═════════ Tipografía ═════════ */
+body[data-area="neotropya"] h1, body[data-area="neotropya"] h2, body[data-area="neotropya"] h3 { font-family: var(--neo-font); font-weight: 800; letter-spacing: -.01em; color: var(--neo-text); }
+body[data-area="neotropya"] button, body[data-area="neotropya"] input, body[data-area="neotropya"] select { font-family: var(--neo-font); }
+body[data-area="neotropya"] .eyebrow { font-family: var(--neo-font); font-weight: 800; letter-spacing: .1em; color: var(--neo-forest); }
+body[data-area="neotropya"] .cell-id { color: var(--neo-forest); }
+body[data-area="neotropya"] .page a:not(.btn):not(.area-card), body[data-area="neotropya"] .modal a:not(.btn) { color: var(--neo-forest); }
+body[data-area="neotropya"] :focus-visible { outline: 3px solid rgba(49,92,73,.55); outline-offset: 2px; }
+body[data-area="neotropya"] ::-webkit-scrollbar-thumb { background: #C9D6C6; }
+body[data-area="neotropya"] .footer { color: var(--neo-text-3); }
+
+/* ═════════ Barra superior ═════════ */
+body[data-area="neotropya"] .topbar { background: rgba(255,255,255,.88); backdrop-filter: blur(8px); border-bottom: 1px solid var(--neo-border); box-shadow: 0 1px 0 rgba(255,255,255,.8); }
+body[data-area="neotropya"] .brand { color: var(--neo-text); }
+body[data-area="neotropya"] .brand-logo { background: var(--neo-forest); color: #fff; box-shadow: none; border-radius: 12px; }
+body[data-area="neotropya"] .brand-title .accent { color: var(--neo-forest); }
+body[data-area="neotropya"] .brand-sub { color: var(--neo-text-2); }
+body[data-area="neotropya"] .area-switch { background: var(--neo-soft); border-color: var(--neo-border); border-radius: 999px; }
+body[data-area="neotropya"] .area-switch a { color: var(--neo-text-2); border-radius: 999px; }
+body[data-area="neotropya"] .area-switch a:hover { color: var(--neo-text); }
+body[data-area="neotropya"] .area-switch a[aria-current="true"] { background: var(--neo-forest); color: #fff; font-weight: 700; }
+body[data-area="neotropya"] .crumbs a { color: var(--neo-text-2); }
+body[data-area="neotropya"] .crumbs a:hover { color: var(--neo-forest); }
+body[data-area="neotropya"] .crumbs [aria-current="page"] { color: var(--neo-text); }
+
+/* ═════════ Botones ═════════ */
+body[data-area="neotropya"] .btn { border-radius: 999px; background: #fff; border-color: var(--neo-border); color: var(--neo-text); font-weight: 700; padding-inline: 16px;
+  transition: background .15s, border-color .15s, box-shadow .15s, transform .15s; }
+body[data-area="neotropya"] .btn:hover { background: var(--neo-soft); border-color: var(--neo-sage); color: var(--neo-forest-dk); }
+body[data-area="neotropya"] .btn-primary { background: var(--neo-forest); border-color: var(--neo-forest); color: #fff; box-shadow: 0 6px 14px -8px rgba(49,92,73,.6); }
+body[data-area="neotropya"] .btn-primary:hover { background: var(--neo-forest-hi); border-color: var(--neo-forest-hi); color: #fff; filter: none; }
+body[data-area="neotropya"] .btn-ghost { background: transparent; border-color: transparent; }
+body[data-area="neotropya"] .btn-ghost:hover { background: var(--neo-soft); }
+body[data-area="neotropya"] .btn-sm { padding-inline: 12px; }
+body[data-area="neotropya"] .icon-btn { padding: 0; }
+
+/* ═════════ Paneles, filtros y controles ═════════ */
+body[data-area="neotropya"] .panel { background: #fff; border-color: var(--neo-border); border-radius: var(--neo-radius); box-shadow: var(--neo-shadow); }
+body[data-area="neotropya"] .toolbar { padding: 14px; gap: 12px; }
+body[data-area="neotropya"] .input, body[data-area="neotropya"] .select, body[data-area="neotropya"] .search input {
+  background: #fff; border-color: var(--neo-border-hi); color: var(--neo-text); border-radius: var(--neo-radius-xs); min-height: 40px; }
+body[data-area="neotropya"] .input::placeholder, body[data-area="neotropya"] .search input::placeholder { color: #7A8A80; }
+body[data-area="neotropya"] .input:focus, body[data-area="neotropya"] .select:focus, body[data-area="neotropya"] .search input:focus {
+  border-color: var(--neo-forest); box-shadow: 0 0 0 3px rgba(168,195,160,.55); }
+body[data-area="neotropya"] .search svg { color: var(--neo-text-3); }
+body[data-area="neotropya"] .seg { border-color: var(--neo-border); border-radius: 999px; background: var(--neo-soft); padding: 3px; gap: 2px; }
+body[data-area="neotropya"] .seg button { color: var(--neo-text-2); border-radius: 999px; font-weight: 700; }
+body[data-area="neotropya"] .seg button + button { border-left: 0; }
+body[data-area="neotropya"] .seg button[aria-pressed="true"] { background: #fff; color: var(--neo-forest); box-shadow: 0 1px 3px rgba(38,59,50,.15); }
+body[data-area="neotropya"] .count { color: var(--neo-text-3); font-family: var(--neo-font); font-size: 13px; }
+body[data-area="neotropya"] .check input { accent-color: var(--neo-forest); }
+
+/* ═════════ Indicadores ═════════ */
+body[data-area="neotropya"] .kpi { border-radius: var(--neo-radius); padding: 18px; }
+body[data-area="neotropya"] .kpi .lbl { color: var(--neo-text-2); font-weight: 800; letter-spacing: .06em; }
+body[data-area="neotropya"] .kpi .val { font-family: var(--neo-font); font-weight: 800; }
+body[data-area="neotropya"] .kpi .sub { color: var(--neo-text-3); }
+body[data-area="neotropya"] .kpi .bar { background: var(--neo-soft); height: 6px; border-radius: 6px; }
+body[data-area="neotropya"] .kpi .bar > span { height: 6px; border-radius: 6px; }
+
+/* ═════════ Estados (texto + color + punto) ═════════ */
+body[data-area="neotropya"] .chip { border-radius: 999px; font-weight: 700; padding: 3px 10px; }
+body[data-area="neotropya"] .chip-ok    { color: var(--neo-ok);   background: var(--neo-ok-bg);   border-color: #B9DCC5; }
+body[data-area="neotropya"] .chip-upd   { color: var(--neo-upd);  background: var(--neo-upd-bg);  border-color: #EBCF9C; }
+body[data-area="neotropya"] .chip-todo  { color: var(--neo-todo); background: var(--neo-todo-bg); border-color: #B5D0DC; }
+body[data-area="neotropya"] .chip-warn  { color: var(--neo-warn); background: var(--neo-warn-bg); border-color: #EFC4A8; }
+body[data-area="neotropya"] .chip-err   { color: var(--neo-err);  background: var(--neo-err-bg);  border-color: #EDB6AC; }
+body[data-area="neotropya"] .chip-other { color: var(--neo-text-2); background: #F1F4EF; border-color: var(--neo-border); }
+body[data-area="neotropya"] .chip-demo  { color: #7A3B12; background: #FCE5D3; border-color: #E9B38E; }
+
+/* ═════════ Avisos y estados de carga ═════════ */
+body[data-area="neotropya"] .alert { border-radius: var(--neo-radius-sm); }
+body[data-area="neotropya"] .alert-info { background: var(--neo-blue); border-color: #BFD8E3; color: #1F4458; }
+body[data-area="neotropya"] .alert-warn { background: #FDF1E8; border-color: #F0C9AC; color: #6E3412; }
+body[data-area="neotropya"] .alert-err  { background: #FCEBE7; border-color: #EDB6AC; color: #7E2414; }
+body[data-area="neotropya"] .alert-demo { background: repeating-linear-gradient(135deg, #FCE9DB 0 14px, #FDF3EB 14px 28px); border-color: #E9B38E; color: #6E3412; }
+body[data-area="neotropya"] .state { background: rgba(255,255,255,.75); border: 1.5px dashed var(--neo-border-hi); border-radius: var(--neo-radius); color: var(--neo-text-2); }
+body[data-area="neotropya"] .state h3 { color: var(--neo-text); }
+body[data-area="neotropya"] .skeleton { background: linear-gradient(90deg, #fff 0%, var(--neo-soft) 50%, #fff 100%); background-size: 200% 100%; border-color: var(--neo-border); border-radius: var(--neo-radius); }
+
+/* ═════════ Tablas (densas, legibles) ═════════ */
+body[data-area="neotropya"] table.data th { background: #F3F7F1; color: var(--neo-text-2); font-weight: 800; letter-spacing: .06em; border-bottom: 1px solid var(--neo-border); }
+body[data-area="neotropya"] table.data td { border-top: 1px solid #E7EDE5; padding: 10px 14px; }
+body[data-area="neotropya"] table.data tr.row:hover td { background: #F4F8F2; }
+body[data-area="neotropya"] table.data tr.row:focus-visible { outline: 3px solid rgba(49,92,73,.45); outline-offset: -3px; }
+body[data-area="neotropya"] .table-wrap { border-radius: var(--neo-radius); }
+
+/* ═════════ Tarjetas ═════════ */
+body[data-area="neotropya"] .item-card, body[data-area="neotropya"] .area-card {
+  background: #fff; border: 1px solid var(--neo-border); border-radius: var(--neo-radius); box-shadow: var(--neo-shadow); color: var(--neo-text);
+  transition: transform .18s, box-shadow .18s, border-color .18s, background .18s;
+}
+body[data-area="neotropya"] .item-card:hover, body[data-area="neotropya"] .item-card:focus-visible,
+body[data-area="neotropya"] .area-card:hover, body[data-area="neotropya"] .area-card:focus-visible {
+  transform: translateY(-3px); border-color: var(--neo-sage); box-shadow: var(--neo-shadow-hi);
+}
+body[data-area="neotropya"] .ring-ok { border-top: 4px solid #9CCBAE; } body[data-area="neotropya"] .ring-upd { border-top: 4px solid #F0C886; }
+body[data-area="neotropya"] .ring-todo { border-top: 4px solid #A9CADA; } body[data-area="neotropya"] .ring-other { border-top: 4px solid var(--neo-border-hi); }
+body[data-area="neotropya"] .item-card .foot { border-top-color: #E7EDE5; color: var(--neo-text-2); }
+body[data-area="neotropya"] .item-card .sentinel { color: var(--neo-text); }
+body[data-area="neotropya"] .area-card::after { background: radial-gradient(circle, var(--card-accent, rgba(168,195,160,.35)), transparent 70%); }
+body[data-area="neotropya"] .area-card .ic { border-radius: 14px; border: 0; background: var(--neo-soft); color: var(--neo-forest); }
+body[data-area="neotropya"] .child-cards .area-card:nth-child(3n+2) .ic { background: var(--neo-blue); }
+body[data-area="neotropya"] .child-cards .area-card:nth-child(3n+3) .ic { background: #FBE3D2; }
+body[data-area="neotropya"] .area-card .go { color: var(--neo-forest); font-weight: 800; }
+body[data-area="neotropya"] .area-card p { color: var(--neo-text-2); }
+
+/* ═════════ Ventanas de detalle y formularios ═════════ */
+body[data-area="neotropya"] .modal-bg { background: rgba(38,59,50,.35); backdrop-filter: blur(3px); }
+body[data-area="neotropya"] .modal-box { background: #fff; border: 1px solid var(--neo-border); border-radius: 22px; box-shadow: 0 30px 70px -30px rgba(38,59,50,.55); }
+body[data-area="neotropya"] .modal-head { border-bottom-color: #E7EDE5; background: linear-gradient(180deg, var(--neo-soft), #fff); border-radius: 22px 22px 0 0; }
+body[data-area="neotropya"] .modal-head .accent { color: var(--neo-forest); }
+body[data-area="neotropya"] .modal-head .kicker { color: var(--neo-text-2); font-family: var(--neo-font); font-weight: 800; }
+body[data-area="neotropya"] .modal-foot { border-top-color: #E7EDE5; }
+body[data-area="neotropya"] .sec-title { color: var(--neo-text-2); font-weight: 800; }
+body[data-area="neotropya"] .sec-title svg { color: var(--neo-forest); }
+body[data-area="neotropya"] .spec-list li { background: var(--neo-soft); border-color: #DCE7D9; border-radius: var(--neo-radius-xs); color: var(--neo-text); }
+body[data-area="neotropya"] .spec-list li::before { color: var(--neo-forest); }
+body[data-area="neotropya"] .todo-list li::before { border-color: #D9A85C; border-radius: 5px; }
+body[data-area="neotropya"] .detail-grid .f { background: var(--neo-soft); border-color: #DCE7D9; }
+body[data-area="neotropya"] .field label, body[data-area="neotropya"] .field legend { color: var(--neo-text); }
+body[data-area="neotropya"] .radio span { background: #fff; border-color: var(--neo-border-hi); color: var(--neo-text); border-radius: 999px; }
+body[data-area="neotropya"] .radio input:checked + span { border-color: var(--neo-forest); background: var(--neo-soft); color: var(--neo-forest-dk); }
+body[data-area="neotropya"] .radio input:checked + span::before { border-color: var(--neo-forest); background: radial-gradient(circle, var(--neo-forest) 45%, transparent 50%); }
+body[data-area="neotropya"] .toast { background: #fff; color: var(--neo-text); border-radius: var(--neo-radius-sm); box-shadow: var(--neo-shadow-hi); }
+body[data-area="neotropya"] .toast.ok { border-color: #B9DCC5; color: var(--neo-text); } body[data-area="neotropya"] .toast.ok svg { color: var(--neo-ok); }
+body[data-area="neotropya"] .toast.err { border-color: #EDB6AC; color: var(--neo-text); } body[data-area="neotropya"] .toast.err svg { color: var(--neo-err); }
+
+/* ═════════ Tablero kanban ═════════ */
+body[data-area="neotropya"] .kb-col { background: rgba(255,255,255,.7); border-color: var(--neo-border); border-radius: var(--neo-radius); border-top-width: 4px; }
+body[data-area="neotropya"] .kb-col.tone-neon { --col-accent: #A9CADA; } body[data-area="neotropya"] .kb-col.tone-amber { --col-accent: #F0C886; }
+body[data-area="neotropya"] .kb-col.tone-mint { --col-accent: #9CCBAE; } body[data-area="neotropya"] .kb-col.tone-dim { --col-accent: var(--neo-border-hi); }
+body[data-area="neotropya"] .kb-head .n { background: var(--neo-soft); color: var(--neo-text-2); font-family: var(--neo-font); font-weight: 800; }
+body[data-area="neotropya"] .kb-card { background: #fff; border-color: var(--neo-border); border-radius: var(--neo-radius-sm); box-shadow: 0 1px 2px rgba(38,59,50,.06); }
+body[data-area="neotropya"] .kb-card:hover, body[data-area="neotropya"] .kb-card:focus-visible { border-color: var(--neo-sage); box-shadow: var(--neo-shadow); }
+body[data-area="neotropya"] .kb-card.ring-ok { border-left-color: #6FB08A; } body[data-area="neotropya"] .kb-card.ring-upd { border-left-color: #D9A85C; }
+body[data-area="neotropya"] .kb-card.ring-todo { border-left-color: #6E9DB5; }
+body[data-area="neotropya"] .kb-idle { border-top-color: var(--neo-border); }
+
+/* ═════════ Cabecera de Neotropya ═════════ */
+.neo-hero {
+  position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: center; gap: 12px;
+  padding: 22px 30px; margin-bottom: 22px; border-radius: 24px; border: 1px solid var(--neo-border);
+  background: radial-gradient(420px 260px at 92% 10%, rgba(220,234,240,.9), transparent 70%),
+              radial-gradient(360px 240px at 70% 110%, rgba(243,197,165,.35), transparent 70%),
+              linear-gradient(120deg, #FFFFFF 0%, #F5F9F3 60%, #EEF5EC 100%);
+  box-shadow: var(--neo-shadow);
+}
+.neo-hero-kicker { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--neo-forest);
+  background: var(--neo-soft); border-radius: 999px; padding: 4px 12px 4px 6px; }
+.neo-hero-kicker .dot { width: 18px; height: 18px; border-radius: 50%; background: var(--neo-forest); box-shadow: inset 0 0 0 4px var(--neo-sage); }
+.neo-hero h1 { font-size: clamp(32px, 5vw, 46px); font-weight: 900; letter-spacing: -.02em; margin-top: 8px; color: var(--neo-text); line-height: 1.05; }
+.neo-hero .neo-sub { font-size: clamp(18px, 2.2vw, 22px); font-weight: 700; color: var(--neo-forest); margin-top: 6px; }
+.neo-hero .neo-desc { color: var(--neo-text-2); font-size: 15.5px; margin-top: 8px; max-width: 540px; line-height: 1.55; }
+.neo-lines { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-top: 12px; padding: 0; list-style: none; }
+.neo-lines li { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--neo-text); background: #fff;
+  border: 1px solid var(--neo-border); border-radius: 999px; padding: 4px 12px; }
+.neo-lines li .sw { width: 10px; height: 10px; border-radius: 50%; }
+.neo-lines li.future { color: var(--neo-text-2); border-style: dashed; background: transparent; }
+.neo-hero-art { min-width: 0; }
+.neo-hero-art svg { width: 100%; height: auto; display: block; max-height: 210px; }
+.neo-hero-actions { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+.neo-hero.compact { padding: 22px 26px; }
+.neo-hero.compact h1 { font-size: clamp(28px, 4vw, 38px); }
+.neo-hero.compact .neo-hero-art svg { max-height: 170px; }
+
+/* ═════════ Tarjeta de Neotropya en el inicio ═════════ */
+.area-card.neo-card {
+  background: radial-gradient(260px 180px at 100% 0%, rgba(220,234,240,.75), transparent 70%), #FCFCFA;
+  border: 1px solid #DADDD6; border-radius: 18px; color: #263B32; font-family: 'Nunito Sans', 'Segoe UI', sans-serif;
+  box-shadow: 0 1px 2px rgba(41,45,43,.05), 0 10px 24px -14px rgba(41,45,43,.22);
+}
+.area-card.neo-card::after { display: none; }
+.area-card.neo-card:hover, .area-card.neo-card:focus-visible { border-color: #A8C3A0; box-shadow: 0 2px 4px rgba(41,45,43,.06), 0 18px 32px -14px rgba(49,92,73,.3); }
+.area-card.neo-card h2 { font-family: 'Nunito Sans', 'Segoe UI', sans-serif; font-weight: 900; color: #263B32; font-size: 26px; }
+.area-card.neo-card p { color: #53665B; }
+.area-card.neo-card .go { color: #315C49; font-weight: 800; }
+.area-card.neo-card .neo-tag { font-weight: 800; letter-spacing: .1em; text-transform: uppercase; font-size: 12px; color: #315C49; }
+
+@media (max-width: 860px) {
+  .neo-hero { grid-template-columns: 1fr; padding: 22px 18px; }
+  .neo-hero-art { order: -1; }
+  .neo-hero-art svg { max-height: 112px; margin: 0 auto; }
+  .neo-hero h1 { font-size: 32px; }
+  .neo-hero .neo-desc { font-size: 14.5px; }
+  .neo-lines li { font-size: 12px; padding: 3px 10px; }
+  .neo-hero.compact .neo-hero-art { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-area="neotropya"] .item-card:hover, body[data-area="neotropya"] .area-card:hover { transform: none; }
+}

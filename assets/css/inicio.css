@@ -1,0 +1,88 @@
+/* ░░ Inicio · punto de encuentro neutral ░░
+   Aislado bajo body[data-area="inicio"] (también se usa en «página no encontrada»).
+   Las dos tarjetas de acceso adelantan la identidad de cada área (ver .neo-card en neotropya.css
+   y .infra-card en infra.css); aquí solo se igualan su estructura y dimensiones. */
+
+:root {
+  --home-bg: #F3F2EE;
+  --home-surface: #FCFCFA;
+  --home-text: #292D2B;
+  --home-text-2: #5F6661;
+  --home-border: #DADDD6;
+  --home-border-hi: #C6CAC2;
+}
+
+body[data-area="inicio"] {
+  color-scheme: light;
+  --bg: var(--home-surface); --bg-2: #EEEDE8; --panel: var(--home-surface); --panel-2: #F0EFEA;
+  --edge: var(--home-border); --edge-2: var(--home-border-hi);
+  --neon: #292D2B; --mint: #3F6B4F; --amber: #8A5300; --orange: #9A4A1C; --red: #A8321F;
+  --text: var(--home-text); --text-2: #3B403D; --muted: var(--home-text-2); --dim: #6B726D; --faint: #7D837E;
+  --shadow: 0 1px 2px rgba(41,45,43,.05), 0 8px 20px -14px rgba(41,45,43,.25); --glow: none;
+  --radius: 12px; --radius-lg: 18px;
+  background: var(--home-bg);
+  color: var(--home-text);
+}
+/* Sin retícula ni resplandores: solo una textura de papel casi imperceptible */
+body[data-area="inicio"] .grid-bg {
+  opacity: 1;
+  background-image: radial-gradient(circle, rgba(41,45,43,.05) 1px, transparent 1.4px);
+  background-size: 22px 22px;
+  -webkit-mask-image: linear-gradient(180deg, #000, transparent 70%); mask-image: linear-gradient(180deg, #000, transparent 70%);
+}
+body[data-area="inicio"] :focus-visible { outline: 3px solid rgba(41,45,43,.45); outline-offset: 2px; }
+
+/* Barra superior neutral */
+body[data-area="inicio"] .topbar { background: rgba(252,252,250,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--home-border); }
+body[data-area="inicio"] .brand { color: var(--home-text); }
+body[data-area="inicio"] .brand-logo { background: #292D2B; color: #FCFCFA; box-shadow: none; border-radius: 10px; }
+body[data-area="inicio"] .brand-title .accent { color: #292D2B; }
+body[data-area="inicio"] .brand-sub { color: var(--home-text-2); }
+body[data-area="inicio"] .area-switch { background: #EEEDE8; border-color: var(--home-border); }
+body[data-area="inicio"] .area-switch a { color: var(--home-text-2); }
+body[data-area="inicio"] .area-switch a:hover { color: var(--home-text); }
+body[data-area="inicio"] .area-switch a[aria-current="true"] { background: #292D2B; color: #FCFCFA; font-weight: 600; }
+body[data-area="inicio"] .crumbs [aria-current="page"] { color: var(--home-text); }
+body[data-area="inicio"] .footer { color: #7D837E; }
+
+/* Bienvenida */
+body[data-area="inicio"] .hero { max-width: 720px; padding-top: 36px; }
+body[data-area="inicio"] .eyebrow { color: var(--home-text-2); font-family: var(--font); font-weight: 600; }
+body[data-area="inicio"] .hero h1 { color: var(--home-text); font-weight: 800; }
+body[data-area="inicio"] .hero h1 .accent { color: var(--home-text-2); font-weight: 700; }
+body[data-area="inicio"] .hero p { color: var(--home-text-2); }
+
+/* Botones y estados (página no encontrada) */
+body[data-area="inicio"] .btn { background: var(--home-surface); border-color: var(--home-border); color: var(--home-text); }
+body[data-area="inicio"] .btn:hover { border-color: #292D2B; color: var(--home-text); }
+body[data-area="inicio"] .btn-primary { background: #292D2B; border-color: #292D2B; color: #FCFCFA; }
+body[data-area="inicio"] .btn-primary:hover { color: #fff; filter: none; background: #3A3F3C; }
+body[data-area="inicio"] .state { background: var(--home-surface); border-color: var(--home-border-hi); color: var(--home-text-2); }
+body[data-area="inicio"] .state h3 { color: var(--home-text); }
+
+/* ═════════ Tarjetas de acceso: misma estructura y tamaño ═════════ */
+.home-cards { display: grid; gap: 20px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 28px; align-items: stretch; }
+.area-card.home-card { padding: 0 0 24px; gap: 10px; min-height: 360px; overflow: hidden; }
+.area-card.home-card > :not(.home-art) { margin-left: 26px; margin-right: 26px; }
+.home-art { display: block; height: 150px; position: relative; overflow: hidden; margin-bottom: 10px; }
+.home-art svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.neo-card .home-art { background: linear-gradient(135deg, #F4F8F2, #EAF1E8); border-bottom: 1px solid #DCE5DA; }
+.neo-card .home-art svg { padding: 10px 0; }
+.infra-card .home-art { background: linear-gradient(160deg, #2B302C, #1A1D1B); border-bottom: 1px solid #454D46; }
+.home-card .home-tag { min-height: 18px; }
+.home-card h2 { margin-top: 2px; }
+.home-card p { flex: 1; }
+.home-card .go { margin-top: 6px; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; align-self: flex-start; font-size: 15px; }
+.neo-card.home-card .go { background: #315C49; color: #fff; }
+.neo-card.home-card:hover .go { background: #3D6F59; }
+.infra-card.home-card .go { background: #F28C28; color: #1A1206; border-radius: 4px; }
+.infra-card.home-card:hover .go { background: #F7A04A; }
+/* La tarjeta de Infraestructura del inicio deja la franja de seguridad al pie, como en su área */
+.infra-card.home-card { padding-bottom: 30px; }
+
+@media (max-width: 760px) {
+  .home-cards { grid-template-columns: 1fr; gap: 22px; }
+  .area-card.home-card { min-height: 0; }
+  .home-art { height: 120px; }
+  .home-card .go { width: calc(100% - 52px); justify-content: center; }
+}

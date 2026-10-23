@@ -195,6 +195,16 @@ Infraestructura usa una identidad propia de «taller todoterreno»: carbón, gra
 - **Cabecera:** `assets/js/infra-theme.js` (`infraHero`). Lleva un plano técnico en SVG (todoterreno, amortiguador y cotas) y no depende de imágenes externas.
 - **Foto de cabecera (opcional):** guarda una foto panorámica del taller en `assets/img/infraestructura-hero.jpg` y descomenta la línea `--in-hero-image` al inicio de `infra.css`. Se le aplica una capa oscura para que el título se lea.
 
+## Temas por área
+
+`app.js` escribe el área activa en `body[data-area]` (`inicio`, `neotropya` o `infraestructura`) cada vez que cambia la ruta, también al abrirla o recargarla directamente. Cada tema vive en su propia hoja y solo actúa con su atributo:
+
+- `assets/css/inicio.css`: inicio neutral (piedra, blanco cálido, grafito) con dos tarjetas de acceso equivalentes.
+- `assets/css/neotropya.css` y `assets/js/neo-theme.js`: laboratorio creativo (blanco cálido, verde bosque, salvia, durazno y azul suave; Nunito Sans), con la cabecera ilustrada de impresión 3D, nodos, energía solar y prótesis (marcada «próximamente», sin enlaces).
+- `assets/css/infra.css` y `assets/js/infra-theme.js`: taller industrial.
+
+Cada hoja define sus variables (`--neo-*`, `--home-*`, `--in-*`) y las asigna a los tokens comunes de `app.css`, así un tema no afecta a los demás.
+
 ## Nodos
 
 Mantiene la lógica original: lee por CSV con respaldo JSONP de gviz, detecta los bloques MALETAS y BOLSOS, interpreta las columnas según su posición respecto al ID y en BOLSOS une «Responsable / Observaciones». Se configura en `assets/js/config.js`. La hoja debe estar compartida como «Cualquier persona con el enlace · Lector».

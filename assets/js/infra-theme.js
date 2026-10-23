@@ -35,7 +35,7 @@ function gear({ cx, cy, r, teeth, phase = 0, accent = false, holes = 5, label = 
 }
 
 /* Plano técnico decorativo: tren de engranajes engranados, amortiguador en despiece y cotas. */
-const ART = `<svg viewBox="0 0 720 260" preserveAspectRatio="xMaxYMid slice" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+export const INFRA_ART = `<svg viewBox="0 0 720 260" preserveAspectRatio="xMaxYMid slice" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
   <g stroke-width="1.4">
     ${gear({ cx: 520, cy: 132, r: 78, teeth: 20, phase: 0.1, holes: 6, label: 'Z20' })}
     ${gear({ cx: 609, cy: 62, r: 44, teeth: 11, phase: 0.42, accent: true, holes: 4, label: 'Z11' })}
@@ -81,7 +81,7 @@ export function infraHero({ kicker = 'Suspensiones CCS · Taller', title = 'Infr
   tags = [], actions = '', compact = false, headingLevel = 1 } = {}) {
   const h = `h${headingLevel}`;
   return `<header class="infra-hero ${compact ? 'compact' : ''}">
-    <div class="infra-hero-art">${ART}</div>
+    <div class="infra-hero-art">${INFRA_ART}</div>
     <div class="infra-hero-body">
       <p class="infra-hero-kicker"><span class="plate">CCS</span>${esc(kicker)}</p>
       <${h}><span class="bar" aria-hidden="true"></span>${esc(title)}</${h}>

@@ -2,7 +2,8 @@
 import { TREE, resolve, pathOf } from './registry.js';
 import { esc, ICON, openModal, closeAllModals, toast, alertBox } from './ui.js';
 import { api } from './api.js';
-import { infraHero } from './infra-theme.js';
+import { infraHero, INFRA_ART } from './infra-theme.js';
+import { neoHero, NEO_ART } from './neo-theme.js';
 
 /* ═════════ Sesión ═════════ */
 export const auth = { user: null, role: null, configured: null, checked: false };
@@ -112,15 +113,36 @@ const card = (n, href, cls = '') => {
   <span class="go">Abrir ${ICON.arrow.replace('<svg', '<svg width="16" height="16"')}</span></a>`;
 };
 
+/* Tarjetas de acceso del inicio: misma estructura (ilustración, etiqueta, título, descripción, acción);
+   cada una adelanta la identidad visual de su área. */
+const HOME_CARDS = {
+  neotropya: { cls: 'neo-card', tagCls: 'neo-tag', art: () => NEO_ART, tag: 'Impresión 3D · Conectividad · Energía solar',
+    desc: 'Fabricación digital, conectividad y soluciones para las personas', go: 'Entrar a Neotropya' },
+  infraestructura: { cls: 'infra-card', tagCls: 'infra-tag', art: () => INFRA_ART, tag: 'Taller · Maquinaria · Oficinas',
+    desc: 'Mantenimiento, taller y desarrollo de proyectos', go: 'Entrar a Infraestructura' }
+};
+
 function renderHome() {
   main.innerHTML = `<section class="hero fade-in">
       <p class="eyebrow">Espacio de trabajo</p>
       <h1>Departamento de Ensamblaje · <span class="accent">Suspensiones CCS</span></h1>
-      <p>Bienvenido. Desde aquí accedes a las áreas del departamento: el seguimiento de los proyectos de Neotropya y la gestión de la infraestructura.</p>
+      <p>Bienvenido. Elige el área en la que vas a trabajar hoy.</p>
     </section>
-    <section class="area-cards fade-in" aria-label="Áreas">
-      ${TREE.children.map(a => card(a, '#/' + a.id)).join('')}
+    <section class="home-cards fade-in" aria-label="Áreas">
+      ${TREE.children.map(a => {
+        const c = HOME_CARDS[a.id];
+        if (!c) return card(a, '#/' + a.id);
+        return `<a class="area-card home-card ${c.cls}" href="#/${a.id}">
+          <span class="home-art" aria-hidden="true">${c.art()}</span>
+          <span class="home-tag ${c.tagCls}">${esc(c.tag)}</span>
+          <h2>${esc(a.title)}</h2>
+          <p>${esc(c.desc)}</p>
+          <span class="go">${esc(c.go)} ${ICON.arrow.replace('<svg', '<svg width="16" height="16"')}</span>
+        </a>`;
+      }).join('')}
     </section>`;
+  // Las ilustraciones son decorativas dentro de la tarjeta (el enlace ya tiene su texto).
+  main.querySelectorAll('.home-art svg').forEach(s => { s.removeAttribute('role'); s.removeAttribute('aria-label'); s.setAttribute('aria-hidden', 'true'); });
 }
 
 function renderBranch(chain) {
@@ -128,7 +150,11 @@ function renderBranch(chain) {
   const back = `<a class="btn" href="${pathOf(chain.slice(0, -1))}">${ICON.back}<span>Volver a ${esc(parent.title)}</span></a>`;
   const head = node.id === 'infraestructura'
     ? infraHero({ tags: ['Taller', 'Maquinaria', 'Oficinas', 'Proyectos'], actions: back })
-    : `<div class="section-head fade-in"><div><h1>${esc(node.title)}</h1><p>${esc(node.desc || '')}</p></div>${back}</div>`;
+    : node.id === 'neotropya'
+      ? neoHero({ actions: back })
+      : chain[1].id === 'neotropya'
+        ? neoHero({ compact: true, kicker: 'Neotropya', title: node.title, subtitle: node.desc || '', description: '', lines: false, actions: back })
+        : `<div class="section-head fade-in"><div><h1>${esc(node.title)}</h1><p>${esc(node.desc || '')}</p></div>${back}</div>`;
   main.innerHTML = `${head}
     <section class="child-cards fade-in" aria-label="Secciones de ${esc(node.title)}">
       ${(node.children || []).map(c => card(c, pathOf(chain) + '/' + c.id, chain[1].tone === 'mint' ? 'mint' : '')).join('')}

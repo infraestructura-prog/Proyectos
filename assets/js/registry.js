@@ -8,11 +8,11 @@ export const TREE = {
   children: [
     {
       id: 'neotropya', title: 'Neotropya', icon: 'node', tone: 'neon',
-      desc: 'Proyectos de nodos: maletas y bolsos en desarrollo y desarrollados.',
+      desc: 'Ideas que conectan, soluciones que ayudan: fabricación digital, conectividad y energía solar para las personas.',
       children: [
         {
           id: 'nodos', title: 'Nodos', icon: 'case',
-          desc: 'Consulta de maletas y bolsos, su estado y sus pendientes.',
+          desc: 'Nodos de conectividad: maletas y bolsos, su estado, sus pendientes y sus actividades.',
           children: [
             {
               id: 'ordenes', title: 'Control de órdenes de fabricación', icon: 'list',
