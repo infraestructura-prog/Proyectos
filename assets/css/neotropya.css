@@ -1,11 +1,17 @@
 /* ░░ Neotropya · laboratorio creativo, luminoso y humano ░░
    Todo está aislado bajo body[data-area="neotropya"] (lo fija app.js según la ruta),
-   salvo la tarjeta .neo-card de la página de inicio. Infraestructura y el inicio no se ven afectados. */
+   salvo la tarjeta .neo-card de la página de inicio. Infraestructura y el inicio no se ven afectados.
+   El fondo es un pastel naranja vivo para que el área se distinga del inicio (gris piedra). */
 
 :root {
-  --neo-bg: #F7F8F2;        /* fondo general, blanco cálido */
+  --neo-bg: #FFD9BF;        /* fondo general: durazno-naranja pastel vivo */
+  --neo-bg-2: #FFC9A6;
+  --neo-coral: #FF9F73;     /* manchas decorativas */
+  --neo-sun: #FFE48A;
+  --neo-mint: #BFE8D4;
   --neo-card: #FFFFFF;      /* tarjetas y formularios */
-  --neo-soft: #EAF1E8;      /* superficies secundarias */
+  --neo-soft: #EAF1E8;      /* superficies secundarias dentro de tarjetas */
+  --neo-cream: #FFF4EA;     /* superficies claras sobre el fondo naranja */
   --neo-forest: #315C49;    /* color principal */
   --neo-forest-hi: #3D6F59;
   --neo-forest-dk: #254838;
@@ -13,10 +19,10 @@
   --neo-peach: #F3C5A5;     /* acento cálido (decoración, fondos) */
   --neo-blue: #DCEAF0;      /* acento complementario (decoración, fondos) */
   --neo-text: #263B32;
-  --neo-text-2: #53665B;
-  --neo-text-3: #5F7266;
-  --neo-border: #D9E2D7;
-  --neo-border-hi: #BFCFBC;
+  --neo-text-2: #4C5F54;
+  --neo-text-3: #4F6258;
+  --neo-border: #EED8C8;    /* bordes cálidos */
+  --neo-border-hi: #E2BFA6;
   /* Estados legibles sobre blanco (texto oscuro + fondo pastel) */
   --neo-ok: #22704A;     --neo-ok-bg: #E3F1E6;
   --neo-upd: #8A5300;    --neo-upd-bg: #FCEFD9;
@@ -44,20 +50,21 @@ body[data-area="neotropya"] {
   --font: var(--neo-font);
   font-family: var(--neo-font);
   color: var(--neo-text);
-  /* Formas orgánicas suaves en los bordes; el centro queda despejado para leer */
+  /* Fondo naranja pastel vivo con manchas de coral, sol y menta en los bordes */
   background:
-    radial-gradient(520px 380px at 104% 6%, rgba(220,234,240,.9), transparent 70%),
-    radial-gradient(460px 340px at -6% 38%, rgba(234,241,232,.95), transparent 70%),
-    radial-gradient(420px 320px at 96% 92%, rgba(243,197,165,.28), transparent 70%),
-    var(--neo-bg);
+    radial-gradient(560px 420px at 102% 0%, rgba(255,159,115,.75), transparent 70%),
+    radial-gradient(480px 380px at -8% 30%, rgba(255,228,138,.8), transparent 70%),
+    radial-gradient(520px 400px at 100% 100%, rgba(191,232,212,.85), transparent 70%),
+    radial-gradient(380px 300px at 10% 105%, rgba(255,159,115,.45), transparent 70%),
+    linear-gradient(160deg, #FFE3CE 0%, var(--neo-bg) 45%, var(--neo-bg-2) 100%);
   background-attachment: fixed;
 }
 /* Puntos y curvas de «conexión» en lugar de la retícula */
 body[data-area="neotropya"] .grid-bg {
   opacity: 1;
   background-image:
-    radial-gradient(circle, rgba(49,92,73,.13) 1.2px, transparent 1.6px),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600' fill='none' stroke='%23A8C3A0' stroke-opacity='.45' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M-20 420 C 120 340, 220 520, 380 430 S 560 300, 640 360' stroke-dasharray='1 9'/%3E%3Cpath d='M-20 120 C 90 60, 180 200, 300 140' /%3E%3Ccircle cx='300' cy='140' r='5' fill='%23F3C5A5' stroke='none'/%3E%3Ccircle cx='380' cy='430' r='4' fill='%23A8C3A0' stroke='none'/%3E%3C/svg%3E");
+    radial-gradient(circle, rgba(150,70,30,.16) 1.2px, transparent 1.7px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600' fill='none' stroke='%23FFFFFF' stroke-opacity='.75' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M-20 420 C 120 340, 220 520, 380 430 S 560 300, 640 360' stroke-dasharray='1 10'/%3E%3Cpath d='M-20 120 C 90 60, 180 200, 300 140' /%3E%3Ccircle cx='300' cy='140' r='6' fill='%23315C49' fill-opacity='.35' stroke='none'/%3E%3Ccircle cx='380' cy='430' r='5' fill='%23FFFFFF' stroke='none'/%3E%3C/svg%3E");
   background-size: 26px 26px, 900px 900px;
   background-position: 0 0, 100% 100%;
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, transparent 35%, #000 85%);
@@ -75,12 +82,12 @@ body[data-area="neotropya"] ::-webkit-scrollbar-thumb { background: #C9D6C6; }
 body[data-area="neotropya"] .footer { color: var(--neo-text-3); }
 
 /* ═════════ Barra superior ═════════ */
-body[data-area="neotropya"] .topbar { background: rgba(255,255,255,.88); backdrop-filter: blur(8px); border-bottom: 1px solid var(--neo-border); box-shadow: 0 1px 0 rgba(255,255,255,.8); }
+body[data-area="neotropya"] .topbar { background: rgba(255,244,234,.93); backdrop-filter: blur(8px); border-bottom: 1px solid var(--neo-border-hi); box-shadow: 0 2px 0 rgba(255,159,115,.4); }
 body[data-area="neotropya"] .brand { color: var(--neo-text); }
 body[data-area="neotropya"] .brand-logo { background: var(--neo-forest); color: #fff; box-shadow: none; border-radius: 12px; }
 body[data-area="neotropya"] .brand-title .accent { color: var(--neo-forest); }
 body[data-area="neotropya"] .brand-sub { color: var(--neo-text-2); }
-body[data-area="neotropya"] .area-switch { background: var(--neo-soft); border-color: var(--neo-border); border-radius: 999px; }
+body[data-area="neotropya"] .area-switch { background: #FFE6D4; border-color: var(--neo-border-hi); border-radius: 999px; }
 body[data-area="neotropya"] .area-switch a { color: var(--neo-text-2); border-radius: 999px; }
 body[data-area="neotropya"] .area-switch a:hover { color: var(--neo-text); }
 body[data-area="neotropya"] .area-switch a[aria-current="true"] { background: var(--neo-forest); color: #fff; font-weight: 700; }
@@ -206,13 +213,14 @@ body[data-area="neotropya"] .kb-idle { border-top-color: var(--neo-border); }
 .neo-hero {
   position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: center; gap: 12px;
   padding: 22px 30px; margin-bottom: 22px; border-radius: 24px; border: 1px solid var(--neo-border);
-  background: radial-gradient(420px 260px at 92% 10%, rgba(220,234,240,.9), transparent 70%),
-              radial-gradient(360px 240px at 70% 110%, rgba(243,197,165,.35), transparent 70%),
-              linear-gradient(120deg, #FFFFFF 0%, #F5F9F3 60%, #EEF5EC 100%);
-  box-shadow: var(--neo-shadow);
+  background: radial-gradient(420px 260px at 92% 10%, rgba(255,228,138,.6), transparent 70%),
+              radial-gradient(360px 240px at 70% 110%, rgba(255,159,115,.35), transparent 70%),
+              radial-gradient(300px 200px at 40% 120%, rgba(191,232,212,.6), transparent 70%),
+              linear-gradient(120deg, #FFFFFF 0%, #FFF8F1 55%, #FFEEE2 100%);
+  border-color: #F2C7A8; box-shadow: 0 2px 4px rgba(150,70,30,.06), 0 18px 36px -18px rgba(150,70,30,.35);
 }
 .neo-hero-kicker { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--neo-forest);
-  background: var(--neo-soft); border-radius: 999px; padding: 4px 12px 4px 6px; }
+  background: #FFE6D4; border-radius: 999px; padding: 4px 12px 4px 6px; }
 .neo-hero-kicker .dot { width: 18px; height: 18px; border-radius: 50%; background: var(--neo-forest); box-shadow: inset 0 0 0 4px var(--neo-sage); }
 .neo-hero h1 { font-size: clamp(32px, 5vw, 46px); font-weight: 900; letter-spacing: -.02em; margin-top: 8px; color: var(--neo-text); line-height: 1.05; }
 .neo-hero .neo-sub { font-size: clamp(18px, 2.2vw, 22px); font-weight: 700; color: var(--neo-forest); margin-top: 6px; }
@@ -231,12 +239,12 @@ body[data-area="neotropya"] .kb-idle { border-top-color: var(--neo-border); }
 
 /* ═════════ Tarjeta de Neotropya en el inicio ═════════ */
 .area-card.neo-card {
-  background: radial-gradient(260px 180px at 100% 0%, rgba(220,234,240,.75), transparent 70%), #FCFCFA;
-  border: 1px solid #DADDD6; border-radius: 18px; color: #263B32; font-family: 'Nunito Sans', 'Segoe UI', sans-serif;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFF6EE 100%);
+  border: 1px solid #F2C7A8; border-radius: 18px; color: #263B32; font-family: 'Nunito Sans', 'Segoe UI', sans-serif;
   box-shadow: 0 1px 2px rgba(41,45,43,.05), 0 10px 24px -14px rgba(41,45,43,.22);
 }
 .area-card.neo-card::after { display: none; }
-.area-card.neo-card:hover, .area-card.neo-card:focus-visible { border-color: #A8C3A0; box-shadow: 0 2px 4px rgba(41,45,43,.06), 0 18px 32px -14px rgba(49,92,73,.3); }
+.area-card.neo-card:hover, .area-card.neo-card:focus-visible { border-color: #FF9F73; box-shadow: 0 2px 4px rgba(41,45,43,.06), 0 18px 32px -14px rgba(150,70,30,.4); }
 .area-card.neo-card h2 { font-family: 'Nunito Sans', 'Segoe UI', sans-serif; font-weight: 900; color: #263B32; font-size: 26px; }
 .area-card.neo-card p { color: #53665B; }
 .area-card.neo-card .go { color: #315C49; font-weight: 800; }

@@ -66,7 +66,12 @@ body[data-area="inicio"] .state h3 { color: var(--home-text); }
 .area-card.home-card > :not(.home-art) { margin-left: 26px; margin-right: 26px; }
 .home-art { display: block; height: 150px; position: relative; overflow: hidden; margin-bottom: 10px; }
 .home-art svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.neo-card .home-art { background: linear-gradient(135deg, #F4F8F2, #EAF1E8); border-bottom: 1px solid #DCE5DA; }
+.neo-card .home-art {
+  background: radial-gradient(180px 120px at 90% 10%, rgba(255,228,138,.8), transparent 70%),
+              radial-gradient(200px 140px at 0% 100%, rgba(191,232,212,.8), transparent 70%),
+              linear-gradient(135deg, #FFE3CE, #FFC9A6);
+  border-bottom: 1px solid #F2C7A8;
+}
 .neo-card .home-art svg { padding: 10px 0; }
 .infra-card .home-art { background: linear-gradient(160deg, #2B302C, #1A1D1B); border-bottom: 1px solid #454D46; }
 .home-card .home-tag { min-height: 18px; }
