@@ -155,19 +155,43 @@ function pairWarnings(p) {
 }
 
 /* ═════════ Escritura (Apps Script) ═════════ */
-async function callScript(payload) {
-  let res;
-  try { res = await fetch(CFG.EDIT_URL, { method: 'POST', body: JSON.stringify(payload), redirect: 'follow' }); }
-  catch {
-    // Si la implementación no es pública, Google responde con su página de inicio de sesión y el navegador la bloquea.
-    if (navigator.onLine === false) throw Object.assign(new Error('No hay conexión a internet.'), { code: 'NETWORK' });
-    throw Object.assign(new Error('El script de edición no está disponible para la página. En Apps Script: Implementar → Gestionar implementaciones → lápiz → «Quién tiene acceso: Cualquier usuario» → Implementar.'), { code: 'SCRIPT_ACCESS' });
-  }
-  let d;
-  try { d = JSON.parse(await res.text()); }
-  catch { throw Object.assign(new Error('El script de edición no respondió bien. Revisa que esté implementado como «Aplicación web» con acceso «Cualquier usuario».'), { code: 'SCRIPT_BAD_RESPONSE' }); }
-  if (!d.ok) throw Object.assign(new Error(d.error || 'Error del script de edición.'), { code: d.code, data: d });
-  return d;
+/* Los guardados se envían como formulario oculto a un marco invisible (no con fetch): así viaja la sesión
+   de Google del navegador, necesaria si el script tiene acceso «Cualquier usuario con una cuenta de Google».
+   El script responde con postMessage. La clave va en el cuerpo del envío, nunca en la URL. */
+export function callScript(payload) {
+  return new Promise((resolve, reject) => {
+    if (navigator.onLine === false) return reject(Object.assign(new Error('No hay conexión a internet.'), { code: 'NETWORK' }));
+    const id = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+    const name = 'ccs-script-' + id;
+    const frame = Object.assign(document.createElement('iframe'), { name, title: 'Conexión con Google Sheets', tabIndex: -1 });
+    frame.setAttribute('aria-hidden', 'true');
+    frame.style.cssText = 'position:absolute;width:0;height:0;border:0;visibility:hidden';
+    const form = Object.assign(document.createElement('form'), { method: 'POST', action: CFG.EDIT_URL, target: name, acceptCharset: 'UTF-8' });
+    form.style.display = 'none';
+    form.appendChild(Object.assign(document.createElement('input'), { type: 'hidden', name: 'payload', value: JSON.stringify({ ...payload, id, origin: location.origin }) }));
+
+    let done = false, afterLoad = null;
+    const finish = (fn, arg) => { if (done) return; done = true; clearTimeout(total); clearTimeout(afterLoad); window.removeEventListener('message', onMsg); frame.remove(); form.remove(); fn(arg); };
+    const noSession = () => finish(reject, Object.assign(new Error('Google no respondió. Abre una sesión de Google en este navegador (no en incógnito) y vuelve a intentarlo. Si ya la tienes, revisa que el script esté implementado con «Ejecutar como: Yo».'), { code: 'NO_SESSION' }));
+    function onMsg(e) {
+      const d = e.data;
+      if (!d || !d.ccsMaquinas || d.id !== id) return;
+      if (!/(^|\.)googleusercontent\.com$|(^|\.)google\.com$/.test(new URL(e.origin).hostname)) return;
+      const r = d.res || {};
+      r.ok ? finish(resolve, r) : finish(reject, Object.assign(new Error(r.error || 'Error del script de edición.'), { code: r.code, data: r }));
+    }
+    window.addEventListener('message', onMsg);
+    // Si la página de Google cargó y no llegó respuesta, casi siempre es que pidió iniciar sesión.
+    frame.addEventListener('load', () => {
+      if (!frame.dataset.sent || afterLoad) return;
+      try { if (frame.contentWindow.location.href === 'about:blank') return; } catch { /* página de Google (otro origen) */ }
+      afterLoad = setTimeout(noSession, 8000);
+    });
+    const total = setTimeout(noSession, 45000);
+    document.body.append(frame, form);
+    frame.dataset.sent = '1';
+    form.submit();
+  });
 }
 
 const ORIGINAL_FIELDS = ['codificacion', 'categoria', 'serial', 'escalera', 'condicion', 'imagen'];

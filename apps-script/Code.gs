@@ -17,7 +17,9 @@ var PESTANA = '';
  *  1. Abre la hoja «Máquinas de Simulación · Ensamblaje CCS» → Extensiones → Apps Script.
  *  2. Borra lo que haya, pega este archivo completo y cambia CLAVE_EDICION. Guarda (icono de disquete).
  *  3. Implementar → Nueva implementación → engranaje → «Aplicación web».
- *       Ejecutar como: Yo      Quién tiene acceso: Cualquier usuario
+ *       Ejecutar como: Yo
+ *       Quién tiene acceso: Cualquier usuario  (o «Cualquier usuario con una cuenta de Google» si tu
+ *       Google Workspace no ofrece la primera; entonces quien guarda debe tener una sesión de Google abierta)
  *     Pulsa Implementar, autoriza los permisos y copia la URL que termina en /exec.
  *  4. Envía esa URL para colocarla en la página (assets/js/config.js → EDIT_URL).
  *  Si más adelante cambias este código o la clave: Implementar → Gestionar implementaciones →
@@ -42,31 +44,45 @@ function doGet() {
   return json_({ ok: true, servicio: 'ensamblaje-ccs-maquinas' });
 }
 
+/* La página envía un formulario oculto (campo «payload») dentro de un marco invisible: así viaja la
+   sesión de Google del navegador, necesaria cuando el acceso es «Cualquier usuario con una cuenta de
+   Google». La respuesta vuelve a la página con postMessage. También acepta JSON directo (fetch). */
 function doPost(e) {
-  var req;
-  try { req = JSON.parse(e.postData.contents); } catch (x) { return json_(err_('BAD_REQUEST', 'La solicitud no es válida.')); }
+  var req = null, viaForm = !!(e && e.parameter && e.parameter.payload);
+  try { req = JSON.parse(viaForm ? e.parameter.payload : e.postData.contents); } catch (x) { req = null; }
+  var res = req ? procesar_(req) : err_('BAD_REQUEST', 'La solicitud no es válida.');
+  return viaForm ? html_(req, res) : json_(res);
+}
+
+function procesar_(req) {
   if (!CLAVE_EDICION || CLAVE_EDICION === 'ESCRIBE-AQUI-TU-CLAVE')
-    return json_(err_('SCRIPT_NOT_CONFIGURED', 'Falta escribir la clave de edición en la primera línea del Apps Script.'));
+    return err_('SCRIPT_NOT_CONFIGURED', 'Falta escribir la clave de edición en la primera línea del Apps Script.');
   if (String(req.clave || '') !== CLAVE_EDICION) {
     Utilities.sleep(800); // frena intentos repetidos
-    return json_(err_('UNAUTHORIZED', 'La clave de edición no es correcta.'));
+    return err_('UNAUTHORIZED', 'La clave de edición no es correcta.');
   }
   try {
-    if (req.accion === 'verificar') return json_({ ok: true });
+    if (req.accion === 'verificar') return { ok: true };
     var lock = LockService.getScriptLock();
-    if (!lock.tryLock(20000)) return json_(err_('BUSY', 'La hoja está ocupada con otro guardado. Inténtalo de nuevo.'));
+    if (!lock.tryLock(20000)) return err_('BUSY', 'La hoja está ocupada con otro guardado. Inténtalo de nuevo.');
     try {
-      if (req.accion === 'editar') return json_(editar_(req.cambios || []));
-      if (req.accion === 'agregar') return json_(agregar_(req.datos || {}));
-      return json_(err_('BAD_REQUEST', 'Acción desconocida.'));
+      if (req.accion === 'editar') return editar_(req.cambios || []);
+      if (req.accion === 'agregar') return agregar_(req.datos || {});
+      return err_('BAD_REQUEST', 'Acción desconocida.');
     } finally { lock.releaseLock(); }
   } catch (x) {
-    return json_(err_('SCRIPT_ERROR', String(x && x.message || x)));
+    return err_('SCRIPT_ERROR', String(x && x.message || x));
   }
 }
 
 /* ── Utilidades ── */
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+function html_(req, res) {
+  var origin = req && /^https?:\/\/[\w.-]+(:\d+)?$/.test(req.origin || '') ? req.origin : '*';
+  var msg = JSON.stringify({ ccsMaquinas: true, id: req && req.id || '', res: res }).replace(/</g, '\\u003c');
+  return HtmlService.createHtmlOutput('<script>window.top.postMessage(' + msg + ', ' + JSON.stringify(origin) + ');</script>')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
 function err_(code, error, extra) { var o = { ok: false, code: code, error: error }; for (var k in (extra || {})) o[k] = extra[k]; return o; }
 function key_(s) { return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(); }
 function spaces_(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); }

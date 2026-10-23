@@ -83,7 +83,7 @@ vercel dev
 1. Abre la hoja de máquinas con la cuenta dueña (infraestructura@) y entra en **Extensiones → Apps Script**. Tiene que ser la cuenta dueña: si la hoja pertenece a otra cuenta, Google no deja implementar («No tienes permiso para realizar esta acción»).
 2. Borra lo que haya y pega el contenido de `apps-script/Code.gs`. También puedes copiarlo con el botón «Copiar código del script» de la ficha de cualquier máquina.
 3. En la primera línea, cambia `ESCRIBE-AQUI-TU-CLAVE` por tu **clave de edición** (la eliges tú). Guarda.
-4. Ve a **Implementar → Nueva implementación → Aplicación web**, con **Ejecutar como: Yo** y **Quién tiene acceso: Cualquier usuario**. Autoriza los permisos: el aviso «Google no ha verificado esta aplicación» se acepta con *Configuración avanzada → Ir a…*.
+4. Ve a **Implementar → Nueva implementación → Aplicación web**, con **Ejecutar como: Yo** y **Quién tiene acceso: Cualquier usuario** (si tu Google Workspace no la ofrece, «Cualquier usuario con una cuenta de Google»: entonces quien guarda debe tener una sesión de Google abierta en ese navegador, fuera del modo incógnito; Safari y navegadores que bloquean cookies de terceros no sirven). Autoriza los permisos: el aviso «Google no ha verificado esta aplicación» se acepta con *Configuración avanzada → Ir a…*.
 5. Copia la URL que termina en `/exec` y ponla en `EDIT_URL` de `assets/js/config.js`. Esa URL no es secreta, porque sin la clave el script no modifica nada.
 
 Al guardar, la página pide la clave una vez y la recuerda solo mientras la pestaña del navegador está abierta. El script:
