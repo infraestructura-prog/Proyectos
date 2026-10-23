@@ -158,7 +158,11 @@ function pairWarnings(p) {
 async function callScript(payload) {
   let res;
   try { res = await fetch(CFG.EDIT_URL, { method: 'POST', body: JSON.stringify(payload), redirect: 'follow' }); }
-  catch { throw Object.assign(new Error('No se pudo contactar con el script de edición. Revisa tu conexión.'), { code: 'NETWORK' }); }
+  catch {
+    // Si la implementación no es pública, Google responde con su página de inicio de sesión y el navegador la bloquea.
+    if (navigator.onLine === false) throw Object.assign(new Error('No hay conexión a internet.'), { code: 'NETWORK' });
+    throw Object.assign(new Error('El script de edición no está disponible para la página. En Apps Script: Implementar → Gestionar implementaciones → lápiz → «Quién tiene acceso: Cualquier usuario» → Implementar.'), { code: 'SCRIPT_ACCESS' });
+  }
   let d;
   try { d = JSON.parse(await res.text()); }
   catch { throw Object.assign(new Error('El script de edición no respondió bien. Revisa que esté implementado como «Aplicación web» con acceso «Cualquier usuario».'), { code: 'SCRIPT_BAD_RESPONSE' }); }
