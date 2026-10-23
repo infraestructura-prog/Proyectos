@@ -77,10 +77,20 @@ function procesar_(req) {
 
 /* ── Utilidades ── */
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+/* Página que ve el usuario en la ventana de Google: muestra el resultado y se lo pasa a la página
+   que abrió la ventana (window.top.opener) o al marco que la contiene (window.top). */
 function html_(req, res) {
   var origin = req && /^https?:\/\/[\w.-]+(:\d+)?$/.test(req.origin || '') ? req.origin : '*';
   var msg = JSON.stringify({ ccsMaquinas: true, id: req && req.id || '', res: res }).replace(/</g, '\\u003c');
-  return HtmlService.createHtmlOutput('<script>window.top.postMessage(' + msg + ', ' + JSON.stringify(origin) + ');</script>')
+  var texto = res.ok ? '✓ Guardado en Google Sheets. Esta ventana se cerrará sola.' : '✗ No se guardó: ' + String(res.error || 'error');
+  var html = '<div style="font:16px system-ui,sans-serif;padding:24px;line-height:1.5;color:' + (res.ok ? '#065f46' : '#991b1b') + '">' +
+    texto.replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }) +
+    '<p style="color:#475569;font-size:14px">Puedes volver a la página del Departamento de Ensamblaje.</p></div>' +
+    '<script>(function(){var m=' + msg + ',o=' + JSON.stringify(origin) + ',t=[];' +
+    'try{if(window.top.opener)t.push(window.top.opener)}catch(e){}' +
+    'try{if(window.top!==window)t.push(window.top)}catch(e){}' +
+    't.forEach(function(w){try{w.postMessage(m,o)}catch(e){}});})();</script>';
+  return HtmlService.createHtmlOutput(html).setTitle(res.ok ? 'Guardado' : 'No se guardó')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 function err_(code, error, extra) { var o = { ok: false, code: code, error: error }; for (var k in (extra || {})) o[k] = extra[k]; return o; }
