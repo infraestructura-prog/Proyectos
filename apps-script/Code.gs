@@ -8,12 +8,14 @@
  */
 var CLAVE_EDICION = 'ESCRIBE-AQUI-TU-CLAVE';
 
-/* Pestaña donde están las máquinas (la misma que lee la página). */
+/* Hoja de cálculo y pestaña donde están las máquinas (las mismas que lee la página). */
+var HOJA_ID = '1PuXWlmC_ZQOBHYAk-OT1Z73gAqF8FtGctp-CYoqPsDk';
 var PESTANA = 'Hoja 5';
 
 /*
- * INSTALACIÓN (una sola vez, unos 5 minutos):
- *  1. En la hoja de máquinas: Extensiones → Apps Script.
+ * INSTALACIÓN (una sola vez, unos 5 minutos). El script va en TU cuenta, no dentro de la hoja,
+ * porque Google no deja a los editores implementar scripts de una hoja que pertenece a otra cuenta:
+ *  1. Entra en https://script.google.com con la cuenta que puede editar la hoja → «Nuevo proyecto».
  *  2. Borra lo que haya, pega este archivo completo y cambia CLAVE_EDICION. Guarda (icono de disquete).
  *  3. Implementar → Nueva implementación → engranaje → «Aplicación web».
  *       Ejecutar como: Yo      Quién tiene acceso: Cualquier usuario
@@ -86,7 +88,7 @@ function lado_(v) { var s = key_(v); return /^derech[ao]$/.test(s) ? 'Derecha' :
 function condicion_(v) { var s = key_(v); return /^(en )?stock$/.test(s) ? 'En stock' : /^vendid[ao]$/.test(s) ? 'Vendida' : ''; }
 
 function hoja_() {
-  var sh = SpreadsheetApp.getActive().getSheetByName(PESTANA);
+  var sh = SpreadsheetApp.openById(HOJA_ID).getSheetByName(PESTANA);
   if (!sh) throw new Error('No existe la pestaña «' + PESTANA + '». Revisa la variable PESTANA del Apps Script.');
   return sh;
 }

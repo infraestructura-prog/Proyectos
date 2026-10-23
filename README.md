@@ -78,9 +78,9 @@ vercel dev
 
 **Parejas.** Las máquinas se venden en parejas: una con chapa y otra sin chapa, unidas por la letra inicial del código (A - CC - DER + A - SC - IZQ). Cada tarjeta muestra una pareja. La página avisa si falta una de las dos, si hay más de dos máquinas con la misma letra o si la pareja tiene condiciones distintas. El botón «Marcar pareja como vendida» cambia las dos filas en una sola operación.
 
-**Editar desde la página (Apps Script).** Google solo deja escribir en la hoja con permiso de su dueño. Para eso se usa [`apps-script/Code.gs`](apps-script/Code.gs), que se instala una vez dentro de la hoja:
+**Editar desde la página (Apps Script).** Google solo deja escribir en la hoja con permiso de su dueño. Para eso se usa [`apps-script/Code.gs`](apps-script/Code.gs), que se instala una vez en tu cuenta de Google y abre la hoja por su ID (`HOJA_ID`):
 
-1. En la hoja, abre **Extensiones → Apps Script**.
+1. Entra en [script.google.com](https://script.google.com) con la cuenta que puede editar la hoja y crea un **Nuevo proyecto**. No uses *Extensiones → Apps Script* de la hoja: como la hoja pertenece a otra cuenta, Google no deja implementarlo («No tienes permiso para realizar esta acción»).
 2. Borra lo que haya y pega el contenido de `apps-script/Code.gs`. También puedes copiarlo con el botón «Copiar código del script» de la ficha de cualquier máquina.
 3. En la primera línea, cambia `ESCRIBE-AQUI-TU-CLAVE` por tu **clave de edición** (la eliges tú). Guarda.
 4. Ve a **Implementar → Nueva implementación → Aplicación web**, con **Ejecutar como: Yo** y **Quién tiene acceso: Cualquier usuario**. Autoriza los permisos: el aviso «Google no ha verificado esta aplicación» se acepta con *Configuración avanzada → Ir a…*.

@@ -429,9 +429,9 @@ export function mount(root, ctx) {
       <div class="modal-head"><div><p class="kicker">Edición desde la página</p><h2 data-modal-title>Activar la edición</h2></div>
         <button class="btn btn-ghost icon-btn" data-close aria-label="Cerrar">${ICON.close}</button></div>
       <div class="modal-body">
-        <p>Google solo permite modificar la hoja con permiso de su dueño. Se hace una vez, con un pequeño script dentro de la propia hoja:</p>
+        <p>Google solo permite modificar la hoja con permiso de su dueño. Se hace una vez, con un pequeño script en tu cuenta de Google:</p>
         <ol style="margin:10px 0 0;padding-left:20px;display:grid;gap:6px">
-          <li>En la hoja: <b>Extensiones → Apps Script</b>.</li>
+          <li>Entra en <b>script.google.com</b> con la cuenta que edita la hoja y crea un <b>Nuevo proyecto</b>.</li>
           <li>Pega el código (botón de abajo) y escribe tu clave de edición en la primera línea. Guarda.</li>
           <li><b>Implementar → Nueva implementación → Aplicación web</b>, con «Ejecutar como: Yo» y «Cualquier usuario». Autoriza.</li>
           <li>Envía la URL que termina en <span class="mono">/exec</span> para conectarla a la página.</li>
