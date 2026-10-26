@@ -195,6 +195,23 @@ Infraestructura usa una identidad propia de «taller todoterreno»: carbón, gra
 - **Cabecera:** `assets/js/infra-theme.js` (`infraHero`). Lleva un plano técnico en SVG (todoterreno, amortiguador y cotas) y no depende de imágenes externas.
 - **Foto de cabecera (opcional):** guarda una foto panorámica del taller en `assets/img/infraestructura-hero.jpg` y descomenta la línea `--in-hero-image` al inicio de `infra.css`. Se le aplica una capa oscura para que el título se lea.
 
+## Investigaciones (Neotropya › Nodos › Investigaciones)
+
+- Cada estudio es un hijo del nodo `investigaciones` en `assets/js/registry.js`. Para agregar otro, añade un nodo con su propio módulo.
+- **Pinturas y recubrimientos para la maleta** (`assets/js/modules/inv-pinturas.js`):
+  - Los datos iniciales están en `assets/data/investigaciones/pinturas-maleta.json`, extraídos de «Cuadro comparativo de pinturas - VF». El texto original de cada celda se conserva en `original`.
+  - **No usa Google Sheets.** Los cambios (agregar, editar, eliminar, opción recomendada) se guardan solo en `localStorage` de ese navegador, con la clave `ccs-inv-pinturas-maleta-v1`. No se comparten con otros usuarios ni modifican la hoja.
+  - «Exportar JSON» e «Importar JSON» sirven para respaldar o trasladar los datos. El archivo se valida antes de reemplazar nada.
+  - «Restaurar datos del estudio» vuelve a los valores originales.
+  - Los datos iniciales solo se cargan si no hay una versión guardada.
+- Datos pendientes de validar, señalados en la página sin corregir los valores:
+  - En B (vinilo), USD 30–60 + 43,99 no coincide con el total escrito de 73,99–93,99.
+  - En A, C y D, el catalizador figura como «a definir».
+  - En C, los pigmentos fríos no tienen importe y los importes listados no explican el total de 396,89.
+  - En D, los importes listados suman 352,29, pero el total escrito es 354,07.
+  - La conclusión atribuye al control un SRI ligeramente superior, pero A y B tienen el mismo rango.
+  - El Excel no trae imágenes: las tarjetas usan una muestra ilustrativa.
+
 ## Temas por área
 
 `app.js` escribe el área activa en `body[data-area]` (`inicio`, `neotropya` o `infraestructura`) cada vez que cambia la ruta, también al abrirla o recargarla directamente. Cada tema vive en su propia hoja y solo actúa con su atributo:

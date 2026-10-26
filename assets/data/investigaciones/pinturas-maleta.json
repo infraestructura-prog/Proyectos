@@ -1,0 +1,172 @@
+{
+  "schema": "ccs-investigacion-v1",
+  "id": "pinturas-maleta",
+  "titulo": "Pinturas y recubrimientos para la maleta",
+  "descripcion": "Comparación de alternativas de protección superficial y comportamiento térmico para el proyecto NODO",
+  "fuente": {
+    "archivo": "Cuadro comparativo de pinturas - VF",
+    "hoja": "Sheet1",
+    "extraido": "2026-10-26",
+    "nota": "Investigación proporcionada por el equipo. Los valores provienen del estudio: no son resultados de ensayos propios ni especificaciones verificadas del fabricante."
+  },
+  "criterios": [
+    { "nombre": "Respuesta solar (Índice SRI)", "descripcion": "Capacidad del material para reflejar la radiación solar y evitar la acumulación térmica en el interior." },
+    { "nombre": "Durabilidad mecánica (1 a 5)", "descripcion": "Resistencia de la superficie a impactos, rayones y desgaste físico por manipulación." },
+    { "nombre": "Resistencia ambiental (1 a 5)", "descripcion": "Comportamiento frente a la degradación por intemperie, rayos UV y ambientes salinos." },
+    { "nombre": "Viabilidad de aplicación (1 a 5)", "descripcion": "Complejidad técnica y accesibilidad del proceso de instalación sobre el sustrato." }
+  ],
+  "leyenda": [
+    { "sri": "SRI ≥ 100 · Excelente", "durabilidad": "5/5 · Dureza y máxima resistencia al impacto.", "ambiental": "5/5 · Resistencia salina e insensible a radiación UV.", "viabilidad": "5/5 · Muy alta / In-House directo" },
+    { "sri": "SRI 60 - 80 · Aceptable", "durabilidad": "3/5 · Acabados flexibles propensos a rayones leves.", "ambiental": "3/5 · Resistencia a intemperie de 3 a 7 años, pero sensible en bordes expuestos.", "viabilidad": "3/5 · Media / Taller de pintura." },
+    { "sri": "SRI < 50 · Deficiente", "durabilidad": "1/5 · Superficies blandas, de fácil raspado o que acumulan suciedad.", "ambiental": "1/5 · Degradación rápida en menos de 1 año.", "viabilidad": "1/5 · Taller especializado / Muy alta complejidad." }
+  ],
+  "conclusiones": "Aunque el Acrolon 218 HS ofrece un rendimiento ligeramente superior en reflectividad térmica (SRI), el Vinil 3M 2080 (Gloss White) se consolida como la opción óptima para el proyecto NODO. Su principal ventaja radica en su excepcional viabilidad de aplicación (In-House directo), permitiendo una ejecución limpia, rápida y controlada sin depender de talleres externos.\n\nEn contraste, el sistema de pintura penaliza fuertemente la viabilidad debido a su alta complejidad técnica, costos operativos elevados y el alto riesgo de un acabado manual deficiente: es un proceso propenso a escurrimientos en las esquinas y relieves complejos de la maleta, texturas de piel de naranja por variaciones en la presión o viscosidad de la pistola, y contaminación por partículas de polvo. El vinil ofrece una relación costo-resultado sumamente eficiente, garantizando un escudo térmico adecuado (SRI 75-80) con un estándar estético y profesional totalmente predecible.",
+  "motivosRecomendacion": [
+    "Aplicación interna (hecha en casa).",
+    "Menor dependencia de talleres externos.",
+    "Tiempo de ejecución de 2–4 horas.",
+    "Relación costo–resultado favorable según la investigación.",
+    "SRI consignado de 75–80."
+  ],
+  "observacionesGenerales": [
+    "La conclusión afirma que el Acrolon 218 HS ofrece una reflectividad (SRI) ligeramente superior, pero en la tabla el control (A) y el vinilo (B) tienen el mismo rango: 75–80. Pendiente de validar.",
+    "La recomendación del estudio considera la viabilidad global: las alternativas C (pigmentos fríos) y D (microesferas) tienen rangos SRI superiores en la tabla (100–105).",
+    "Los costos del estudio son totales por lote de material y excluyen envío y, en los sistemas de taller, mano de obra. No se calcula costo por maleta mientras los totales y componentes pendientes no estén validados.",
+    "La columna «Imagen» del archivo está vacía: las muestras de las tarjetas son ilustrativas."
+  ],
+  "recomendadaId": "B",
+  "alternativas": [
+    {
+      "id": "A",
+      "categoria": "Control (PU 2K)",
+      "producto": "Sherwin-Williams Acrolon 218 HS",
+      "sri": "75–80",
+      "durabilidad": 5,
+      "ambiental": 5,
+      "viabilidad": 1,
+      "modalidad": "Taller especializado",
+      "tiempo": "24–48 horas",
+      "vidaUtil": "10 años",
+      "ventajas": ["Capa dura contra golpes y rayones.", "Superficie lisa y lavable que repele la mugre."],
+      "limitaciones": ["Pérdida leve de brillo tras años al sol."],
+      "materiales": ["Acrolon 218 HS", "Catalizador", "Reductor", "Plastic Primer"],
+      "costoTotal": "USD 395,11",
+      "costoExclusiones": "más envío y mano de obra",
+      "costoDesglose": "277.99$ (Acrolon)\n+ Catalizador (a definir)\n+(4 x 19.78$) (4 Primer)\n+38$ (Thinner)\n-------------------------\n395.11$ + envio + mano de obra",
+      "rendimiento": "8–10 maletas",
+      "observaciones": ["Catalizador: costo por definir en el estudio; el total consignado no lo incluye. Pendiente de validar."],
+      "muestra": "satinado",
+      "original": {
+        "categoria": "A. Control (PU 2K)",
+        "sri": "SRI: 75-80",
+        "durabilidad": "5 / 5\n- Capa ultra dura contra golpes y rayones.\n- Superficie lisa lavable que repele la mugre.",
+        "ambiental": "5 / 5\n-  Años esperados: 10 años\n- Pérdida leve de brillo tras años al sol.",
+        "viabilidad": "1/ 5\n- Ejecución en taller especializado\n- Tiempo estimado: 24 a 48 horas",
+        "materiales": "Acrolon 218 HS + Catalizador + Reductor + Plastic Primer",
+        "costo": "277.99$ (Acrolon)                + Catalizador (a definir)         +(4 x 19.78$) (4 Primer)               +38$ (Thinner)               -------------------------                                                                    395.11$ + envio + mano de obra",
+        "rendimiento": "8-10 maletas"
+      }
+    },
+    {
+      "id": "B",
+      "categoria": "Vinilo de fundición",
+      "producto": "Wrap Film Series 2080 (Gloss White)",
+      "alias": "Identificado como 3M 2080 (Gloss White) en las conclusiones.",
+      "sri": "75–80",
+      "durabilidad": 3,
+      "ambiental": 4,
+      "viabilidad": 5,
+      "modalidad": "Interna / hecha en casa",
+      "tiempo": "2–4 horas",
+      "vidaUtil": "3–5 años",
+      "ventajas": ["Aplicación interna, sin depender de talleres externos.", "Ejecución limpia, rápida y controlada según el estudio."],
+      "limitaciones": ["Sensible a raspones o cortes con objetos filosos.", "Posible desprendimiento en bordes por humedad y calor."],
+      "materiales": ["Vinilo 2080", "Primer 94"],
+      "costoTotal": "USD 73,99–93,99",
+      "costoExclusiones": "más envío",
+      "costoDesglose": "30$-60$ (Vinil 2080)\n+ 43.99$ (Primer)\n...........................\n73.99$  --   93.99$ + envio",
+      "rendimiento": "4–5 maletas",
+      "observaciones": ["El desglose indica USD 30–60 (vinilo) + USD 43,99 (primer), pero el total escrito termina en USD 93,99. Pendiente de validar."],
+      "muestra": "brillo",
+      "original": {
+        "categoria": "B. Vinilo de Fundición",
+        "sri": "SRI: 75 - 80",
+        "durabilidad": "3 / 5\n\n- Sensible a raspones o cortes con objetos filosos.",
+        "ambiental": "4 / 5\n- Años esperados: 3 a 5 años\n- Desprendimiento en bordes por humedad y calor.",
+        "viabilidad": "5 / 5\n- Ejecución: Hecho en casa\n- Tiempo estimado: 2 a 4 horas",
+        "materiales": "Vinilo  2080 + Primer 94",
+        "costo": "30$-60$ (Vinil 2080)          + 43.99$ (Primer)                      ...........................            73.99$  --   93.99$ + envio",
+        "rendimiento": "4-5 maletas"
+      }
+    },
+    {
+      "id": "C",
+      "categoria": "NIR Reflective",
+      "producto": "Acrolon 218 HS + Sher-Color Cool Pigments",
+      "sri": "100–105",
+      "durabilidad": 5,
+      "ambiental": 5,
+      "viabilidad": 1,
+      "modalidad": "Taller especializado",
+      "tiempo": "24–48 horas",
+      "vidaUtil": "10 años",
+      "ventajas": ["Máxima dureza contra fricción y uso rudo.", "Repele aceites y polvo sin mancharse."],
+      "limitaciones": ["Desgaste estético mínimo con el tiempo."],
+      "materiales": ["Acrolon 218 HS Cool Pigments", "Promotor", "Reductor"],
+      "costoTotal": "USD 396,89",
+      "costoExclusiones": "más envío y mano de obra",
+      "costoDesglose": "277.99$ (Acrolon)\n+ Catalizador (a definir)\n+ 19.78$ (Primer)\n+38$ (Thinner)\n+ Pigmentos frios\n-------------------------\n396.89$ + envio + mano de obra",
+      "rendimiento": "8–10 maletas",
+      "observaciones": [
+        "Catalizador: costo por definir en el estudio. Pendiente de validar.",
+        "Los pigmentos fríos figuran en el desglose sin importe; los importes listados (277,99 + 19,78 + 38) no explican por sí solos el total de 396,89. Pendiente de validar.",
+        "Los materiales mencionan «Promotor», mientras el desglose menciona Catalizador y Primer. Pendiente de validar."
+      ],
+      "muestra": "frio",
+      "original": {
+        "categoria": "C. NIR Reflective",
+        "sri": "SRI:  100-105",
+        "durabilidad": "5 / 5\n- Máxima dureza contra fricción y uso rudo.\n- Repele aceites y polvo sin mancharse.",
+        "ambiental": "5 / 5\n- Años esperados: 10 años\n- Desgaste estético mínimo con el tiempo.",
+        "viabilidad": "1 / 5\n- Ejecución en taller especializado\n- Tiempo estimado: 24 a 48 horas",
+        "materiales": "Acrolon 218 HS Cool Pigments + Promotor + Reductor",
+        "costo": "277.99$ (Acrolon)                + Catalizador (a definir)         + 19.78$ (Primer)               +38$ (Thinner)                    + Pigmentos frios         -------------------------                  396.89$ + envio + mano de obra",
+        "rendimiento": "8-10 maletas"
+      }
+    },
+    {
+      "id": "D",
+      "categoria": "Aditivado en taller",
+      "producto": "Acrolon 218 HS + Glass Bubbles",
+      "sri": "100–105",
+      "durabilidad": 4,
+      "ambiental": 5,
+      "viabilidad": 1,
+      "modalidad": "Taller especializado",
+      "tiempo": "24–48 horas",
+      "vidaUtil": "8–10 años",
+      "ventajas": ["Buena resistencia a impactos y raspones."],
+      "limitaciones": ["Acabado poroso que puede acumular poco polvo.", "Ligera pérdida de blancura."],
+      "materiales": ["Acrolon 218 HS", "3M K37", "Plastic Primer", "Reductor"],
+      "costoTotal": "USD 354,07",
+      "costoExclusiones": "más envío y mano de obra",
+      "costoDesglose": "277.99$ (Acrolon)\n+ Catalizador (a definir)\n+ 19.78$ (Primer)\n+38$ (Thinner)\n+ 16.52 (micro-esferas)\n-------------------------\n354.07$ + envio + mano de obra",
+      "rendimiento": "8–10 maletas",
+      "observaciones": [
+        "Catalizador: costo por definir en el estudio. Pendiente de validar.",
+        "Los importes listados (277,99 + 19,78 + 38 + 16,52 = 352,29) difieren del total escrito de 354,07. Pendiente de validar."
+      ],
+      "muestra": "poroso",
+      "original": {
+        "categoria": "D. Aditivado en Taller",
+        "sri": "SRI: 100 - 105",
+        "durabilidad": "4 / 5\n- Buena resistencia a impactos y raspones.\n- Acabado poroso que puede acumular poco polvo.",
+        "ambiental": "5 / 5\n- Años esperados: 8 a 10 años\n- Ligera pérdida de blancura.",
+        "viabilidad": "1 / 5\n- Ejecución en Taller especializado\n- Tiempo estimado: 24 a 48 horas",
+        "materiales": "Acrolon 218 HS + 3M K37 + Plastic Primer + Reductor",
+        "costo": "277.99$ (Acrolon)                + Catalizador (a definir)         + 19.78$ (Primer)               +38$ (Thinner)                  + 16.52 (micro-esferas)       -------------------------                  354.07$ + envio + mano de obra",
+        "rendimiento": "8-10 maletas"
+      }
+    }
+  ]
+}

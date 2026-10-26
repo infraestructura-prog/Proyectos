@@ -20,6 +20,18 @@ export const TREE = {
               load: () => import('./modules/nodos.js')
             },
             {
+              // Investigaciones: cada estudio es un hijo; para agregar otro, añade un nodo aquí.
+              id: 'investigaciones', title: 'Investigaciones', icon: 'flask',
+              desc: 'Estudios y comparativas técnicas para el proyecto NODO.',
+              children: [
+                {
+                  id: 'pinturas', title: 'Pinturas y recubrimientos para la maleta', icon: 'palette',
+                  desc: 'Comparación de alternativas de protección superficial y comportamiento térmico para el proyecto NODO',
+                  load: () => import('./modules/inv-pinturas.js')
+                }
+              ]
+            },
+            {
               id: 'actividades', title: 'Tablero de actividades', icon: 'kanban',
               desc: 'Vista kanban de las actividades pendientes de cada nodo, por estado o por responsable.',
               load: () => import('./modules/nodos-kanban.js')
