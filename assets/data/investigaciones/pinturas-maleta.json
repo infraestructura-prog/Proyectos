@@ -34,6 +34,7 @@
     "Los costos del estudio son totales por lote de material y excluyen envío y, en los sistemas de taller, mano de obra. No se calcula costo por maleta mientras los totales y componentes pendientes no estén validados.",
     "La columna «Imagen» del archivo está vacía: las muestras de las tarjetas son ilustrativas."
   ],
+  "costoNivelCriterio": "Clasificación relativa entre las alternativas del estudio según su costo total consignado por lote: Bajo = la de menor costo; Medio = costo intermedio; Alto = las de mayor costo. Se puede ajustar al editar cada alternativa.",
   "recomendadaId": "B",
   "alternativas": [
     {
@@ -50,6 +51,8 @@
       "ventajas": ["Capa dura contra golpes y rayones.", "Superficie lisa y lavable que repele la mugre."],
       "limitaciones": ["Pérdida leve de brillo tras años al sol."],
       "materiales": ["Acrolon 218 HS", "Catalizador", "Reductor", "Plastic Primer"],
+      "costoNivel": "Alto",
+      "imagenUrl": "",
       "costoTotal": "USD 395,11",
       "costoExclusiones": "más envío y mano de obra",
       "costoDesglose": "277.99$ (Acrolon)\n+ Catalizador (a definir)\n+(4 x 19.78$) (4 Primer)\n+38$ (Thinner)\n-------------------------\n395.11$ + envio + mano de obra",
@@ -82,6 +85,8 @@
       "ventajas": ["Aplicación interna, sin depender de talleres externos.", "Ejecución limpia, rápida y controlada según el estudio."],
       "limitaciones": ["Sensible a raspones o cortes con objetos filosos.", "Posible desprendimiento en bordes por humedad y calor."],
       "materiales": ["Vinilo 2080", "Primer 94"],
+      "costoNivel": "Bajo",
+      "imagenUrl": "",
       "costoTotal": "USD 73,99–93,99",
       "costoExclusiones": "más envío",
       "costoDesglose": "30$-60$ (Vinil 2080)\n+ 43.99$ (Primer)\n...........................\n73.99$  --   93.99$ + envio",
@@ -113,6 +118,8 @@
       "ventajas": ["Máxima dureza contra fricción y uso rudo.", "Repele aceites y polvo sin mancharse."],
       "limitaciones": ["Desgaste estético mínimo con el tiempo."],
       "materiales": ["Acrolon 218 HS Cool Pigments", "Promotor", "Reductor"],
+      "costoNivel": "Alto",
+      "imagenUrl": "",
       "costoTotal": "USD 396,89",
       "costoExclusiones": "más envío y mano de obra",
       "costoDesglose": "277.99$ (Acrolon)\n+ Catalizador (a definir)\n+ 19.78$ (Primer)\n+38$ (Thinner)\n+ Pigmentos frios\n-------------------------\n396.89$ + envio + mano de obra",
@@ -148,6 +155,8 @@
       "ventajas": ["Buena resistencia a impactos y raspones."],
       "limitaciones": ["Acabado poroso que puede acumular poco polvo.", "Ligera pérdida de blancura."],
       "materiales": ["Acrolon 218 HS", "3M K37", "Plastic Primer", "Reductor"],
+      "costoNivel": "Medio",
+      "imagenUrl": "",
       "costoTotal": "USD 354,07",
       "costoExclusiones": "más envío y mano de obra",
       "costoDesglose": "277.99$ (Acrolon)\n+ Catalizador (a definir)\n+ 19.78$ (Primer)\n+38$ (Thinner)\n+ 16.52 (micro-esferas)\n-------------------------\n354.07$ + envio + mano de obra",

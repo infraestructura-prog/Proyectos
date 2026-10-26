@@ -10,7 +10,14 @@ const SCHEMA = 'ccs-investigacion-v1';
 const STUDY_ID = 'pinturas-maleta';
 const MUESTRAS = ['satinado', 'brillo', 'frio', 'poroso', 'neutro'];
 
+const NIVELES = ['Bajo', 'Medio', 'Alto'];
 const small = icon => icon.replace('<svg', '<svg width="16" height="16"');
+const httpsUrl = s => { try { return new URL(s).protocol === 'https:'; } catch { return false; } };
+/* Los enlaces de Google Drive «/file/d/ID/view» no son imágenes; se usa su miniatura pública. */
+function imgSrc(url) {
+  const m = String(url || '').match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{10,})/);
+  return m ? `https://drive.google.com/thumbnail?id=${m[1]}&sz=w800` : url;
+}
 const lines = s => String(s || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
 const uid = () => 'alt-' + (crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36));
 
@@ -24,6 +31,8 @@ function normAlt(a) {
     sri: str(a.sri, 40), durabilidad: rate(a.durabilidad), ambiental: rate(a.ambiental), viabilidad: rate(a.viabilidad),
     modalidad: str(a.modalidad, 80), tiempo: str(a.tiempo, 80), vidaUtil: str(a.vidaUtil, 80),
     ventajas: arr(a.ventajas), limitaciones: arr(a.limitaciones), materiales: arr(a.materiales),
+    costoNivel: NIVELES.includes(a.costoNivel) ? a.costoNivel : '',
+    imagenUrl: httpsUrl(str(a.imagenUrl, 1000)) ? str(a.imagenUrl, 1000) : '',
     costoTotal: str(a.costoTotal, 80), costoExclusiones: str(a.costoExclusiones, 160), costoDesglose: str(a.costoDesglose, 3000),
     rendimiento: str(a.rendimiento, 80), observaciones: arr(a.observaciones),
     muestra: MUESTRAS.includes(a.muestra) ? a.muestra : 'neutro'
@@ -78,6 +87,13 @@ function sampleSvg(a) {
   </svg>`;
 }
 
+/* Nivel de costo con texto + barras (no depende solo del color). */
+const costLevel = nivel => {
+  const n = NIVELES.indexOf(nivel) + 1;
+  if (!n) return '<b class="inv-level none-level">Sin clasificar</b>';
+  return `<span class="inv-level lvl-${n}"><span class="bars" aria-hidden="true">${[1, 2, 3].map(i => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</span><b>${nivel}</b></span>`;
+};
+
 const stars = (n, label) => `<span class="inv-stars" role="img" aria-label="${esc(label)}: ${n} de 5">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= n ? 'on' : ''}" aria-hidden="true">${ICON.star}</span>`).join('')}</span>`;
 
 /* ═════════ Módulo ═════════ */
@@ -98,6 +114,16 @@ export function mount(root, ctx) {
     }
     // Los datos iniciales solo se usan si no hay una versión guardada en este navegador.
     const saved = storage.read();
+    // Versiones guardadas antes de existir los campos nuevos: se completan con los valores del estudio.
+    if (saved && Array.isArray(saved.alternativas)) {
+      const seedById = new Map((S.seed.alternativas || []).map(x => [x.id, x]));
+      saved.alternativas.forEach(x => {
+        const s = x && seedById.get(x.id);
+        if (!s) return;
+        if (x.costoNivel === undefined) x.costoNivel = s.costoNivel;
+        if (x.imagenUrl === undefined) x.imagenUrl = s.imagenUrl;
+      });
+    }
     const check = saved ? validateImport({ ...saved, schema: SCHEMA, id: STUDY_ID }) : null;
     if (check && check.ok) {
       S.alts = check.value.alternativas; S.recId = check.value.recomendadaId; S.savedAt = saved.savedAt || null;
@@ -127,7 +153,9 @@ export function mount(root, ctx) {
     return `<article class="inv-card ${rec ? 'is-rec' : ''}" aria-labelledby="${titleId}">
       <div class="inv-sample">
         ${sampleSvg(a)}
-        <span class="inv-sample-note">Muestra ilustrativa</span>
+        ${a.imagenUrl ? `<img class="inv-photo" src="${esc(imgSrc(a.imagenUrl))}" alt="Foto de ${esc(a.producto)}" loading="lazy" referrerpolicy="no-referrer">` : ''}
+        <span class="inv-sample-note">${a.imagenUrl ? 'Cargando imagen…' : 'Muestra ilustrativa'}</span>
+        ${a.imagenUrl ? '<span class="inv-sample-note inv-photo-failed">Imagen no disponible · muestra ilustrativa</span>' : ''}
         ${rec ? `<span class="inv-rec-badge">${small(ICON.star)}Opción recomendada según el estudio</span>` : ''}
       </div>
       <div class="inv-body">
@@ -137,7 +165,7 @@ export function mount(root, ctx) {
         <dl class="inv-metrics">
           <div class="m"><dt>SRI</dt><dd><b class="big">${esc(a.sri || '—')}</b><small>Índice de reflectancia solar</small></dd></div>
           <div class="m"><dt>Durabilidad mecánica</dt><dd>${stars(a.durabilidad, 'Durabilidad mecánica')}<b>${a.durabilidad}/5</b></dd></div>
-          <div class="m"><dt>Costo total consignado</dt><dd><b>${esc(a.costoTotal || '—')}</b>${a.costoExclusiones ? `<small>${esc(a.costoExclusiones)}</small>` : ''}
+          <div class="m"><dt>Costo</dt><dd>${costLevel(a.costoNivel)}<small>Relativo entre las alternativas</small>
             ${pend ? `<span class="chip chip-warn inv-pend">${small(ICON.warn)}Pendiente de validar</span>` : ''}</dd></div>
           <div class="m"><dt>Aplicación</dt><dd><b>${esc(a.modalidad || '—')}</b>${a.tiempo ? `<small>${esc(a.tiempo)}</small>` : ''}</dd></div>
         </dl>
@@ -171,10 +199,9 @@ export function mount(root, ctx) {
       </div>
       <section><h4>Materiales requeridos</h4>${a.materiales.length ? `<ul class="inv-tags">${a.materiales.map(m => `<li>${esc(m)}</li>`).join('')}</ul>` : '<p class="none">Sin materiales registrados.</p>'}</section>
       <section class="inv-cost">
-        <h4>Costos</h4>
-        <p><span class="k">Costo del lote (consignado):</span> <b>${esc(a.costoTotal || '—')}</b> ${esc(a.costoExclusiones)}</p>
-        <p><span class="k">Costo por maleta:</span> no calculado. Los importes del estudio son totales por lote, no precios unitarios, y hay totales o componentes pendientes de validar.</p>
-        ${a.costoDesglose ? `<p class="k" style="margin-top:8px">Desglose de costos</p><pre class="inv-pre">${esc(a.costoDesglose)}</pre>` : ''}
+        <h4>Costo</h4>
+        <p>${costLevel(a.costoNivel)}${a.costoExclusiones ? ` <span class="k">· ${esc(a.costoExclusiones)}</span>` : ''}</p>
+        <p class="k" style="margin-top:4px">${esc(S.seed.costoNivelCriterio || 'Clasificación relativa entre las alternativas del estudio.')}</p>
       </section>
       <section><h4>Observaciones y datos pendientes de validar</h4>
         ${a.observaciones.length ? `<ul class="inv-list inv-warn">${a.observaciones.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="none">Sin observaciones.</p>'}</section>
@@ -255,6 +282,15 @@ export function mount(root, ctx) {
       </section>
     </div>`;
 
+    // Fotos de producto: al cargar ocultan la muestra; si fallan, vuelve la muestra ilustrativa.
+    root.querySelectorAll('img.inv-photo').forEach(img => {
+      const box = img.parentNode;
+      const ok = () => box.classList.add('has-photo');
+      const bad = () => { box.classList.add('photo-failed'); img.remove(); };
+      if (img.complete) { img.naturalWidth ? ok() : bad(); }
+      else { img.addEventListener('load', ok, { once: true }); img.addEventListener('error', bad, { once: true }); }
+    });
+
     const q = root.querySelector('#inv-q');
     q.addEventListener('input', e => { S.q = e.target.value; const pos = e.target.selectionStart; render(); const n = root.querySelector('#inv-q'); n.focus(); n.setSelectionRange(pos, pos); });
     root.querySelector('#inv-cat').addEventListener('change', e => { S.cat = e.target.value; render(); root.querySelector('#inv-cat').focus(); });
@@ -285,12 +321,13 @@ export function mount(root, ctx) {
         ${field('tiempo', 'Tiempo estimado', text('tiempo', v.tiempo, 'Ej. 2–4 horas'))}
         ${field('vidaUtil', 'Vida útil esperada', text('vidaUtil', v.vidaUtil, 'Ej. 3–5 años'))}
         ${field('rendimiento', 'Rendimiento por lote', text('rendimiento', v.rendimiento, 'Ej. 4–5 maletas'))}
-        ${field('costoTotal', 'Costo total consignado (lote)', text('costoTotal', v.costoTotal, 'Ej. USD 73,99–93,99'))}
+        ${field('costoNivel', 'Clasificación de costo', `<select id="if-costoNivel" name="costoNivel" class="select" style="width:100%"><option value="">Sin clasificar</option>${NIVELES.map(n => `<option ${n === v.costoNivel ? 'selected' : ''}>${n}</option>`).join('')}</select>`, 'Relativa entre las alternativas del estudio.')}
         ${field('costoExclusiones', 'Exclusiones del costo', text('costoExclusiones', v.costoExclusiones, 'Ej. más envío'))}
+        ${field('imagenUrl', 'Imagen del producto (enlace)', `<input id="if-imagenUrl" name="imagenUrl" type="url" class="input" value="${esc(v.imagenUrl)}" placeholder="https://…" autocomplete="off"><img class="img-preview" alt="Vista previa de la imagen" referrerpolicy="no-referrer">`,
+          'Enlace https a una foto real del producto (de Google Drive sirve el enlace de compartir con acceso «Cualquier persona con el enlace»). Si no carga, se muestra la muestra ilustrativa.', true)}
         ${field('ventajas', 'Ventajas', area('ventajas', v.ventajas.join('\n')), 'Una por línea.', true)}
         ${field('limitaciones', 'Limitaciones', area('limitaciones', v.limitaciones.join('\n')), 'Una por línea.', true)}
         ${field('materiales', 'Materiales requeridos', area('materiales', v.materiales.join('\n')), 'Uno por línea.', true)}
-        ${field('costoDesglose', 'Desglose de costos', area('costoDesglose', v.costoDesglose, 5), 'Texto libre, tal como figura en la fuente.', true)}
         ${field('observaciones', 'Observaciones y pendientes de validar', area('observaciones', v.observaciones.join('\n')), 'Una por línea. Si hay alguna, la tarjeta muestra «Pendiente de validar».', true)}
         ${field('muestra', 'Muestra ilustrativa', `<select id="if-muestra" name="muestra" class="select" style="width:100%">${[['satinado', 'Pintura satinada'], ['brillo', 'Vinilo brillante'], ['frio', 'Reflectiva (pigmentos fríos)'], ['poroso', 'Textura con microesferas'], ['neutro', 'Neutra']].map(([k, l]) => `<option value="${k}" ${k === v.muestra ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}
       </div>
@@ -300,7 +337,14 @@ export function mount(root, ctx) {
     </form>`, initialFocus: '#if-categoria' });
     const form = m.el.querySelector('form');
     let dirty = false;
-    form.addEventListener('input', () => { dirty = true; });
+    const preview = form.querySelector('.img-preview');
+    const updatePreview = () => {
+      const u = form.elements.imagenUrl.value.trim();
+      if (httpsUrl(u)) { preview.src = imgSrc(u); preview.style.display = 'block'; preview.onerror = () => { preview.style.display = 'none'; }; }
+      else preview.style.display = 'none';
+    };
+    updatePreview();
+    form.addEventListener('input', e => { dirty = true; if (e.target.name === 'imagenUrl') updatePreview(); });
     m.setCanClose(() => !dirty || window.confirm('Hay cambios sin guardar. ¿Quieres descartarlos?'));
     form.addEventListener('submit', e => {
       e.preventDefault();
@@ -308,11 +352,14 @@ export function mount(root, ctx) {
       const next = normAlt({
         ...(a || {}), id: a ? a.id : uid(),
         categoria: f('categoria'), producto: f('producto'), sri: f('sri'), modalidad: f('modalidad'), tiempo: f('tiempo'), vidaUtil: f('vidaUtil'),
-        rendimiento: f('rendimiento'), costoTotal: f('costoTotal'), costoExclusiones: f('costoExclusiones'), costoDesglose: f('costoDesglose'),
+        rendimiento: f('rendimiento'), costoNivel: f('costoNivel'), imagenUrl: f('imagenUrl'), costoExclusiones: f('costoExclusiones'),
         durabilidad: Number(f('durabilidad')), ambiental: Number(f('ambiental')), viabilidad: Number(f('viabilidad')),
         ventajas: lines(f('ventajas')), limitaciones: lines(f('limitaciones')), materiales: lines(f('materiales')), observaciones: lines(f('observaciones')), muestra: f('muestra')
       });
       const errs = {};
+      const rawImg = f('imagenUrl').trim();
+      if (rawImg && !httpsUrl(rawImg)) errs.imagenUrl = 'El enlace debe empezar por https://';
+      else if (/drive\.google\.com\/drive\/(u\/\d+\/)?folders\//.test(rawImg)) errs.imagenUrl = 'Es un enlace a una carpeta de Drive. Abre la foto, pulsa «Compartir → Copiar enlace» y pega ese enlace.';
       if (!next.categoria) errs.categoria = 'Escribe la categoría.';
       if (!next.producto) errs.producto = 'Escribe el nombre del producto.';
       form.querySelectorAll('[data-f]').forEach(fl => { const er = errs[fl.dataset.f]; fl.classList.toggle('invalid', !!er); fl.querySelector('.err').textContent = er || ''; });
