@@ -300,6 +300,43 @@ body[data-area="neotropya"] .kb-idle { border-top-color: var(--neo-border); }
 .inv-quote { font-style: italic; color: var(--neo-text-2); margin-top: 8px; line-height: 1.6; padding-left: 12px; border-left: 3px solid var(--neo-peach); }
 @media (max-width: 480px) { .inv-cols, .inv-dgrid { grid-template-columns: 1fr; } .inv-rec-badge { max-width: none; position: static; margin: 8px 10px; } .inv-head { padding: 18px; } }
 
+/* ═════════ Inventario de consumibles ═════════ */
+.cons-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.cons-kpis .kpi .sub { min-height: 18px; }
+.cons-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.cons-card { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--neo-border); border-radius: 18px; box-shadow: var(--neo-shadow); overflow: hidden; transition: transform .16s, box-shadow .16s; }
+.cons-card:hover { transform: translateY(-2px); box-shadow: var(--neo-shadow-hi); }
+.cons-card.cons-cero { border-top: 4px solid #E7A79B; } .cons-card.cons-positivo { border-top: 4px solid #9CCBAE; }
+.cons-card.cons-vacio, .cons-card.cons-error, .cons-card.cons-invalido, .cons-card.cons-negativo { border-top: 4px solid #F0C886; }
+.cons-img { height: 120px; display: grid; place-items: center; background: linear-gradient(135deg, #F4F8F2, #EAF1E8); border-bottom: 1px solid #EEF1EA; }
+.cons-photo { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.cons-ph { display: grid; place-items: center; color: #A8C3A0; }
+.cons-img .cons-ph svg { width: 44px; height: 44px; }
+.cons-body { padding: 12px 14px 14px; display: grid; gap: 6px; align-content: start; flex: 1; }
+.cons-body h3 { font-size: 16px; font-weight: 800; line-height: 1.25; color: var(--neo-text); }
+.cons-code { font-size: 12.5px; color: var(--neo-forest); font-weight: 600; }
+.cons-qty { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 12px; background: var(--neo-soft); }
+.cons-qty .lbl { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--neo-text-2); }
+.cons-qty-n { font-size: 28px; font-weight: 900; color: var(--neo-text); line-height: 1; }
+.cons-qty-na { font-size: 14px; font-weight: 700; color: #8A5300; }
+.cons-more { justify-self: start; margin-top: 2px; }
+.cons-desc { font-size: 14px; color: var(--neo-text); background: #FAFBF7; border: 1px solid #E7EDE5; border-radius: 10px; padding: 8px 10px; }
+.cons-warn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: #9A4A1C; margin-top: 4px; }
+.cons-table td { vertical-align: middle; }
+.cons-table .num { text-align: right; white-space: nowrap; }
+.cons-table .cons-qty-n { font-size: 18px; }
+.cons-thumb-cell { width: 52px; }
+.cons-thumb { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: var(--neo-soft); display: grid; place-items: center; }
+.cons-thumb svg { width: 20px; height: 20px; }
+.cons-table td:nth-child(6) { min-width: 170px; }
+.cons-foot { text-align: center; margin-top: 18px; }
+@media (max-width: 640px) {
+  .cons-actions { align-items: stretch; width: 100%; } .cons-actions .btn { justify-content: center; }
+  .cons-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .cons-img { height: 90px; } .cons-qty-n { font-size: 24px; }
+}
+@media (max-width: 380px) { .cons-grid { grid-template-columns: 1fr; } }
+
 /* ═════════ Cabecera de Neotropya ═════════ */
 .neo-hero {
   position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: center; gap: 12px;

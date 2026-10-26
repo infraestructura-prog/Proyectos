@@ -195,6 +195,25 @@ Infraestructura usa una identidad propia de «taller todoterreno»: carbón, gra
 - **Cabecera:** `assets/js/infra-theme.js` (`infraHero`). Lleva un plano técnico en SVG (todoterreno, amortiguador y cotas) y no depende de imágenes externas.
 - **Foto de cabecera (opcional):** guarda una foto panorámica del taller en `assets/img/infraestructura-hero.jpg` y descomenta la línea `--in-hero-image` al inicio de `infra.css`. Se le aplica una capa oscura para que el título se lea.
 
+## Inventarios › Consumibles (Neotropya › Nodos › Inventarios)
+
+- **Consulta de solo lectura: Google Sheets → página.** Lee la pestaña `Inventario Ensamblaje` de la hoja `1Qq5_DlFSfhkTyhiV1x8vezPV1ZYFuQlK1ewiB_5zI9A`. Se configura en `assets/js/config.js` (`CONSUMIBLES`).
+  - La hoja está compartida como «Cualquier persona con el enlace · Lector», así que no hace falta servidor ni credenciales.
+  - Si dejara de ser pública, la página lo indica. Entonces haría falta una función de servidor con una cuenta de solo lectura (variables de entorno en Vercel); esa función todavía no está implementada.
+- **Método de lectura:**
+  - Se usa la exportación CSV de la pestaña por su `gid` (`37652809`), que conserva el texto de cada celda. Así se distinguen `0`, vacío y errores como `#REF!`.
+  - Si el `gid` cambia (por ejemplo, porque se recreó la pestaña), se usa como respaldo la lectura por nombre de pestaña. Google puede vaciar en esa lectura los textos de columnas numéricas; el pie de la página avisa cuando se está usando.
+- **Datos:** las columnas se detectan por encabezado (Foto, Número de elemento, Codificación, Descripción del elemento, Cantidad) y se leen todas las filas con contenido, así que las filas nuevas aparecen solas.
+  - Cantidades: `0` = «Sin existencias»; positiva = «Con existencias»; vacía = «Sin cantidad informada»; error o texto = «Cantidad no disponible»; negativa = «Dato por revisar».
+  - La cantidad de Ventiladores llega ya calculada por Google Sheets; la página no replica su fórmula.
+- **Actualización:** al abrir la sección, con «Actualizar» y cada 120 s mientras esté abierta y visible.
+  - No hay consultas simultáneas y se descartan las respuestas antiguas.
+  - Si falla, se conservan los últimos datos correctos.
+  - Es una consulta periódica, no una sincronización instantánea. Google puede tardar unos segundos en reflejar un cambio en su exportación.
+- **Fotos:** la columna «Foto» llega vacía, porque las imágenes están incrustadas o flotando sobre las celdas y no se pueden leer por esta vía. Se muestra un marcador.
+  - Mejora opcional: agregar a la hoja una columna `URL de foto` con enlaces `https`; la página la detecta sola. Si en la columna «Foto» hay un enlace `https` como texto, también se usa.
+- `localStorage` solo recuerda la vista, la búsqueda, el filtro y el orden; nunca el inventario.
+
 ## Kanban de Infraestructura (Infraestructura › Kanban)
 
 - Código en `assets/js/modules/infra-kanban.js`, estilos en `assets/css/infra.css` (`.ik-*`). Datos iniciales en `assets/data/infra-kanban.json`, tomados del To-do list.

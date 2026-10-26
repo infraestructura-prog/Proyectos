@@ -32,6 +32,18 @@ export const TREE = {
               ]
             },
             {
+              // Inventarios: cada inventario es un hijo; para agregar otro, añade un nodo aquí.
+              id: 'inventarios', title: 'Inventarios', icon: 'box',
+              desc: 'Consulta de existencias para el ensamblaje de nodos, leídas desde Google Sheets.',
+              children: [
+                {
+                  id: 'consumibles', title: 'Consumibles', icon: 'box',
+                  desc: 'Disponibilidad de piezas, accesorios y materiales para el ensamblaje de nodos',
+                  load: () => import('./modules/inv-consumibles.js')
+                }
+              ]
+            },
+            {
               id: 'actividades', title: 'Tablero de actividades', icon: 'kanban',
               desc: 'Vista kanban de las actividades pendientes de cada nodo, por estado o por responsable.',
               load: () => import('./modules/nodos-kanban.js')

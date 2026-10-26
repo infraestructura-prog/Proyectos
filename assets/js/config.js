@@ -14,6 +14,17 @@ export const NODOS = {
   ALLOW_DEMO: true
 };
 
+/* Neotropya › Nodos › Inventarios › Consumibles (solo lectura: Google Sheets → página). */
+export const CONSUMIBLES = {
+  SHEET_ID: '1Qq5_DlFSfhkTyhiV1x8vezPV1ZYFuQlK1ewiB_5zI9A',
+  TAB: 'Inventario Ensamblaje',
+  // gid de la pestaña: permite la exportación CSV que conserva el texto de cada celda (errores incluidos).
+  // Si la pestaña se recrea y cambia su gid, la página usa la lectura por nombre de pestaña como respaldo.
+  GID: '37652809',
+  REFRESH_SECONDS: 120,
+  SHEET_URL: 'https://docs.google.com/spreadsheets/d/1Qq5_DlFSfhkTyhiV1x8vezPV1ZYFuQlK1ewiB_5zI9A/edit#gid=37652809'
+};
+
 export const MAQUINAS = {
   // Hoja «Máquinas de Simulación · Ensamblaje CCS» (Drive de infraestructura@suspensionesccs.com).
   // Compartida como «Cualquier persona con el enlace · Lector», la página la lee directamente (como Nodos).
