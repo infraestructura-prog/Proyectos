@@ -1,0 +1,271 @@
+{
+  "schema": "ccs-kanban-v1",
+  "id": "infra-kanban",
+  "version": 1,
+  "fuente": "To-do list del departamento (carga inicial). Los criterios de cierre son propuestas operativas editables; no representan trabajo ya realizado.",
+  "tarjetas": [
+    {
+      "id": "censo-activos",
+      "titulo": "Completar el censo de activos",
+      "objetivo": "Inventario básico de activos completo, con manuales y despieces disponibles identificados y la información faltante documentada.",
+      "descripcion": "Revisar el inventario de activos, identificar qué manuales y despieces existen y documentar los vacíos de información.",
+      "criterio": "Inventario revisado y vacíos de información identificados.",
+      "estado": "todo", "estadoPorConfirmar": true,
+      "prioridad": "alta", "proyecto": "Mantenimiento", "equipo": "Activos del departamento",
+      "responsable": "", "supervisor": "Fabricio", "solicitante": "",
+      "proximaAccion": "Confirmar el avance real del inventario.",
+      "fechas": { "original": "2026-10-09", "reprogramada": "", "condicionadas": [] },
+      "subtareas": [
+        { "id": "s1", "texto": "Inventario básico de activos", "hecha": false },
+        { "id": "s2", "texto": "Identificar manuales y despieces disponibles", "hecha": false },
+        { "id": "s3", "texto": "Documentar la información faltante", "hecha": false }
+      ],
+      "notas": "Supervisión indicada: Fabricio. Avance por confirmar."
+    },
+    {
+      "id": "almacenaje-ensamblaje",
+      "titulo": "Organizar y equipar el almacenaje del área de ensamblaje",
+      "objetivo": "Compartimentación, gavetas y almacenamiento modular definidos e implementados según el espacio disponible.",
+      "descripcion": "Definir e implementar compartimentación, gavetas y almacenamiento modular adecuado al espacio del área de ensamblaje.",
+      "criterio": "Soluciones acordadas instaladas y distribución del espacio verificada.",
+      "estado": "todo", "estadoPorConfirmar": true,
+      "prioridad": "alta", "proyecto": "Taller", "equipo": "Área de ensamblaje",
+      "responsable": "", "supervisor": "", "solicitante": "",
+      "proximaAccion": "Confirmar el avance y comparar las cotizaciones de organizadores.",
+      "fechas": { "original": "2026-10-23", "reprogramada": "", "condicionadas": [] },
+      "subtareas": [
+        { "id": "s1", "texto": "Comparar cotizaciones de organizadores", "hecha": false },
+        { "id": "s2", "texto": "Revisar soluciones impresas en 3D", "hecha": false },
+        { "id": "s3", "texto": "Verificar tableros y materiales con Adrián/Fabrizio", "hecha": false },
+        { "id": "s4", "texto": "Revisar espacio de impresoras, mesas/racks, ventilación y ductos con Fabrizio", "hecha": false }
+      ],
+      "notas": "La fecha original (23/10/2026) era una meta de avance. Si una subtarea tiene ejecución independiente, se puede convertir en tarjeta vinculada."
+    },
+    {
+      "id": "mueble-volantes",
+      "titulo": "Supervisar la construcción e instalación del mueble de volantes",
+      "objetivo": "Bases construidas y mueble de volantes instalado.",
+      "descripcion": "Supervisar la construcción de las bases y la instalación del mueble de volantes. El contacto y la coordinación con el herrero ya se completaron (hito aparte).",
+      "criterio": "Mueble instalado y revisado en estabilidad y funcionalidad.",
+      "estado": "todo", "estadoPorConfirmar": true,
+      "prioridad": "alta", "proyecto": "Taller", "equipo": "Mueble de volantes",
+      "responsable": "", "supervisor": "", "solicitante": "", "dependenciaExterna": "Herrero",
+      "proximaAccion": "Confirmar si la construcción de las bases ya comenzó.",
+      "fechas": { "original": "2026-10-27", "reprogramada": "", "condicionadas": [
+        { "fecha": "2026-10-26", "condicion": "Bases previstas" },
+        { "fecha": "2026-10-27", "condicion": "Instalación prevista" }
+      ] },
+      "subtareas": [
+        { "id": "s1", "texto": "Contacto y coordinación del herrero", "hecha": true },
+        { "id": "s2", "texto": "Construcción de las bases", "hecha": false },
+        { "id": "s3", "texto": "Instalación del mueble", "hecha": false },
+        { "id": "s4", "texto": "Revisión de estabilidad y funcionalidad", "hecha": false }
+      ],
+      "notas": "Inicio efectivo de la construcción por confirmar. La coordinación terminada no implica que la construcción esté completada.",
+      "vinculadas": ["hito-herrero"]
+    },
+    {
+      "id": "tapa-drywall",
+      "titulo": "Fabricar e instalar la tapa del drywall",
+      "objetivo": "Tapa del área intervenida instalada y con su ajuste verificado.",
+      "descripcion": "Completar la fabricación de la tapa del drywall del área intervenida, instalarla y verificar su ajuste.",
+      "criterio": "Tapa instalada y ajuste verificado.",
+      "estado": "doing", "estadoPorConfirmar": false,
+      "prioridad": "", "proyecto": "Oficinas", "equipo": "Drywall",
+      "responsable": "", "supervisor": "", "solicitante": "",
+      "proximaAccion": "Confirmar si la tapa está lista para instalar.",
+      "fechas": { "original": "", "reprogramada": "", "condicionadas": [
+        { "fecha": "2026-10-26", "condicion": "Instalación solo si la tapa estaba lista" }
+      ] },
+      "subtareas": [
+        { "id": "s1", "texto": "Terminar la fabricación de la tapa", "hecha": false },
+        { "id": "s2", "texto": "Instalar la tapa", "hecha": false },
+        { "id": "s3", "texto": "Verificar el ajuste", "hecha": false }
+      ],
+      "notas": "Último estado documentado: en fabricación. La instalación del 26/10/2026 era condicionada; no se asume realizada. La reparación del ducto es una actividad distinta, ya completada."
+    },
+    {
+      "id": "puentes-elevadores",
+      "titulo": "Recuperar el funcionamiento de puentes y elevadores",
+      "objetivo": "Diagnóstico, repuestos e intervención coordinados para que los puentes y elevadores vuelvan a funcionar.",
+      "descripcion": "Coordinar el diagnóstico, los repuestos y la intervención necesaria para recuperar el funcionamiento de puentes y elevadores.",
+      "criterio": "Intervención y validación técnica documentadas por el personal competente.",
+      "estado": "blocked", "estadoPorConfirmar": false,
+      "prioridad": "critica", "proyecto": "Mantenimiento", "equipo": "Puentes y elevadores",
+      "responsable": "Cristian", "supervisor": "", "solicitante": "Ingeniería Mecánica (revisión técnica y especificaciones)",
+      "bloqueo": { "quien": "Proveedor de válvulas", "motivo": "Válvulas pendientes de llegada.", "accion": "Confirmar estado de compra, despacho y llegada de las válvulas." },
+      "proximaAccion": "Confirmar estado de compra, despacho y llegada de las válvulas.",
+      "fechas": { "original": "", "reprogramada": "", "condicionadas": [] },
+      "subtareas": [
+        { "id": "s1", "texto": "Confirmar estado de compra, despacho y llegada de válvulas", "hecha": false },
+        { "id": "s2", "texto": "Registrar fallas por equipo", "hecha": false },
+        { "id": "s3", "texto": "Confirmar presupuesto, proveedor y técnico", "hecha": false },
+        { "id": "s4", "texto": "Solicitar a Fabrizio el contexto escrito de rampas y herrero", "hecha": false },
+        { "id": "s5", "texto": "Definir próxima intervención", "hecha": false },
+        { "id": "s6", "texto": "Escalar a Alberto los retrasos que impidan reparar", "hecha": false }
+      ],
+      "notas": "Cristian: seguimiento operativo. Ingeniería Mecánica: revisión técnica y especificaciones. Hay referencias antiguas a fechas relativas (por ejemplo, «el miércoles siguiente a la reunión») que no se convirtieron en fechas absolutas."
+    },
+    {
+      "id": "goteras",
+      "titulo": "Solucionar las dos entradas de agua (goteras)",
+      "objetivo": "Los dos puntos de entrada de agua identificados y con su solución coordinada.",
+      "descripcion": "Identificar los dos puntos de entrada de agua y coordinar su reparación con los involucrados.",
+      "criterio": "Ambos puntos atendidos y resultado de la verificación registrado.",
+      "estado": "todo", "estadoPorConfirmar": true,
+      "prioridad": "alta", "proyecto": "Oficinas", "equipo": "Techo / goteras",
+      "responsable": "", "supervisor": "", "solicitante": "Giovanni, José, Carmen · centro comercial", "dependenciaExterna": "Centro comercial",
+      "proximaAccion": "Confirmar el estado del diagnóstico.",
+      "fechas": { "original": "", "reprogramada": "", "condicionadas": [] },
+      "subtareas": [
+        { "id": "s1", "texto": "Diagnóstico de los dos puntos", "hecha": false },
+        { "id": "s2", "texto": "Propuesta de reparación", "hecha": false },
+        { "id": "s3", "texto": "Coordinación con Giovanni, José, Carmen y el centro comercial", "hecha": false },
+        { "id": "s4", "texto": "Intervención", "hecha": false },
+        { "id": "s5", "texto": "Comprobación del resultado", "hecha": false }
+      ],
+      "notas": ""
+    },
+    {
+      "id": "presupuesto-tomacorrientes",
+      "titulo": "Obtener el presupuesto de instalación de tomacorrientes",
+      "objetivo": "Presupuesto del Sr. José recibido y registrado para definir el siguiente paso.",
+      "descripcion": "Obtener del Sr. José el presupuesto de instalación de tomacorrientes. La instalación es una fase posterior y no queda completada al recibir el presupuesto.",
+      "criterio": "Presupuesto recibido y registrado.",
+      "estado": "blocked", "estadoPorConfirmar": false,
+      "prioridad": "", "proyecto": "Oficinas", "equipo": "Tomacorrientes",
+      "responsable": "", "supervisor": "", "solicitante": "",
+      "bloqueo": { "quien": "Sr. José", "motivo": "En espera de respuesta con el presupuesto.", "accion": "Dar seguimiento al Sr. José." },
+      "proximaAccion": "Dar seguimiento al Sr. José.",
+      "fechas": { "original": "", "reprogramada": "", "condicionadas": [] },
+      "subtareas": [],
+      "notas": "Prioridad por confirmar."
+    },
+    {
+      "id": "dashboard-mantenimiento",
+      "titulo": "Ampliar el dashboard con el panel de mantenimiento",
+      "objetivo": "Seguimiento de maquinaria e infraestructura ampliado con fichas de activos y de reparaciones.",
+      "descripcion": "Ampliar el seguimiento de maquinaria e infraestructura mediante fichas de activos y reparaciones. El panel de Manufactura se mantiene separado y se conecta mediante las interfaces necesarias.",
+      "criterio": "Fichas de activos y reparaciones disponibles con el alcance acordado.",
+      "estado": "todo", "estadoPorConfirmar": true,
+      "prioridad": "alta", "proyecto": "Desarrollo de proyectos", "equipo": "Dashboard de mantenimiento",
+      "responsable": "", "supervisor": "", "solicitante": "",
+      "proximaAccion": "Confirmar el estado efectivo de la ampliación.",
+      "fechas": { "original": "", "reprogramada": "", "condicionadas": [] },
+      "subtareas": [
+        { "id": "s1", "texto": "Piezas y especificaciones", "hecha": false },
+        { "id": "s2", "texto": "Historial de intervenciones", "hecha": false },
+        { "id": "s3", "texto": "Costos y proveedores", "hecha": false },
+        { "id": "s4", "texto": "Compras y fechas estimadas de reparación", "hecha": false },
+        { "id": "s5", "texto": "Evaluar reutilización o migración de datos de Odoo", "hecha": false }
+      ],
+      "notas": "Los avances del dashboard ya presentados (hito aparte) no equivalen a terminar esta ampliación. Conservar el panel de Manufactura separado."
+    },
+    {
+      "id": "hito-herrero",
+      "titulo": "Contactar y coordinar al herrero del mueble de volantes",
+      "objetivo": "Herrero contactado y trabajo coordinado.",
+      "descripcion": "Hito completado: contacto y coordinación del herrero. No incluye la construcción ni la instalación del mueble.",
+      "criterio": "Herrero contactado y trabajo coordinado.",
+      "estado": "done", "estadoPorConfirmar": false, "hito": true,
+      "prioridad": "alta", "proyecto": "Taller", "equipo": "Mueble de volantes",
+      "responsable": "", "supervisor": "", "solicitante": "",
+      "proximaAccion": "",
+      "fechas": { "original": "", "reprogramada": "", "condicionadas": [] },
+      "subtareas": [],
+      "cierre": { "nota": "Hito registrado como completado en el To-do list.", "fecha": "" },
+      "notas": "Las fases posteriores siguen en la tarjeta «Supervisar la construcción e instalación del mueble de volantes».",
+      "vinculadas": ["mueble-volantes"]
+    },
+    {
+      "id": "hito-ducto",
+      "titulo": "Reparar el ducto de aire acondicionado",
+      "objetivo": "Ducto de aire acondicionado reparado.",
+      "descripcion": "Hito completado. Es una actividad distinta de la tapa del drywall.",
+      "criterio": "Ducto reparado.",
+      "estado": "done", "estadoPorConfirmar": false, "hito": true,
+      "prioridad": "", "proyecto": "Oficinas", "equipo": "Aire acondicionado",
+      "responsable": "", "supervisor": "", "solicitante": "",
+      "proximaAccion": "",
+      "fechas": { "original": "", "reprogramada": "", "condicionadas": [] },
+      "subtareas": [],
+      "cierre": { "nota": "Reparación completada según el To-do list.", "fecha": "2026-10-21" },
+      "notas": ""
+    },
+    {
+      "id": "hito-dashboard",
+      "titulo": "Publicar la versión inicial del dashboard y los accesos a módulos",
+      "objetivo": "Dashboard inicial publicado con accesos a los módulos.",
+      "descripcion": "Hito: avance reportado. No incluye la ampliación con el panel de mantenimiento.",
+      "criterio": "Versión inicial publicada y presentada.",
+      "estado": "done", "estadoPorConfirmar": false, "hito": true,
+      "prioridad": "", "proyecto": "Desarrollo de proyectos", "equipo": "Dashboard",
+      "responsable": "", "supervisor": "", "solicitante": "",
+      "proximaAccion": "",
+      "fechas": { "original": "", "reprogramada": "", "condicionadas": [] },
+      "subtareas": [],
+      "cierre": { "nota": "Avance reportado en el To-do list.", "fecha": "2026-10-23" },
+      "notas": "",
+      "vinculadas": ["dashboard-mantenimiento"]
+    },
+    {
+      "id": "hito-maquinas-diagnostico",
+      "titulo": "Presentar el avance de la interfaz de máquinas de diagnóstico",
+      "objetivo": "Avance de la interfaz presentado.",
+      "descripcion": "Hito: presentación registrada. No implica que la interfaz esté terminada.",
+      "criterio": "Avance presentado.",
+      "estado": "done", "estadoPorConfirmar": false, "hito": true,
+      "prioridad": "", "proyecto": "Desarrollo de proyectos", "equipo": "Máquinas de diagnóstico",
+      "responsable": "", "supervisor": "", "solicitante": "",
+      "proximaAccion": "",
+      "fechas": { "original": "", "reprogramada": "", "condicionadas": [] },
+      "subtareas": [],
+      "cierre": { "nota": "Presentación registrada en el To-do list.", "fecha": "2026-10-23" },
+      "notas": ""
+    },
+    {
+      "id": "estudio-sujecion",
+      "titulo": "Estudiar la sujeción moto-maleta",
+      "objetivo": "Estudio de sujeción entre la moto y la maleta completado.",
+      "descripcion": "Actividad transversal de Neotropya registrada en el To-do list.",
+      "criterio": "Estudio entregado (criterio por acordar).",
+      "estado": "doing", "estadoPorConfirmar": false, "transversal": true,
+      "prioridad": "", "proyecto": "Neotropya / transversal", "equipo": "Sujeción moto-maleta",
+      "responsable": "", "supervisor": "", "solicitante": "",
+      "proximaAccion": "",
+      "fechas": { "original": "", "reprogramada": "", "condicionadas": [] },
+      "subtareas": [],
+      "notas": "Último estado documentado: «En proceso»."
+    },
+    {
+      "id": "ia-2026-10-24", "titulo": "Sesión de formación en IA · 24/10/2026", "objetivo": "Sesión de formación realizada.", "descripcion": "Instancia de la formación en IA del 24/10/2026, pendiente de confirmación.",
+      "criterio": "Asistencia o realización confirmada.", "estado": "todo", "estadoPorConfirmar": true, "transversal": true, "prioridad": "", "proyecto": "Gestión departamental", "equipo": "Formación en IA",
+      "responsable": "", "supervisor": "", "solicitante": "", "proximaAccion": "Confirmar si la sesión se realizó.", "fechas": { "original": "2026-10-24", "reprogramada": "", "condicionadas": [] }, "subtareas": [], "notas": ""
+    },
+    {
+      "id": "ia-2026-10-25", "titulo": "Sesión de formación en IA · 25/10/2026", "objetivo": "Sesión de formación realizada.", "descripcion": "Instancia de la formación en IA del 25/10/2026, pendiente de confirmación.",
+      "criterio": "Asistencia o realización confirmada.", "estado": "todo", "estadoPorConfirmar": true, "transversal": true, "prioridad": "", "proyecto": "Gestión departamental", "equipo": "Formación en IA",
+      "responsable": "", "supervisor": "", "solicitante": "", "proximaAccion": "Confirmar si la sesión se realizó.", "fechas": { "original": "2026-10-25", "reprogramada": "", "condicionadas": [] }, "subtareas": [], "notas": ""
+    },
+    {
+      "id": "ia-2026-10-26", "titulo": "Sesión de formación en IA · 26/10/2026", "objetivo": "Sesión de formación realizada.", "descripcion": "Instancia de la formación en IA del 26/10/2026, pendiente de confirmación.",
+      "criterio": "Asistencia o realización confirmada.", "estado": "todo", "estadoPorConfirmar": true, "transversal": true, "prioridad": "", "proyecto": "Gestión departamental", "equipo": "Formación en IA",
+      "responsable": "", "supervisor": "", "solicitante": "", "proximaAccion": "Confirmar si la sesión se realizó.", "fechas": { "original": "2026-10-26", "reprogramada": "", "condicionadas": [] }, "subtareas": [], "notas": ""
+    },
+    {
+      "id": "reporte-2026-10-24", "titulo": "Enviar reporte a Alberto · 24/10/2026", "objetivo": "Reporte del día entregado a Alberto.", "descripcion": "Instancia del reporte del 24/10/2026, pendiente de confirmación.",
+      "criterio": "Reporte enviado.", "estado": "todo", "estadoPorConfirmar": true, "transversal": true, "prioridad": "", "proyecto": "Gestión departamental", "equipo": "Reportes",
+      "responsable": "", "supervisor": "", "solicitante": "Alberto", "proximaAccion": "Confirmar si el reporte se envió.", "fechas": { "original": "2026-10-24", "reprogramada": "", "condicionadas": [] }, "subtareas": [], "notas": ""
+    },
+    {
+      "id": "reporte-2026-10-25", "titulo": "Enviar reporte a Alberto · 25/10/2026", "objetivo": "Reporte del día entregado a Alberto.", "descripcion": "Instancia del reporte del 25/10/2026, pendiente de confirmación.",
+      "criterio": "Reporte enviado.", "estado": "todo", "estadoPorConfirmar": true, "transversal": true, "prioridad": "", "proyecto": "Gestión departamental", "equipo": "Reportes",
+      "responsable": "", "supervisor": "", "solicitante": "Alberto", "proximaAccion": "Confirmar si el reporte se envió.", "fechas": { "original": "2026-10-25", "reprogramada": "", "condicionadas": [] }, "subtareas": [], "notas": ""
+    },
+    {
+      "id": "reporte-2026-10-26", "titulo": "Enviar reporte a Alberto · 26/10/2026", "objetivo": "Reporte del día entregado a Alberto.", "descripcion": "Instancia del reporte del 26/10/2026, pendiente de confirmación.",
+      "criterio": "Reporte enviado.", "estado": "todo", "estadoPorConfirmar": true, "transversal": true, "prioridad": "", "proyecto": "Gestión departamental", "equipo": "Reportes",
+      "responsable": "", "supervisor": "", "solicitante": "Alberto", "proximaAccion": "Confirmar si el reporte se envió.", "fechas": { "original": "2026-10-26", "reprogramada": "", "condicionadas": [] }, "subtareas": [], "notas": ""
+    }
+  ]
+}

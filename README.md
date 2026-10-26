@@ -195,6 +195,23 @@ Infraestructura usa una identidad propia de «taller todoterreno»: carbón, gra
 - **Cabecera:** `assets/js/infra-theme.js` (`infraHero`). Lleva un plano técnico en SVG (todoterreno, amortiguador y cotas) y no depende de imágenes externas.
 - **Foto de cabecera (opcional):** guarda una foto panorámica del taller en `assets/img/infraestructura-hero.jpg` y descomenta la línea `--in-hero-image` al inicio de `infra.css`. Se le aplica una capa oscura para que el título se lea.
 
+## Kanban de Infraestructura (Infraestructura › Kanban)
+
+- Código en `assets/js/modules/infra-kanban.js`, estilos en `assets/css/infra.css` (`.ik-*`). Datos iniciales en `assets/data/infra-kanban.json`, tomados del To-do list.
+- **Columnas:** To do, Doing, Testing, Blocked y Done.
+- **Reglas de estado:**
+  - Pasar a Blocked pide el motivo y la acción para desbloquear.
+  - Pasar a Testing pide qué comprobar y el resultado esperado.
+  - Pasar a Done pide una nota de cierre o evidencia.
+  - Al desbloquear o reabrir, el motivo y el cierre anteriores quedan en el historial.
+  - No hay que pasar por Testing obligatoriamente. Ninguna fecha cambia el estado por sí sola.
+- **Estados inciertos:** quedan en To do con la etiqueta «Estado por confirmar». Las tarjetas vencidas se marcan sin modificar sus fechas originales.
+- **Actividades transversales** (estudio de sujeción y gestión departamental): están ocultas por defecto; se muestran con el filtro «Mostrar actividades transversales». Las sesiones y los reportes del 24, 25 y 26/10/2026 son tarjetas separadas, todas con «estado por confirmar».
+- **Persistencia (primera versión):** se guarda en `localStorage` de ese navegador, con la clave `ccs-infra-kanban-v1`, y se respalda con «Exportar / Importar JSON».
+  - Los datos iniciales se cargan una sola vez.
+  - **No se comparte entre equipos** ni se sincroniza con Google Sheets, Slack u otras fuentes.
+  - Para compartir el tablero entre varias personas haría falta un almacenamiento común. Está pendiente de definir.
+
 ## Investigaciones (Neotropya › Nodos › Investigaciones)
 
 - Cada estudio es un hijo del nodo `investigaciones` en `assets/js/registry.js`. Para agregar otro, añade un nodo con su propio módulo.

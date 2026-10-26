@@ -48,6 +48,11 @@ export const TREE = {
           id: 'maquinas', title: 'Máquinas de simulación', icon: 'gear',
           desc: 'Registro de máquinas vendidas y en stock con sus características.',
           load: () => import('./modules/maquinas.js')
+        },
+        {
+          id: 'kanban', title: 'Kanban', icon: 'kanban',
+          desc: 'Actividades de mantenimiento, taller, oficinas y desarrollo de proyectos: pendientes, en curso, en prueba, bloqueadas y completadas.',
+          load: () => import('./modules/infra-kanban.js')
         }
       ]
     }
