@@ -146,7 +146,6 @@ export function mount(root, ctx) {
         <span class="ik-prio p-${c.prioridad || 'none'}">${c.prioridad ? esc(prioLabel(c.prioridad)) : 'Prioridad por confirmar'}</span>
       </div>
       <button type="button" class="ik-title" data-act="open" data-id="${esc(c.id)}">${esc(c.titulo)}</button>
-      ${c.objetivo ? `<p class="ik-obj">${esc(c.objetivo)}</p>` : ''}
       <div class="ik-tags">
         ${c.estadoPorConfirmar ? '<span class="ik-tag t-confirm">Estado por confirmar</span>' : ''}
         ${od ? `<span class="ik-tag t-late">${small(ICON.warn)}Vencida · ${fmtD(d)}</span>` : ''}
