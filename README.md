@@ -232,6 +232,9 @@ Archivos: `assets/js/modules/presupuestos.js` (interfaz) y `assets/js/modules/pr
   - Publicar una versión nueva de la página no sobrescribe lo guardado.
   - Si lo guardado está dañado, no se borra: la página ofrece descargar una copia antes de restaurar.
   - Si un guardado falla, el cambio no se aplica y se muestra el motivo.
+- **Videos:** se agregan en el formulario del producto, campo «Videos», uno por línea («Título | enlace» o solo el enlace).
+  - YouTube (vía `youtube-nocookie.com`), Vimeo y archivos `.mp4`/`.webm` se reproducen dentro de la ficha al pulsar «Reproducir». Antes de eso no se carga nada de esos sitios, salvo la miniatura de YouTube.
+  - Los demás enlaces se abren en una pestaña nueva. Si el autor desactivó la inserción del video, YouTube muestra un aviso y queda el enlace «Abrir en YouTube».
 - **Respaldo:** «Exportar JSON» incluye productos, presupuesto, aprobaciones, registro de correcciones e imágenes subidas. «Importar JSON» valida el archivo, incluido el límite del presupuesto, antes de reemplazar.
 - Si se abren dos pestañas a la vez, cada cambio se aplica sobre la versión guardada más reciente, y la otra pestaña la recarga.
 

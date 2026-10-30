@@ -160,6 +160,39 @@ function imageTag(p, cls = '') {
   return `<img class="pp-photo ${cls}" src="${esc(p.imagen.valor)}" alt="${alt}" loading="lazy" referrerpolicy="no-referrer">${placeholder}`;
 }
 
+/* Videos: YouTube y Vimeo se reproducen dentro de la ficha (solo al pulsar «Reproducir», para no cargar
+   nada de terceros antes); cualquier otro enlace se abre en una pestaña nueva. */
+function videoSource(url) {
+  let u; try { u = new URL(url); } catch { return null; }
+  const host = u.hostname.replace(/^(www|m)\./, '');
+  let yt = null;
+  if (host === 'youtu.be') yt = u.pathname.slice(1).split('/')[0];
+  else if (['youtube.com', 'youtube-nocookie.com', 'music.youtube.com'].includes(host)) {
+    yt = u.searchParams.get('v') || (u.pathname.match(/^\/(?:embed|shorts|live|v)\/([^/?#]+)/) || [])[1];
+  }
+  if (yt && /^[\w-]{6,20}$/.test(yt)) {
+    const t = parseInt(u.searchParams.get('t') || u.searchParams.get('start') || '0', 10);
+    return { tipo: 'YouTube', thumb: `https://i.ytimg.com/vi/${yt}/hqdefault.jpg`,
+      embed: `https://www.youtube-nocookie.com/embed/${yt}?autoplay=1&rel=0&modestbranding=1${t > 0 ? `&start=${t}` : ''}` };
+  }
+  const vm = host === 'vimeo.com' ? u.pathname.match(/^\/(\d{5,12})/) : host === 'player.vimeo.com' ? u.pathname.match(/^\/video\/(\d{5,12})/) : null;
+  if (vm) return { tipo: 'Vimeo', thumb: null, embed: `https://player.vimeo.com/video/${vm[1]}?autoplay=1&dnt=1` };
+  if (u.protocol === 'https:' && /\.(mp4|webm|ogv)$/i.test(u.pathname)) return { tipo: 'archivo', thumb: null, embed: u.href, archivo: true };
+  return null;
+}
+
+/* Campo «Videos» del formulario: una línea por video, «Título | enlace» o solo el enlace. */
+const videoLines = v => v.map(x => (x.titulo && x.titulo !== 'Video' ? `${x.titulo} | ${x.url}` : x.url)).join('\n');
+function parseVideos(text) {
+  const out = [], bad = [];
+  lines(text).forEach((l, i) => {
+    const k = l.lastIndexOf('|');
+    const titulo = k >= 0 ? l.slice(0, k).trim() : '', url = (k >= 0 ? l.slice(k + 1) : l).trim();
+    if (webUrl(url)) out.push({ titulo: titulo || 'Video', url }); else bad.push(i + 1);
+  });
+  return { videos: out, bad };
+}
+
 /* ═════════ Módulo ═════════ */
 export function mount(root, ctx) {
   const P = prefs.read();
@@ -434,7 +467,10 @@ export function mount(root, ctx) {
     S.detailId = id;
     const m = openModal({ size: 'pp-wide', html: '<div data-detail></div>', label: 'Ficha del producto', onClose: () => { detail = null; S.detailId = null; } });
     detail = m;
-    m.el.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b) act(b.dataset.act, b.dataset.id); });
+    m.el.addEventListener('click', e => {
+      const b = e.target.closest('[data-act]'); if (!b) return;
+      if (b.dataset.act === 'play') playVideo(b); else act(b.dataset.act, b.dataset.id);
+    });
     fillDetail();
   }
 
@@ -482,7 +518,7 @@ export function mount(root, ctx) {
         <section><h3>Justificación de compra</h3>${p.justificacion ? `<p>${esc(p.justificacion)}</p>` : '<p class="none">Sin justificación registrada.</p>'}</section>
         ${p.grupo ? `<section><h3>Alternativas para la misma necesidad («${esc(p.grupo)}»)</h3>${others.length ? `<ul class="pp-incl">${others.map(o => `<li><button type="button" class="pp-link" data-act="open" data-id="${esc(o.id)}">${esc(o.nombre)}</button><span>${esc(priceText(o))}</span>${estadoChip(o.estado)}</li>`).join('')}</ul>` : '<p class="none">No hay otras alternativas en este grupo.</p>'}
           <p class="muted">Agrupar no aprueba nada: la decisión de compra es tuya.</p></section>` : ''}
-        ${p.videos.length ? `<section><h3>Videos de referencia</h3><p class="muted">Son videos, no imágenes del producto.</p><ul class="inv-list">${p.videos.map(v => `<li><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(v.titulo)}</a></li>`).join('')}</ul></section>` : ''}
+        ${p.videos.length ? `<section><h3>Videos de referencia</h3><p class="muted">Son videos de referencia, no imágenes del producto.</p><div class="pp-videos">${p.videos.map(videoCard).join('')}</div></section>` : ''}
         <section><h3>Observaciones</h3>${p.observaciones.length ? list(p.observaciones) : '<p class="none">Sin observaciones.</p>'}</section>
         <section><h3>Datos pendientes de confirmar</h3>${p.pendientes.length ? list(p.pendientes, 'inv-warn') : '<p class="none">Nada pendiente.</p>'}</section>
         <details class="inv-orig"><summary>Historial (${p.historial.length})</summary>
@@ -491,6 +527,33 @@ export function mount(root, ctx) {
       <div class="modal-foot pp-dfoot">${actions(p, 'detail')}</div>`;
     hydrate(detail.el);
     if (scroll) scroll.scrollTop = top;
+  }
+
+  function videoCard(v) {
+    const s = videoSource(v.url);
+    const link = `<a class="pp-vlink" href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${small(ICON.arrow)}${s && !s.archivo ? `Abrir en ${s.tipo}` : 'Abrir video'}</a>`;
+    if (!s) return `<figure class="pp-video"><div class="pp-vframe pp-vnone"><span>Este enlace no se puede reproducir dentro de la página.</span></div><figcaption><b>${esc(v.titulo)}</b>${link}</figcaption></figure>`;
+    return `<figure class="pp-video"><div class="pp-vframe">
+        <button type="button" class="pp-play" data-act="play" data-embed="${esc(s.embed)}"${s.archivo ? ' data-file' : ''} data-title="${esc(v.titulo)}" aria-label="Reproducir: ${esc(v.titulo)}">
+          ${s.thumb ? `<img src="${esc(s.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}
+          <span class="pp-playbtn"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>Reproducir</span></button></div>
+      <figcaption><b>${esc(v.titulo)}</b>${link}</figcaption></figure>`;
+  }
+
+  // Sustituye la miniatura por el reproductor; al cerrar la ficha el iframe desaparece y el video se detiene.
+  function playVideo(btn) {
+    const box = btn.closest('.pp-vframe');
+    if (btn.hasAttribute('data-file')) {
+      const vid = Object.assign(document.createElement('video'), { src: btn.dataset.embed, controls: true, autoplay: true, playsInline: true, preload: 'metadata' });
+      vid.setAttribute('aria-label', btn.dataset.title || 'Video');
+      vid.addEventListener('error', () => { box.innerHTML = '<span class="pp-vnone">No se pudo cargar el video. Usa «Abrir video».</span>'; box.classList.add('pp-vnone'); });
+      box.replaceChildren(vid); box.classList.add('playing'); vid.focus(); return;
+    }
+    const f = Object.assign(document.createElement('iframe'), {
+      src: btn.dataset.embed, title: btn.dataset.title || 'Video', allowFullscreen: true, referrerPolicy: 'strict-origin-when-cross-origin'
+    });
+    f.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
+    box.replaceChildren(f); box.classList.add('playing'); f.focus();
   }
 
   /* ── Acciones ── */
@@ -659,6 +722,7 @@ export function mount(root, ctx) {
           ${field('imagenUrl', 'Imagen por enlace', text('imagenUrl', v.imagen && v.imagen.tipo === 'url' ? v.imagen.valor : '', 'https://…', 'type="url"'), `Imagen actual: ${imgNow}.`)}
           ${field('imagenArchivo', 'o subir una imagen', '<input id="pf-imagenArchivo" name="imagenArchivo" type="file" accept="image/*" class="input">', 'Se reduce y se guarda en este navegador.')}
           ${v.imagen ? `<div class="field full"><label class="pp-radio"><input type="checkbox" name="sinImagen"> Quitar la imagen actual</label></div>` : ''}
+          ${field('videos', 'Videos', area('videos', videoLines(v.videos), 3), 'Uno por línea: «Título | enlace» o solo el enlace. Los de YouTube, Vimeo y archivos .mp4/.webm se reproducen dentro de la ficha.', true)}
           ${field('descripcion', 'Descripción', area('descripcion', v.descripcion), '', true)}
           ${field('especificaciones', 'Especificaciones', area('especificaciones', v.especificaciones.join('\n'), 4), 'Una por línea.', true)}
           ${field('justificacion', 'Justificación de compra', area('justificacion', v.justificacion), '', true)}
@@ -708,6 +772,9 @@ export function mount(root, ctx) {
       const imgUrl = f('imagenUrl').trim();
       if (imgUrl && !webUrl(imgUrl)) errs.imagenUrl = 'El enlace de la imagen debe empezar por https://';
       else if (/youtube\.com|youtu\.be/.test(imgUrl)) errs.imagenUrl = 'Es un enlace de video, no de una imagen.';
+      const vids = parseVideos(f('videos'));
+      if (vids.bad.length) errs.videos = `Línea ${vids.bad.join(', ')}: falta un enlace que empiece por https://`;
+      else if (vids.videos.length > 10) errs.videos = 'Máximo 10 videos por producto.';
       const file = form.elements.imagenArchivo.files[0];
       if (file && !file.type.startsWith('image/')) errs.imagenArchivo = 'El archivo no es una imagen.';
       else if (file && file.size > 15 * 1024 * 1024) errs.imagenArchivo = 'La imagen supera 15 MB.';
@@ -728,7 +795,7 @@ export function mount(root, ctx) {
         ...(p || {}), id, nombre, marca: f('marca'), modelo: f('modelo'), categoria: f('categoria'), plataforma: f('plataforma'), proveedor: f('proveedor'),
         enlace, imagen, precioCents: precio, moneda, cantidad, cargos, tasa, importancia: f('importancia'), grupo: f('grupo'),
         descripcion: f('descripcion'), especificaciones: lines(f('especificaciones')), justificacion: f('justificacion'),
-        observaciones: lines(f('observaciones')), pendientes: lines(f('pendientes')),
+        observaciones: lines(f('observaciones')), pendientes: lines(f('pendientes')), videos: vids.videos,
         estado: p ? p.estado : 'Pendiente', compra: p ? p.compra : null, historial: p ? p.historial : []
       });
       const res = mutate(d => {
