@@ -78,18 +78,32 @@ export function validateState(obj) {
   const b = obj.presupuesto || {};
   const presupuesto = { maxCents: Number.isInteger(b.maxCents) && b.maxCents >= 0 ? b.maxCents : null, moneda: curOk(b.moneda) ? b.moneda : '' };
   const registro = Array.isArray(obj.registro) ? obj.registro.filter(r => r && typeof r === 'object').slice(-500) : [];
-  const value = { schema: SCHEMA, rev: Number.isInteger(obj.rev) ? obj.rev : 0, savedAt: typeof obj.savedAt === 'string' ? obj.savedAt : null, presupuesto, productos, registro };
+  const semilla = Array.isArray(obj.semilla) ? obj.semilla.filter(s => typeof s === 'string').slice(0, 500) : null;
+  const value = { schema: SCHEMA, rev: Number.isInteger(obj.rev) ? obj.rev : 0, savedAt: typeof obj.savedAt === 'string' ? obj.savedAt : null, presupuesto, productos, registro, semilla };
   const inv = invariants(value);
   if (inv) return { ok: false, error: 'Los datos no cumplen el límite del presupuesto: ' + inv };
   return { ok: true, value };
 }
 
+const seedProduct = (seed, x) => normProduct({
+  ...x, estado: 'Pendiente', importancia: '', grupo: '', justificacion: '',
+  historial: [{ at: now(), accion: 'Cargado', detalle: x.origen ? `Desde: ${x.origen}.` : `Desde el documento «${seed.fuente.documento}».` }]
+});
+
 function fromSeed(seed) {
-  const productos = (seed.productos || []).map(x => normProduct({
-    ...x, estado: 'Pendiente', importancia: '', grupo: '', justificacion: '',
-    historial: [{ at: now(), accion: 'Cargado', detalle: `Desde el documento «${seed.fuente.documento}».` }]
-  }));
-  return { schema: SCHEMA, rev: 0, savedAt: null, presupuesto: { maxCents: null, moneda: '' }, productos, registro: [] };
+  const productos = (seed.productos || []).map(x => seedProduct(seed, x));
+  return { schema: SCHEMA, rev: 0, savedAt: null, presupuesto: { maxCents: null, moneda: '' }, productos, registro: [], semilla: productos.map(p => p.id) };
+}
+
+/* Productos añadidos a la fuente después de que este navegador guardó sus datos: se agregan como pendientes.
+   `semilla` recuerda los que ya se ofrecieron, así un producto eliminado no reaparece. Los datos guardados
+   antes de existir `semilla` ya recibieron la primera tanda (los productos sin «agregado»). */
+function seedAdditions(state, seed) {
+  const list = seed.productos || [];
+  const seen = new Set(state.semilla || list.filter(x => !x.agregado).map(x => x.id));
+  const have = new Set(state.productos.map(p => p.id));
+  const nuevos = list.filter(x => !seen.has(x.id) && !have.has(x.id)).map(x => seedProduct(seed, x));
+  return { nuevos, semilla: [...new Set([...seen, ...list.map(x => x.id)])] };
 }
 
 /* ═════════ Almacenamiento ═════════ */
@@ -163,7 +177,7 @@ export function mount(root, ctx) {
     const raw = storage.raw();
     if (raw) {
       let r; try { r = validateState(JSON.parse(raw)); } catch { r = { ok: false, error: 'El contenido guardado no es JSON válido.' }; }
-      if (r.ok) { S.data = r.value; render(); return; }
+      if (r.ok) { S.data = r.value; render(); mergeSeed(); return; }
       S.rawBad = { raw, error: r.error }; render(); return; // nunca se sobrescribe en silencio
     }
     try {
@@ -177,6 +191,24 @@ export function mount(root, ctx) {
     S.data = init;
     if (err) toast(`Los productos iniciales no se pudieron guardar: ${err}. Los cambios no se conservarán.`, 'err', 9000);
     if (alive) render();
+  }
+
+  // Agrega a lo guardado los productos nuevos de la fuente, sin tocar los existentes. Si la fuente no carga, no pasa nada.
+  async function mergeSeed() {
+    let seed;
+    try { const res = await fetch(DATA_URL, { cache: 'no-store' }); if (!res.ok) return; seed = await res.json(); } catch { return; }
+    if (!alive || !Array.isArray(seed.productos)) return;
+    const { nuevos } = seedAdditions(S.data, seed);
+    const known = S.data.semilla && seed.productos.every(x => S.data.semilla.includes(x.id));
+    if (!nuevos.length && known) return;
+    const r = mutate(d => {
+      const add = seedAdditions(d, seed);
+      const ids = new Set(d.productos.map(p => p.id));
+      d.productos.push(...add.nuevos.filter(p => !ids.has(p.id)));
+      d.semilla = add.semilla;
+    });
+    if (r.error) toast(`No se pudieron agregar los productos nuevos de la fuente: ${r.error}`, 'err', 9000);
+    else if (nuevos.length) toast(nuevos.length === 1 ? `Se agregó un producto nuevo: ${nuevos[0].nombre}.` : `Se agregaron ${nuevos.length} productos nuevos.`);
   }
 
   /* Aplica un cambio sobre la versión guardada más reciente (por si otra pestaña cambió algo),

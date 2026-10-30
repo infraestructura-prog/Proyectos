@@ -225,6 +225,7 @@ Archivos: `assets/js/modules/presupuestos.js` (interfaz) y `assets/js/modules/pr
   - Se usa solo la primera vez que se abre la sección en un navegador.
   - Todos los productos empiezan como «Pendiente», sin importancia asignada, sin aprobaciones y sin presupuesto máximo.
   - No hay sincronización con Google Docs ni con Drive.
+  - **Agregar productos a la fuente:** se añaden al final de la lista con un `id` nuevo, `"agregado": "AAAA-MM-DD"` y, si no vienen del documento, `"origen"`. Los navegadores que ya tienen datos guardados los reciben como pendientes al abrir la sección, sin cambiar nada de lo existente. Un producto eliminado no reaparece, porque la lista `semilla` de los datos guardados recuerda qué productos ya se ofrecieron. Ejemplo: la plegadora WINMAX WTHR0013, tomada de amazon.com.
 - **Persistencia:**
   - Datos: `localStorage` del navegador, clave `ccs-presupuestos-v1`.
   - Imágenes subidas como archivo: IndexedDB, base `ccs-presupuestos`. Se reducen a 1200 px en JPEG.

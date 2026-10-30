@@ -177,6 +177,44 @@
         "Especificaciones por completar con información confirmada.",
         "El documento no incluye imagen de este producto."
       ]
+    },
+    {
+      "id": "winmax-wthr0013",
+      "agregado": "2026-10-30",
+      "origen": "Ficha de Amazon (amazon.com, ASIN B08MJQZX4Q) consultada el 2026-10-30",
+      "nombre": "Mini doblador universal de montaje manual",
+      "marca": "WINMAX TOOLS AUTOMOTIVE",
+      "modelo": "WTHR0013",
+      "categoria": "Plegadoras de chapa (universales)",
+      "plataforma": "Amazon",
+      "proveedor": "Amazon (amazon.com) · vendido por Tools-Supply, enviado por Amazon",
+      "enlace": "https://www.amazon.com/WINMAX-TOOLS-AUTOMOTIVE-Mounting-Universal/dp/B08MJQZX4Q",
+      "imagen": { "tipo": "semilla", "valor": "/assets/data/presupuestos/img/winmax-wthr0013.jpg" },
+      "descripcion": "Doblador manual que forma alambre, metal plano y tubo en abrazaderas, manijas, soportes, ganchos, bobinas y más.",
+      "especificaciones": [
+        "Dobla en ángulo agudo varilla de hasta 5/16\" de diámetro y pletina de 1\" × 1/8\".",
+        "Sirve para muchos materiales, pero no para tubo de cobre.",
+        "Se monta en un banco de trabajo o se sujeta en un tornillo de banco.",
+        "Incluye ejes de 0,197\", 0,236\" y 0,512\" (largo).",
+        "Incluye círculos de 0,984\", 1,181\", 1,378\" y 1,575\".",
+        "Modos de ángulo largo y ángulo corto.",
+        "Dimensiones del producto: 12,99 × 5,51 × 5,12 pulgadas.",
+        "Número de pieza del fabricante: WTHR0013."
+      ],
+      "precioCents": 4450,
+      "precioOriginal": "US$44.50",
+      "moneda": "USD",
+      "cantidad": 1,
+      "videos": [],
+      "observaciones": [
+        "Precio publicado en amazon.com el 2026-10-30: US$44,50.",
+        "Valoración en Amazon: 4,3 de 5 (119 opiniones).",
+        "La ficha indica «Partyreal» como fabricante y WINMAX TOOLS AUTOMOTIVE como marca.",
+        "Alternativa a la «Mini dobladora universal» de Mercado Libre; no está agrupada ni aprobada."
+      ],
+      "pendientes": [
+        "Envío e impuestos hasta el destino por cotizar: la entrega gratis que muestra Amazon es para una dirección en EE. UU."
+      ]
     }
   ]
 }
