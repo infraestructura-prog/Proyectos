@@ -214,6 +214,59 @@ Infraestructura usa una identidad propia de «taller todoterreno»: carbón, gra
   - Mejora opcional: agregar a la hoja una columna `URL de foto` con enlaces `https`; la página la detecta sola. Si en la columna «Foto» hay un enlace `https` como texto, también se usa.
 - `localStorage` solo recuerda la vista, la búsqueda, el filtro y el orden; nunca el inventario.
 
+## Presupuestos (Neotropya › Presupuestos)
+
+Productos que se necesitan comprar para el departamento: se comparan opciones y se aprueban compras dentro de un presupuesto máximo.
+Archivos: `assets/js/modules/presupuestos.js` (interfaz) y `assets/js/modules/presupuestos-core.js` (reglas de dinero y del límite).
+
+### Datos y almacenamiento
+
+- **Fuente inicial:** `assets/data/presupuestos/equipamiento-taller-v1.json`, extraído del documento «Equipamiento de Taller V1», y sus imágenes en `assets/data/presupuestos/img/`.
+  - Se usa solo la primera vez que se abre la sección en un navegador.
+  - Todos los productos empiezan como «Pendiente», sin importancia asignada, sin aprobaciones y sin presupuesto máximo.
+  - No hay sincronización con Google Docs ni con Drive.
+- **Persistencia:**
+  - Datos: `localStorage` del navegador, clave `ccs-presupuestos-v1`.
+  - Imágenes subidas como archivo: IndexedDB, base `ccs-presupuestos`. Se reducen a 1200 px en JPEG.
+  - Publicar una versión nueva de la página no sobrescribe lo guardado.
+  - Si lo guardado está dañado, no se borra: la página ofrece descargar una copia antes de restaurar.
+  - Si un guardado falla, el cambio no se aplica y se muestra el motivo.
+- **Respaldo:** «Exportar JSON» incluye productos, presupuesto, aprobaciones, registro de correcciones e imágenes subidas. «Importar JSON» valida el archivo, incluido el límite del presupuesto, antes de reemplazar.
+- Si se abren dos pestañas a la vez, cada cambio se aplica sobre la versión guardada más reciente, y la otra pestaña la recarga.
+
+### Reglas del presupuesto
+
+- **Cálculo:** todos los importes se guardan en centavos enteros. Las conversiones usan una tasa explícita registrada en el producto, guardada en millonésimas y calculada sin decimales flotantes.
+- **Comprometido = aprobados + comprados.**
+  - Aprobar reserva el importe.
+  - Marcar como comprado congela el importe y no lo vuelve a sumar.
+  - Los pendientes no consumen presupuesto.
+- **Aprobar se bloquea si:**
+  - no hay máximo o moneda del presupuesto;
+  - el producto no tiene precio o su moneda está por confirmar;
+  - quedan cargos «pendientes de cotizar»;
+  - el producto está en otra moneda sin equivalencia;
+  - el nuevo total supera el máximo. En ese caso se muestran el saldo, el total resultante y cuánto falta.
+  - Se permite aprobar por el importe exacto disponible.
+- **Cambios a lo ya aprobado:** las mismas reglas se aplican al editar un producto aprobado y al cambiar el máximo o su moneda. Si un cambio supera el límite, se conservan los valores anteriores y se explica el motivo.
+- **Correcciones:** una compra realizada no se desmarca ni se quita. «Corregir compra» exige un motivo y queda en el historial del producto y en el registro general.
+- **Cargos (envío, impuestos y otros):** cada uno puede tener importe conocido, estar confirmado en cero, tener una reserva estimada o estar pendiente de cotizar.
+  - Un cargo pendiente nunca cuenta como cero.
+  - Las reservas estimadas se señalan como tales.
+- **Importancia:** Alta, Media o Baja. Es independiente de la aprobación.
+- **Grupos de alternativas:** solo agrupan productos; nunca aprueban nada automáticamente.
+
+### Configuración pendiente
+
+- **Uso compartido:** hoy cada navegador tiene su propia copia. Para compartir el presupuesto entre usuarios hace falta un almacenamiento compartido, por ejemplo una hoja con Apps Script como la de Máquinas, o una base de datos.
+  - Ese servidor debe repetir las validaciones del límite.
+  - También debe usar un bloqueo, como `LockService` en Apps Script, para que dos aprobaciones simultáneas no superen el máximo.
+- **Datos por confirmar en la fuente:**
+  - moneda de los precios con símbolo «$»;
+  - medidas de las KASTFORCE: «18 pulgadas» en el anexo, frente a las medidas de la tabla;
+  - marca, modelo y especificaciones de la aspiradora;
+  - precio y especificaciones del mueble aéreo.
+
 ## Kanban de Infraestructura (Infraestructura › Kanban)
 
 - Código en `assets/js/modules/infra-kanban.js`, estilos en `assets/css/infra.css` (`.ik-*`). Datos iniciales en `assets/data/infra-kanban.json`, tomados del To-do list.

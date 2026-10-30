@@ -1,0 +1,182 @@
+{
+  "schema": "ccs-presupuestos-semilla-v1",
+  "fuente": {
+    "documento": "Equipamiento de Taller V1",
+    "extraido": "2026-10-30",
+    "nota": "Los precios son referencias investigadas en el documento, no precios actuales verificados. La página no se sincroniza con Google Docs ni con Drive."
+  },
+  "productos": [
+    {
+      "id": "mini-dobladora-universal",
+      "nombre": "Mini dobladora universal",
+      "marca": "Genérica",
+      "modelo": "Universal",
+      "categoria": "Plegadoras de chapa (universales)",
+      "plataforma": "Mercado Libre",
+      "proveedor": "Mercado Libre (Venezuela)",
+      "enlace": "https://articulo.mercadolibre.com.ve/MLV-734287391-mini-dobladora-universal-forma-alambre-metal-plano-tubo-_JM#polycard_client=search-desktop&be_origin=backend&overlay_label=not_apply&search_layout=grid&position=10&type=item&tracking_id=ea97ca3d-de17-47be-9121-cdbc6f1e97a8&wid=MLV734287391&sid=search",
+      "imagen": { "tipo": "semilla", "valor": "/assets/data/presupuestos/img/mini-dobladora-universal.jpg" },
+      "descripcion": "Dobladora manual para alambre, pletina y tubo pequeño.",
+      "especificaciones": [
+        "Dobla acero, aluminio, cobre y latón.",
+        "Incluye cuatro rollos de Ø 25 mm, Ø 30 mm, Ø 35 mm y Ø 40 mm.",
+        "Dos piezas de esquina para crear formas angulares.",
+        "Acero plano: espesor máximo aproximado de 2 mm.",
+        "Altura máxima aproximada del material: 30 mm."
+      ],
+      "precioCents": 30463,
+      "precioOriginal": "$304.63",
+      "moneda": "",
+      "cantidad": 1,
+      "videos": [
+        { "titulo": "Dobladora Manual Universal de Alambre y Pequeñas Soleras MUB-1 de Kayka Industrial", "url": "https://www.youtube.com/watch?v=ki_Ag-0g4s0" }
+      ],
+      "observaciones": [
+        "Precio de referencia del documento ($304,63). El símbolo $ no confirma la moneda."
+      ],
+      "pendientes": [
+        "Confirmar la moneda del precio antes de aprobar.",
+        "La referencia visual del documento (video) menciona la dobladora MUB-1 de Kayka Industrial. No está confirmado que sea la marca ni el modelo del producto de Mercado Libre."
+      ]
+    },
+    {
+      "id": "xpotool-plegadora-universal",
+      "nombre": "Máquina plegadora universal",
+      "marca": "XPOtool",
+      "modelo": "",
+      "categoria": "Plegadoras de chapa (universales)",
+      "plataforma": "Amazon",
+      "proveedor": "Amazon NL (Países Bajos)",
+      "enlace": "http://amazon.nl/-/en/XPOtool-universal-bending-materials-accessories/dp/B0BW16XLYV/ref=sr_1_5?crid=2803UE72HBJ22&dib=eyJ2IjoiMSJ9.wQzc-9HO5kvuymhdwWbF2Pb2PQyUCMxmhoATDu7IZT8tOXw1NeeVXPsp8OwDdOpvTj_EkUeillQqLNpgOpVBQRvFeeA8J-GpXSZYgiqqbMGer8PWMcwdIRKhjUWO8bHWNeY--RnIQMv8p2Gk-iHwR6LIGwhvfkkFJN2fP7M5MqxcrfxuFD3rnkgfgLW8nQDSHXMqmFb3OHTGAs83PP_xNhvdxj8e0l8dLiEF-YZQH0HzBwHqSPacSjwJ4V3MrhsGu7wCWW0wFRY6CXDxOfbeEdBITSBxJeKGGl7N2jZg4yc.FkIKEmUjIWZEuaXRKoFuy8Q0SD-sm5Tlu_jPfNsz4M4&dib_tag=se&keywords=PLEGADORA+DE+CHAPA&qid=1790706321&sprefix=plegadora+de+chapa%2Caps%2C283&sr=8-5",
+      "imagen": null,
+      "descripcion": "",
+      "especificaciones": [],
+      "precioCents": 4899,
+      "precioOriginal": "$48.99",
+      "moneda": "",
+      "cantidad": 1,
+      "videos": [],
+      "observaciones": [
+        "Precio consignado en el documento ($48,99)."
+      ],
+      "pendientes": [
+        "Confirmar la moneda: la plataforma es de Países Bajos y el documento usa el símbolo $.",
+        "Especificaciones no detalladas en el documento.",
+        "El documento no incluye imagen de este producto."
+      ]
+    },
+    {
+      "id": "kastforce-kf5006",
+      "nombre": "Dobladora de chapa KASTFORCE KF5006",
+      "marca": "KASTFORCE",
+      "modelo": "KF5006",
+      "categoria": "Plegadoras de láminas de aluminio",
+      "plataforma": "Amazon",
+      "proveedor": "Amazon (amazon.com) · opción 1 del documento",
+      "enlace": "https://www.amazon.com/KASTFORCE-KF5006-Carpeta-Capacidad-pulgadas/dp/B08GYKB24J/ref=sr_1_4_sspa?crid=3C38GWKY2PR86&dib=eyJ2IjoiMSJ9.hU3Y2oI0n43p2BjEuV_3s6pqo0PlThUBvoLeAomhgAOwUksgsx6DOFIqJQP9abhhDk6BLW1Q1b4AsYXEYQjppNofnb3JX25W2rBwqz-04hx5B2PktWEJ_W4xEnawInjIOlYAFYrAxn3Di8Vk_eM4_d5HjDdz9tseyBpNlxPG--lzOBlZAOa5GzUBLctl9196Mqh_0N0gDnM9q3_OgXCvyYfW2xgvS07D3h7ZwsoT6a6WD8Bd1ISqec6YaYy88p_p2eIymHjbuQnFXsAhoIhl1tQjVjGirk9lSyTRtMYDa-w.sNJA6EWF8w48AY2Fa1DvjDsleTs5mXv-DcbD6NhwLjs&dib_tag=se&keywords=plegadora+de+aluminio&qid=1790707164&sprefix=%2Caps%2C273&sr=8-4-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&psc=1",
+      "imagen": { "tipo": "semilla", "valor": "/assets/data/presupuestos/img/kastforce-kf5006.jpg" },
+      "descripcion": "Plegadora de caja y bandeja (box and pan brake) para lámina.",
+      "especificaciones": [
+        "Capacidad máxima de ancho: 24\" (610 mm).",
+        "Espesor máximo en acero suave: calibre 20 (1,0 mm).",
+        "Ángulo de doblez: 0–135°.",
+        "Dedos de 1\", 2\", 3\", 8\" y 10\" (25, 51, 76, 203 y 255 mm).",
+        "Profundidad máxima de caja: 1,5\" (38 mm)."
+      ],
+      "precioCents": 29998,
+      "precioOriginal": "$299.98",
+      "moneda": "",
+      "cantidad": 1,
+      "videos": [
+        { "titulo": "The Evolution Of Baileigh metal fabrication machine KF5006 Box and Pan Brake Sheet Metal Folder Bend", "url": "https://www.youtube.com/watch?v=cOs-N6Vmjy8" }
+      ],
+      "observaciones": [
+        "Precio consignado en el documento ($299,98)."
+      ],
+      "pendientes": [
+        "Confirmar la moneda del precio antes de aprobar.",
+        "Dimensión pendiente de verificar: el anexo la denomina «18 pulgadas» y la tabla indica 24\" (610 mm) de ancho máximo."
+      ]
+    },
+    {
+      "id": "kastforce-kf5002",
+      "nombre": "Dobladora de chapa KASTFORCE KF5002",
+      "marca": "KASTFORCE",
+      "modelo": "KF5002",
+      "categoria": "Plegadoras de láminas de aluminio",
+      "plataforma": "Amazon",
+      "proveedor": "Amazon (amazon.com) · opción 2 del documento",
+      "enlace": "https://www.amazon.com/KASTFORCE-KF5002-Dobladora-Curvadora-Capacidad/dp/B07DDG6CRX/ref=sr_1_1_sspa?crid=3C38GWKY2PR86&dib=eyJ2IjoiMSJ9.hU3Y2oI0n43p2BjEuV_3s6pqo0PlThUBvoLeAomhgAOwUksgsx6DOFIqJQP9abhhDk6BLW1Q1b4AsYXEYQjppNofnb3JX25W2rBwqz-04hx5B2PktWEJ_W4xEnawInjIOlYAFYrAxn3Di8Vk_eM4_d5HjDdz9tseyBpNlxPG--lzOBlZAOa5GzUBLctl9196Mqh_0N0gDnM9q3_OgXCvyYfW2xgvS07D3h7ZwsoT6a6WD8Bd1ISqec6YaYy88p_p2eIymHjbuQnFXsAhoIhl1tQjVjGirk9lSyTRtMYDa-w.sNJA6EWF8w48AY2Fa1DvjDsleTs5mXv-DcbD6NhwLjs&dib_tag=se&keywords=plegadora+de+aluminio&qid=1790707164&sprefix=%2Caps%2C273&sr=8-1-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&psc=1",
+      "imagen": { "tipo": "semilla", "valor": "/assets/data/presupuestos/img/kastforce-kf5002.jpg" },
+      "descripcion": "Dobladora manual de lámina (freno manual).",
+      "especificaciones": [
+        "Ancho máximo de doblez: 730 mm (28,75\").",
+        "Espesor máximo: 1,2 mm (calibre 18) en acero suave; 1,5 mm (calibre 16) en aluminio.",
+        "Ángulo máximo de flexión: 0–135°."
+      ],
+      "precioCents": 15998,
+      "precioOriginal": "$159.98",
+      "moneda": "",
+      "cantidad": 1,
+      "videos": [
+        { "titulo": "Kastforce KF5002 28inch bending brake", "url": "https://www.youtube.com/watch?v=tj8pB6ODRrA" }
+      ],
+      "observaciones": [
+        "Precio consignado en el documento ($159,98)."
+      ],
+      "pendientes": [
+        "Confirmar la moneda del precio antes de aprobar.",
+        "Dimensión pendiente de verificar: el anexo la denomina «18 pulgadas» y la tabla indica 730 mm (28,75\") de ancho máximo de doblez."
+      ]
+    },
+    {
+      "id": "aspiradora-taller",
+      "nombre": "Aspiradora de taller",
+      "marca": "",
+      "modelo": "",
+      "categoria": "Equipos de limpieza y herramientas manuales",
+      "plataforma": "Distribuidor local",
+      "proveedor": "Distribuidora Roccia (cotización directa)",
+      "enlace": "",
+      "imagen": { "tipo": "semilla", "valor": "/assets/data/presupuestos/img/aspiradora-taller.jpg" },
+      "descripcion": "",
+      "especificaciones": [],
+      "precioCents": 2617,
+      "precioOriginal": "$26.17 USD",
+      "moneda": "USD",
+      "cantidad": 1,
+      "videos": [],
+      "observaciones": [
+        "Precio cotizado directamente por el distribuidor: USD 26,17."
+      ],
+      "pendientes": [
+        "Marca, modelo y especificaciones sin información suficiente.",
+        "La imagen del documento muestra una inscripción en el equipo; no se registra como marca hasta confirmarla con el distribuidor."
+      ]
+    },
+    {
+      "id": "mueble-aereo",
+      "nombre": "Mueble aéreo",
+      "marca": "",
+      "modelo": "",
+      "categoria": "Mobiliario",
+      "plataforma": "Otro",
+      "proveedor": "Casa Lista",
+      "enlace": "https://casalistatienda.com/producto/estante-de-cocina-modulo-aereo-15/",
+      "imagen": null,
+      "descripcion": "",
+      "especificaciones": [],
+      "precioCents": null,
+      "precioOriginal": "",
+      "moneda": "",
+      "cantidad": 1,
+      "videos": [],
+      "observaciones": [],
+      "pendientes": [
+        "Precio por cotizar.",
+        "Especificaciones por completar con información confirmada.",
+        "El documento no incluye imagen de este producto."
+      ]
+    }
+  ]
+}

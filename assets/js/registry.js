@@ -49,6 +49,11 @@ export const TREE = {
               load: () => import('./modules/nodos-kanban.js')
             }
           ]
+        },
+        {
+          id: 'presupuestos', title: 'Presupuestos', icon: 'wallet',
+          desc: 'Productos que se necesitan comprar: compara opciones y aprueba compras dentro de un presupuesto máximo.',
+          load: () => import('./modules/presupuestos.js')
         }
       ]
     },

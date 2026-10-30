@@ -25,6 +25,7 @@ export const ICON = {
   download: svg('<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>'),
   upload: svg('<path d="M12 21V9M7 14l5-5 5 5M5 3h14"/>'),
   star: svg('<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>'),
+  wallet: svg('<path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M3 5v14a2 2 0 0 0 2 2h15V7"/><path d="M16 14h.01"/>'),
   kanban: svg('<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M5.5 7h2M11.5 7h2M17.5 7h2M11.5 11h2M5.5 11h2"/>'),
   arrow: svg('<path d="M5 12h14M13 6l6 6-6 6"/>'),
   back: svg('<path d="M19 12H5M11 18l-6-6 6-6"/>'),
