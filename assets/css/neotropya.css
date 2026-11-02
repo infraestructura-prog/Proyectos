@@ -603,3 +603,10 @@ body[data-area="neotropya"] .ik-neo .ik-block.ik-delay b { color: var(--neo-upd)
 body[data-area="neotropya"] .ik-neo .ik-syncnote { color: var(--neo-text-3); border-top-color: var(--neo-border); }
 body[data-area="neotropya"] .ik-neo .ik-extbar { background: rgba(255,255,255,.7); border-color: var(--neo-border); border-radius: var(--neo-radius-sm); color: var(--neo-text-2); }
 body[data-area="neotropya"] .ik-neo .ik-extbar.err { background: var(--neo-err-bg); border-color: #EDB6AC; }
+
+/* Estados de nodo «En fabricación» y «Bloqueado» */
+body[data-area="neotropya"] .chip-fab { color: #5B4A8C; background: #ECE7F6; border-color: #CFC4E6; }
+body[data-area="neotropya"] .chip-blk { color: var(--neo-err); background: var(--neo-err-bg); border-color: #EDB6AC; }
+body[data-area="neotropya"] .ring-fab { border-top: 4px solid #C3B6E0; } body[data-area="neotropya"] .ring-blk { border-top: 4px solid #E59A8C; }
+body[data-area="neotropya"] .kb-card.ring-fab { border-left-color: #8E7BC0; } body[data-area="neotropya"] .kb-card.ring-blk { border-left-color: #C9533F; }
+body[data-area="neotropya"] .kb-col.tone-violet { --col-accent: #C3B6E0; } body[data-area="neotropya"] .kb-col.tone-red { --col-accent: #E59A8C; }

@@ -119,11 +119,13 @@ export const norm = s => (s || '').toLowerCase();
 export const statusKind = s => {
   const v = norm(s);
   if (/desplegad|completad/.test(v)) return 'ok';
+  if (/\bbloque/.test(v)) return 'blk';   // «Bloqueado»: lo frena algo que no depende del equipo (no «Desbloqueado»)
+  if (/fabric/.test(v)) return 'fab';
   if (/actualiz/.test(v)) return 'upd';
   if (/ejecutar/.test(v)) return 'todo';
   return 'other';
 };
-export const badge = s => `<span class="chip chip-${statusKind(s)}"><span class="dot ${statusKind(s) === 'upd' ? 'pulse' : ''}"></span>${esc(s)}</span>`;
+export const badge = s => `<span class="chip chip-${statusKind(s)}"><span class="dot ${/upd|fab/.test(statusKind(s)) ? 'pulse' : ''}"></span>${esc(s)}</span>`;
 export const small = icon => icon.replace('<svg', '<svg width="16" height="16"');
 
 /* Número del módulo de centinela tomado de las especificaciones (ej. «Módulo de centinela: #03» → «#03»). */

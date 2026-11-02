@@ -357,3 +357,12 @@ button.pair-half:hover, button.pair-half:focus-visible { transform: translateY(-
   .kanban { grid-auto-columns: 86%; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* Estados de nodo «En fabricación» y «Bloqueado» (chip, anillo, columna y fila de 5 indicadores) */
+.chip-fab { color: #c4b5fd; border-color: rgba(167,139,250,.45); background: rgba(167,139,250,.1); }
+.chip-blk { color: var(--red); border-color: rgba(248,113,113,.45); background: rgba(248,113,113,.1); }
+.ring-fab { border-color: rgba(167,139,250,.3); } .ring-blk { border-color: rgba(248,113,113,.35); }
+.kb-card.ring-fab { border-left-color: #a78bfa; } .kb-card.ring-blk { border-left-color: var(--red); }
+.kb-col.tone-violet { --col-accent: #a78bfa; } .kb-col.tone-red { --col-accent: var(--red); }
+.kpis.kpis-5 > :first-child { grid-column: 1 / -1; }
+@media (min-width: 1024px) { .kpis.kpis-5 { grid-template-columns: repeat(5, minmax(0,1fr)); } .kpis.kpis-5 > :first-child { grid-column: auto; } }

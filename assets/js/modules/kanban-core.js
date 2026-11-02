@@ -144,7 +144,7 @@ export function mountKanban(root, cfg) {
   /* ── Tarjetas sincronizadas (cfg.external) ──
      Vienen de otra fuente (p. ej. el estado de los nodos en Google Sheets): no se guardan en este tablero,
      no se editan ni se mueven aquí; su columna la decide la fuente. Formato de cada elemento:
-     { id, ref, titulo, estado, proyecto, responsable, tags[], demora, detalle } */
+     { id, ref, titulo, estado, proyecto, responsable, tags[], demora, bloqueo?: { quien, motivo }, detalle } */
   async function loadExternal(force = false) {
     if (!cfg.external) return;
     B.ext.state = 'loading'; if (B.ready) render();
@@ -173,7 +173,8 @@ export function mountKanban(root, cfg) {
       </div>
       <button type="button" class="ik-title" data-act="ext-open" data-id="${esc(x.id)}">${esc(x.titulo)}</button>
       ${(x.tags || []).length ? `<div class="ik-tags">${x.tags.map(t => `<span class="ik-tag t-src">${esc(t)}</span>`).join('')}</div>` : ''}
-      ${x.demora ? `<div class="ik-block ik-delay"><b>${small(ICON.warn)}Motivo de demora</b><span>${esc(x.demora)}</span></div>` : ''}
+      ${x.bloqueo ? `<div class="ik-block"><b>${small(ICON.lock)}Depende de: ${esc(x.bloqueo.quien || 'dependencia por identificar')}</b><span>${esc(x.bloqueo.motivo)}</span></div>`
+        : x.demora ? `<div class="ik-block ik-delay"><b>${small(ICON.warn)}Motivo de demora</b><span>${esc(x.demora)}</span></div>` : ''}
       <dl class="ik-meta">
         <div><dt>Responsable</dt><dd>${esc(x.responsable || 'Por asignar')}</dd></div>
         ${x.detalle ? `<div><dt>${esc(x.detalle[0])}</dt><dd>${esc(x.detalle[1])}</dd></div>` : ''}

@@ -22,7 +22,7 @@ export function mount(root, ctx) {
       </div>
     </div>
     <div data-banner></div>
-    <section class="kpis" data-kpis aria-label="Resumen"></section>
+    <section class="kpis kpis-5" data-kpis aria-label="Resumen"></section>
     <section class="panel toolbar" aria-label="Búsqueda y filtros">
       <div class="search">${ICON.search}<label class="sr-only" for="nd-q">Buscar</label>
         <input id="nd-q" type="search" placeholder="Buscar por ID o componente (ej. Ecoflow, NO-FI…)"></div>
@@ -61,8 +61,9 @@ export function mount(root, ctx) {
     const items = [
       { label:'Total registrados', val:d.length, sub:`${d.filter(x=>x.tipo==='Maleta').length} maletas · ${d.filter(x=>x.tipo==='Bolso').length} bolsos`, c:'var(--text)', bar:'linear-gradient(90deg,#94a3b8,#475569)', k:'' },
       { label:'Desplegados / Completados', val:n('ok'), sub:'Operativos', c:'var(--mint)', bar:'linear-gradient(90deg,var(--mint),#059669)', k:'ok' },
-      { label:'En actualizaciones', val:n('upd'), sub:'Trabajo en curso', c:'var(--amber)', bar:'linear-gradient(90deg,var(--amber),#f97316)', k:'upd' },
-      { label:'Por ejecutar', val:n('todo'), sub:'Pendientes de iniciar', c:'var(--neon)', bar:'linear-gradient(90deg,var(--neon),#2563eb)', k:'todo' }
+      { label:'En curso', val:n('upd') + n('fab'), sub:`${n('upd')} en actualizaciones · ${n('fab')} en fabricación`, c:'var(--amber)', bar:'linear-gradient(90deg,var(--amber),#f97316)', k:'upd' },
+      { label:'Por ejecutar', val:n('todo'), sub:'Pendientes de iniciar', c:'var(--neon)', bar:'linear-gradient(90deg,var(--neon),#2563eb)', k:'todo' },
+      { label:'Bloqueados', val:n('blk'), sub:'Frenados por algo externo', c:'var(--red)', bar:'linear-gradient(90deg,var(--red),#b91c1c)', k:'blk' }
     ];
     els.kpis.innerHTML = items.map(i => {
       const pct = d.length ? Math.round(i.val / d.length * 100) : 0;

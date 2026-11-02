@@ -10,9 +10,11 @@ import {
 /* Columnas según el estado del nodo al que pertenece cada actividad. */
 const STATUS_COLUMNS = [
   { key: 'todo', title: 'Por ejecutar', tone: 'neon' },
+  { key: 'fab', title: 'En fabricación', tone: 'violet', optional: true },
   { key: 'upd', title: 'En actualizaciones', tone: 'amber' },
+  { key: 'blk', title: 'Bloqueados', tone: 'red' },
   { key: 'ok', title: 'Desplegados / Completados', tone: 'mint' },
-  { key: 'other', title: 'Otros estados', tone: 'dim' }
+  { key: 'other', title: 'Otros estados', tone: 'dim', optional: true }
 ];
 
 export function mount(root, ctx) {
@@ -85,10 +87,10 @@ export function mount(root, ctx) {
       }));
     }
     return STATUS_COLUMNS.map(c => ({
-      title: c.title, tone: c.tone,
+      title: c.title, tone: c.tone, optional: c.optional,
       items: list.filter(a => statusKind(a.node.estado) === c.key),
       idle: nodes.filter(n => statusKind(n.estado) === c.key && !n.pendientes.length)
-    })).filter(c => c.items.length || c.idle.length || c.title !== 'Otros estados');
+    })).filter(c => c.items.length || c.idle.length || !c.optional);   // las columnas opcionales solo aparecen si tienen algo
   }
 
   function cardHtml(a) {

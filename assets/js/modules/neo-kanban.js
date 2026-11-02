@@ -6,20 +6,23 @@
    La lógica está en kanban-core.js; la estética, en neotropya.css (.ik-neo). */
 import { neoHero } from '../neo-theme.js';
 import { mountKanban } from './kanban-core.js';
-import { shared, refreshShared, norm, openNodeDetail } from './nodos-data.js';
+import { shared, refreshShared, statusKind, openNodeDetail } from './nodos-data.js';
 
-/* Estado del nodo en la hoja → columna y título de su tarjeta. Desplegados y completados no generan tarjeta. */
+/* Estado del nodo en la hoja → columna y título de su tarjeta. Desplegados y completados no generan tarjeta.
+   «Bloqueado» va a Blocked: el «Motivo de demora» de la hoja es el motivo y el responsable, de quién depende. */
 function nodeCard(n) {
-  const v = norm(n.estado);
+  const k = statusKind(n.estado);
   let estado, accion;
-  if (/fabric/.test(v)) [estado, accion] = ['doing', 'Fabricación'];
-  else if (/actualiz/.test(v)) [estado, accion] = ['doing', 'Actualización'];
-  else if (/ejecutar/.test(v)) [estado, accion] = ['todo', 'Ejecución'];
+  if (k === 'blk') [estado, accion] = ['blocked', 'Actualización'];
+  else if (k === 'fab') [estado, accion] = ['doing', 'Fabricación'];
+  else if (k === 'upd') [estado, accion] = ['doing', 'Actualización'];
+  else if (k === 'todo') [estado, accion] = ['todo', 'Ejecución'];
   else return null;
   const np = n.pendientes.length;
   return {
     id: 'nodo:' + n.id, ref: n.id, titulo: `${accion} del nodo ${n.id}`, estado, proyecto: 'Nodos',
     responsable: n.responsable, demora: n.demora, tags: [n.tipo, n.estado],
+    bloqueo: estado === 'blocked' ? { quien: n.responsable, motivo: n.demora || 'Motivo no registrado en la hoja («Motivo de demora»).' } : null,
     detalle: ['Pendientes', np ? `${np} en la ficha del nodo` : 'Ninguno registrado']
   };
 }
@@ -36,7 +39,7 @@ export function mount(root) {
     external: {
       sourceName: 'Nodos (Google Sheets)', sourceTitle: 'Estado leído de la hoja de control de nodos', badge: 'Desde Nodos',
       toggle: 'Mostrar nodos en curso',
-      rule: '«Por ejecutar» va a To do; «En actualizaciones» o «En fabricación», a Doing. Los desplegados y completados no aparecen.',
+      rule: '«Por ejecutar» va a To do; «En actualizaciones» o «En fabricación», a Doing; «Bloqueado», a Blocked. Los desplegados y completados no aparecen.',
       note: 'El estado se cambia en la hoja de Nodos. Abre la tarjeta para ver la ficha.',
       async load(force) {
         await refreshShared({ force });

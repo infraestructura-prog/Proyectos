@@ -308,6 +308,7 @@ Archivos: `assets/js/modules/presupuestos.js` (interfaz) y `assets/js/modules/pr
   - Columna según el estado en la hoja:
     - «Por ejecutar» va a To do.
     - «En actualizaciones» o «En fabricación» va a Doing.
+    - «Bloqueado» va a Blocked. El «Motivo de demora» de la hoja se muestra como motivo del bloqueo y el responsable, como «Depende de».
     - «Desplegado», «Completado» y los estados que no se reconocen no generan tarjeta.
   - Son de solo lectura:
     - no se guardan ni se exportan con el tablero;
@@ -315,6 +316,21 @@ Archivos: `assets/js/modules/presupuestos.js` (interfaz) y `assets/js/modules/pr
     - al abrirlas se muestra la ficha del nodo.
   - Se ocultan con «Mostrar nodos en curso» y se recargan con «Actualizar».
   - Si la hoja no se puede leer, se avisa y el resto del tablero sigue funcionando. Los datos de demostración de Nodos nunca se muestran como estado real.
+
+## Estados de los nodos (hoja de control de órdenes de fabricación)
+
+`statusKind` en `assets/js/modules/nodos-data.js` clasifica el texto de la columna de estado; no distingue mayúsculas:
+
+| Texto en la hoja | Clase | Control de órdenes | Tablero de actividades | Kanban de Neotropya |
+|---|---|---|---|---|
+| contiene «desplegad» o «completad» | `ok` | Desplegados / Completados | Desplegados / Completados | sin tarjeta |
+| empieza una palabra con «bloque» (no «Desbloqueado») | `blk` | Bloqueados (rojo) | Bloqueados | Blocked |
+| contiene «fabric» | `fab` | En curso (violeta) | En fabricación (solo si hay alguno) | Doing |
+| contiene «actualiz» | `upd` | En curso (ámbar) | En actualizaciones | Doing |
+| contiene «ejecutar» | `todo` | Por ejecutar | Por ejecutar | To do |
+| cualquier otro | `other` | etiqueta gris | Otros estados (solo si hay alguno) | sin tarjeta |
+
+Un estado nuevo en la hoja necesita una regla aquí; si no, cae en `other`.
 
 ## Investigaciones (Neotropya › Nodos › Investigaciones)
 
