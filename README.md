@@ -303,6 +303,18 @@ Archivos: `assets/js/modules/presupuestos.js` (interfaz) y `assets/js/modules/pr
   - Los criterios de finalización son propuestas.
 - **Separación de Infraestructura:** formato `ccs-kanban-v1`, identificador `neotropya-kanban` y clave de localStorage `ccs-neotropya-kanban-v1`. Los archivos de un tablero no se pueden importar en el otro.
 - Mismas columnas, reglas de estado, exportación e importación que el Kanban de Infraestructura.
+- **Tarjetas sincronizadas desde Nodos:**
+  - Se lee la misma hoja de Google Sheets que Neotropya › Nodos, y cada nodo en curso aparece como una sola tarjeta («Actualización del nodo NO-FI-V3-002»). La tarjeta no lista los pendientes del nodo, solo cuántos tiene.
+  - Columna según el estado en la hoja:
+    - «Por ejecutar» va a To do.
+    - «En actualizaciones» o «En fabricación» va a Doing.
+    - «Desplegado», «Completado» y los estados que no se reconocen no generan tarjeta.
+  - Son de solo lectura:
+    - no se guardan ni se exportan con el tablero;
+    - no se mueven ni se editan aquí, porque el estado se cambia en la hoja;
+    - al abrirlas se muestra la ficha del nodo.
+  - Se ocultan con «Mostrar nodos en curso» y se recargan con «Actualizar».
+  - Si la hoja no se puede leer, se avisa y el resto del tablero sigue funcionando. Los datos de demostración de Nodos nunca se muestran como estado real.
 
 ## Investigaciones (Neotropya › Nodos › Investigaciones)
 

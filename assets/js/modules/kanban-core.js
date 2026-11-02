@@ -86,7 +86,8 @@ export function mountKanban(root, cfg) {
   const BOARD_ID = cfg.boardId;
   const storage = storageFor(cfg.storeKey);
   const B ={ cards: [], savedAt: null, ready: false, error: '', mobileCol: 'todo',
-    f: { q: '', resp: '', prio: '', proy: '', dep: '', vencidas: false, transversal: false, archivadas: false } };
+    f: { q: '', resp: '', prio: '', proy: '', dep: '', vencidas: false, transversal: false, archivadas: false, ext: true },
+    ext: { items: [], state: cfg.external ? 'loading' : 'off', error: '' } };
   let alive = true, dragId = null;
 
   const wrap = inner => `<div class="ik ${cfg.cls || ''}">${inner}</div>`;
@@ -140,6 +141,47 @@ export function mountKanban(root, cfg) {
     return true;
   }
 
+  /* ── Tarjetas sincronizadas (cfg.external) ──
+     Vienen de otra fuente (p. ej. el estado de los nodos en Google Sheets): no se guardan en este tablero,
+     no se editan ni se mueven aquí; su columna la decide la fuente. Formato de cada elemento:
+     { id, ref, titulo, estado, proyecto, responsable, tags[], demora, detalle } */
+  async function loadExternal(force = false) {
+    if (!cfg.external) return;
+    B.ext.state = 'loading'; if (B.ready) render();
+    try { B.ext.items = (await cfg.external.load(force)).filter(x => x && COL_IDS.includes(x.estado)); B.ext.state = 'ok'; B.ext.error = ''; }
+    catch (e) { B.ext.state = 'error'; B.ext.error = e && e.message || 'error desconocido'; }
+    if (alive && B.ready) render();
+  }
+
+  function visibleExt(x) {
+    const f = B.f;
+    if (!f.ext || f.vencidas) return false;
+    const q = f.q.trim().toLowerCase();
+    if (q && ![x.titulo, x.ref, x.responsable, x.demora, ...(x.tags || [])].join(' ').toLowerCase().includes(q)) return false;
+    if (f.resp && (f.resp === '__none' ? x.responsable : x.responsable !== f.resp)) return false;
+    if (f.prio && f.prio !== '__none') return false;
+    if (f.proy && x.proyecto !== f.proy) return false;
+    if (f.dep === '__con' || (f.dep && !f.dep.startsWith('__'))) return false;
+    return true;
+  }
+
+  function extCardHtml(x) {
+    return `<li class="ik-card ik-sync" data-ext="${esc(x.id)}">
+      <div class="ik-card-top">
+        <span class="ik-proj">${esc(x.proyecto || '')}</span>
+        <span class="ik-src" title="${esc(cfg.external.sourceTitle || '')}">${small(ICON.refresh)}${esc(cfg.external.badge || 'Sincronizada')}</span>
+      </div>
+      <button type="button" class="ik-title" data-act="ext-open" data-id="${esc(x.id)}">${esc(x.titulo)}</button>
+      ${(x.tags || []).length ? `<div class="ik-tags">${x.tags.map(t => `<span class="ik-tag t-src">${esc(t)}</span>`).join('')}</div>` : ''}
+      ${x.demora ? `<div class="ik-block ik-delay"><b>${small(ICON.warn)}Motivo de demora</b><span>${esc(x.demora)}</span></div>` : ''}
+      <dl class="ik-meta">
+        <div><dt>Responsable</dt><dd>${esc(x.responsable || 'Por asignar')}</dd></div>
+        ${x.detalle ? `<div><dt>${esc(x.detalle[0])}</dt><dd>${esc(x.detalle[1])}</dd></div>` : ''}
+      </dl>
+      <p class="ik-syncnote">${esc(cfg.external.note || 'El estado se cambia en la fuente.')}</p>
+    </li>`;
+  }
+
   /* ── Tarjeta compacta ── */
   function cardHtml(c, i, n) {
     const pr = progress(c), d = targetDate(c), od = isOverdue(c);
@@ -180,6 +222,11 @@ export function mountKanban(root, cfg) {
     const opt = (arr, v, all, extra = '') => `<option value="">${all}</option>${extra}` + arr.map(x => `<option value="${esc(x)}" ${x === v ? 'selected' : ''}>${esc(x)}</option>`).join('');
     const sel = (v, val) => (v === val ? 'selected' : '');
     const vis = active.filter(visible);
+    const ext = B.ext.state === 'ok' ? B.ext.items : [];
+    const visExt = ext.filter(visibleExt);
+    const respAll = [...active.map(c => c.responsable), ...ext.map(x => x.responsable)];
+    const proyAll = [...active.map(c => c.proyecto), ...ext.map(x => x.proyecto)];
+    const nCol = id => vis.filter(c => c.estado === id).length + visExt.filter(x => x.estado === id).length;
     const archived = B.cards.filter(c => c.archivada);
 
     root.innerHTML = `<div class="ik ${cfg.cls || ''}">${hero}
@@ -187,18 +234,19 @@ export function mountKanban(root, cfg) {
         <div class="search">${ICON.search}<label class="sr-only" for="ik-q">Buscar por título, descripción o equipo</label>
           <input id="ik-q" type="search" placeholder="Buscar por título, descripción o equipo…" value="${esc(f.q)}"></div>
         <label class="sr-only" for="ik-resp">Responsable</label>
-        <select id="ik-resp" class="select" data-f="resp">${opt(uniq(active.map(c => c.responsable)), f.resp, 'Responsable: todos', `<option value="__none" ${sel(f.resp, '__none')}>Por asignar</option>`)}</select>
+        <select id="ik-resp" class="select" data-f="resp">${opt(uniq(respAll), f.resp, 'Responsable: todos', `<option value="__none" ${sel(f.resp, '__none')}>Por asignar</option>`)}</select>
         <label class="sr-only" for="ik-prio">Prioridad</label>
         <select id="ik-prio" class="select" data-f="prio"><option value="">Prioridad: todas</option>${PRIOS.map(p => `<option value="${p.id}" ${sel(f.prio, p.id)}>${p.label}</option>`).join('')}<option value="__none" ${sel(f.prio, '__none')}>Por confirmar</option></select>
         <label class="sr-only" for="ik-proy">Proyecto</label>
-        <select id="ik-proy" class="select" data-f="proy">${opt(uniq(active.map(c => c.proyecto)), f.proy, 'Proyecto: todos')}</select>
+        <select id="ik-proy" class="select" data-f="proy">${opt(uniq(proyAll), f.proy, 'Proyecto: todos')}</select>
         <label class="sr-only" for="ik-dep">Dependencia</label>
         <select id="ik-dep" class="select" data-f="dep"><option value="">Dependencia: todas</option><option value="__con" ${sel(f.dep, '__con')}>Con dependencia</option><option value="__sin" ${sel(f.dep, '__sin')}>Sin dependencia</option>${uniq(active.map(depOf)).map(x => `<option value="${esc(x)}" ${sel(f.dep, x)}>${esc(x)}</option>`).join('')}</select>
         <label class="check"><input type="checkbox" data-f="vencidas" ${f.vencidas ? 'checked' : ''}> Solo vencidas</label>
         <label class="check"><input type="checkbox" data-f="transversal" ${f.transversal ? 'checked' : ''}> Mostrar actividades transversales</label>
+        ${cfg.external ? `<label class="check"><input type="checkbox" data-f="ext" ${f.ext ? 'checked' : ''}> ${esc(cfg.external.toggle)}</label>` : ''}
       </section>
       <div class="ik-bar">
-        <p class="count" aria-live="polite">Mostrando ${vis.length} de ${active.filter(c => f.transversal || !c.transversal).length} tarjetas${f.transversal || !cfg.scopeLabel ? '' : ` ${esc(cfg.scopeLabel)}`}</p>
+        <p class="count" aria-live="polite">Mostrando ${vis.length} de ${active.filter(c => f.transversal || !c.transversal).length} tarjetas${f.transversal || !cfg.scopeLabel ? '' : ` ${esc(cfg.scopeLabel)}`}${cfg.external && f.ext && ext.length ? ` · ${visExt.length} sincronizada${visExt.length === 1 ? '' : 's'} desde ${esc(cfg.external.sourceName)}` : ''}</p>
         <div class="ik-data">
           <button type="button" class="btn btn-sm" data-act="export">${ICON.download}Exportar JSON</button>
           <button type="button" class="btn btn-sm" data-act="import">${ICON.upload}Importar JSON</button>
@@ -207,16 +255,18 @@ export function mountKanban(root, cfg) {
         </div>
       </div>
       <p class="ik-storage">Los cambios se guardan solo en este navegador y no se comparten entre equipos. Usa «Exportar JSON» para respaldarlos o llevarlos a otro equipo.${B.savedAt ? ` Último guardado: ${esc(fmtDate(B.savedAt))}.` : ''}</p>
+      ${cfg.external ? extStatus() : ''}
 
-      <div class="ik-colpick" role="group" aria-label="Elegir columna">${COLS.map(col => `<button type="button" class="ik-pick c-${col.id}" data-act="pick" data-col="${col.id}" aria-pressed="${B.mobileCol === col.id}">${col.title} <span class="n">${vis.filter(c => c.estado === col.id).length}</span></button>`).join('')}</div>
+      <div class="ik-colpick" role="group" aria-label="Elegir columna">${COLS.map(col => `<button type="button" class="ik-pick c-${col.id}" data-act="pick" data-col="${col.id}" aria-pressed="${B.mobileCol === col.id}">${col.title} <span class="n">${nCol(col.id)}</span></button>`).join('')}</div>
 
       <div class="ik-board" data-mobile="${B.mobileCol}">${COLS.map(col => {
         const cards = vis.filter(c => c.estado === col.id).sort((a, b) => a.orden - b.orden);
-        const total = active.filter(c => c.estado === col.id && (f.transversal || !c.transversal)).length;
+        const extCol = visExt.filter(x => x.estado === col.id);
+        const total = active.filter(c => c.estado === col.id && (f.transversal || !c.transversal)).length + (f.ext ? ext.filter(x => x.estado === col.id).length : 0);
         return `<section class="ik-col c-${col.id}" data-col="${col.id}" aria-labelledby="ik-h-${col.id}">
           <header class="ik-col-head"><div><h2 id="ik-h-${col.id}">${col.title}</h2><p>${col.help}</p></div>
-            <span class="n" aria-label="${cards.length} tarjetas">${cards.length === total ? cards.length : `${cards.length}/${total}`}</span></header>
-          <ul class="ik-list" data-col="${col.id}">${cards.map((c, i) => cardHtml(c, i, cards.length)).join('') || '<li class="ik-empty">Sin tarjetas.</li>'}</ul>
+            <span class="n" aria-label="${cards.length + extCol.length} tarjetas">${cards.length + extCol.length === total ? total : `${cards.length + extCol.length}/${total}`}</span></header>
+          <ul class="ik-list" data-col="${col.id}">${cards.map((c, i) => cardHtml(c, i, cards.length)).join('')}${extCol.map(extCardHtml).join('')}${cards.length + extCol.length ? '' : '<li class="ik-empty">Sin tarjetas.</li>'}</ul>
         </section>`;
       }).join('')}</div>
 
@@ -238,7 +288,7 @@ export function mountKanban(root, cfg) {
 
   /* ── Arrastrar y soltar (escritorio) ── */
   function bindDrag() {
-    root.querySelectorAll('.ik-card').forEach(el => {
+    root.querySelectorAll('.ik-card:not(.ik-sync)').forEach(el => {
       el.addEventListener('dragstart', e => { dragId = el.dataset.id; el.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragId); });
       el.addEventListener('dragend', () => { dragId = null; el.classList.remove('dragging'); root.querySelectorAll('.drop-target').forEach(x => x.classList.remove('drop-target')); });
     });
@@ -248,7 +298,7 @@ export function mountKanban(root, cfg) {
       list.addEventListener('drop', e => {
         e.preventDefault();
         const id = dragId || e.dataTransfer.getData('text/plain'); if (!id) return;
-        const items = [...list.querySelectorAll('.ik-card')].filter(x => x.dataset.id !== id);
+        const items = [...list.querySelectorAll('.ik-card:not(.ik-sync)')].filter(x => x.dataset.id !== id);
         let index = items.length;
         for (let k = 0; k < items.length; k++) { const r = items[k].getBoundingClientRect(); if (e.clientY < r.top + r.height / 2) { index = k; break; } }
         const before = items[index] ? items[index].dataset.id : null;
@@ -569,10 +619,21 @@ export function mountKanban(root, cfg) {
       case 'import': root.querySelector('[data-import]').click(); break;
       case 'archived': B.f.archivadas = !B.f.archivadas; render(); break;
       case 'restore': if (c) restore(c); break;
+      case 'ext-open': { const x = B.ext.items.find(i => i.id === id); if (x) cfg.external.open(x.ref); break; }
+      case 'ext-refresh': loadExternal(true); break;
     }
   });
   root.addEventListener('change', e => { if (e.target.dataset.act === 'state') moveCard(e.target.dataset.id, e.target.value); });
 
-  load();
+  function extStatus() {
+    const e = cfg.external, s = B.ext.state;
+    const btn = `<button type="button" class="btn btn-sm btn-ghost" data-act="ext-refresh" ${s === 'loading' ? 'disabled' : ''}>${ICON.refresh}${s === 'loading' ? 'Actualizando…' : 'Actualizar'}</button>`;
+    const msg = s === 'loading' ? `Leyendo ${esc(e.sourceName)}…`
+      : s === 'error' ? `No se pudo leer ${esc(e.sourceName)} (${esc(B.ext.error)}). El resto del tablero funciona con normalidad.`
+        : `${B.ext.items.length} tarjeta${B.ext.items.length === 1 ? '' : 's'} sincronizada${B.ext.items.length === 1 ? '' : 's'} desde ${esc(e.sourceName)}. ${esc(e.rule || '')}`;
+    return `<div class="ik-extbar ${s === 'error' ? 'err' : ''}" role="status"><p>${msg}</p>${btn}</div>`;
+  }
+
+  load().then(() => loadExternal());
   return () => { alive = false; };
 }

@@ -466,3 +466,15 @@ body[data-area="infraestructura"] .page:has(.ik) { max-width: none; }
 .ik-impopt:has(input:checked) { border-color: var(--in-orange); }
 .ik-impopt.danger:has(input:checked) { border-color: var(--in-err); }
 .ik-impsum { margin: 2px 0 0; padding-left: 18px; font-size: 13px; display: grid; gap: 2px; }
+
+/* Kanban · tarjetas sincronizadas desde otra fuente (solo lectura) y su barra de estado */
+.ik-card.ik-sync { border-style: dashed; border-left-style: solid; }
+.ik-src { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 3px; border: 1px solid var(--in-steel); color: var(--in-text-2); }
+.ik-tag.t-src { color: var(--in-text-2); border-color: var(--in-steel); background: var(--in-raised); }
+.ik-block.ik-delay { background: rgba(232,194,74,.1); border-color: rgba(232,194,74,.5); color: var(--in-text); }
+.ik-block.ik-delay b { color: #F1D47E; }
+.ik-block.ik-delay span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.ik-syncnote { margin: 0; padding-top: 6px; border-top: 1px solid rgba(69,77,70,.6); font-size: 12px; color: var(--in-text-3); }
+.ik-extbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin: -6px 0 14px; padding: 8px 12px; border: 1px solid var(--in-steel); border-radius: 6px; font-size: 13px; color: var(--in-text-2); }
+.ik-extbar p { margin: 0; flex: 1 1 260px; }
+.ik-extbar.err { border-color: rgba(239,107,94,.6); }
