@@ -1,0 +1,79 @@
+{
+  "schema": "ccs-kanban-v1",
+  "id": "neotropya-kanban",
+  "version": 1,
+  "fuente": "Carga inicial del Kanban de Neotropya (02/11/2026), a partir de los mensajes de Slack enlazados en cada tarjeta. Los criterios de finalización son propuestas editables; los hechos históricos están en las notas y no representan acciones nuevas ejecutadas.",
+  "tarjetas": [
+    {
+      "id": "investigacion-sujecion-nodo-moto",
+      "titulo": "Investigar la sujeción nodo–moto",
+      "objetivo": "Comparar alternativas de fabricación y compra para recomendar una solución de sujeción práctica, compatible y tipo plug and play.",
+      "descripcion": "Desarrollamos maletas para motos con equipos de conectividad satelital. Se necesita estudiar una solución de sujeción que permita instalar el producto en distintos modelos de motos, incluidas las que tienen parrillera tradicional y las que necesitan bases específicas.",
+      "criterio": "Estudio documentado con alternativas, límites de compatibilidad y recomendación presentada. No implica fabricación ni instalación.",
+      "estado": "doing", "estadoPorConfirmar": false,
+      "prioridad": "", "proyecto": "Investigación", "equipo": "Sujeción nodo–moto",
+      "responsable": "Cristian", "supervisor": "", "solicitante": "Alberto (revisión de la recomendación)", "dependenciaExterna": "",
+      "proximaAccion": "Consolidar los modelos y sistemas de montaje que cubrirá el estudio.",
+      "fechas": { "original": "2026-10-23", "reprogramada": "", "condicionadas": [] },
+      "subtareas": [
+        { "id": "s1", "texto": "Identificar modelos relevantes del mercado venezolano y sus sistemas de parrillera", "hecha": false },
+        { "id": "s2", "texto": "Clasificar motos con parrillera tradicional y motos con bases específicas", "hecha": false },
+        { "id": "s3", "texto": "Investigar adaptadores y sistemas comerciales disponibles", "hecha": false },
+        { "id": "s4", "texto": "Comparar fabricación propia frente a compra: compatibilidad, restricciones y costos documentados", "hecha": false },
+        { "id": "s5", "texto": "Preparar la recomendación para revisar con Alberto", "hecha": false }
+      ],
+      "notas": "Fecha: el 23/10/2026 era una meta original de avance, ya vencida; no es la fecha de entrega final. Nueva fecha por acordar.\nPrioridad por confirmar.\nEl criterio de finalización es una propuesta.",
+      "enlaces": ["https://suspensionesccs-group.slack.com/archives/D0CAAF0B83G/p1793393679760219"],
+      "hito": false, "transversal": false, "archivada": false, "vinculadas": []
+    },
+    {
+      "id": "reporte-baterias",
+      "titulo": "Actualizar el reporte de baterías",
+      "objetivo": "Consolidar un reporte actualizado de inventario, ubicación, instalación, funcionamiento e incidencias de las baterías.",
+      "descripcion": "Actualización del reporte de baterías (elaboración y envío del reporte). El reporte inicial ya se envió a Alberto el 21/10/2026; esta tarjeta corresponde a su actualización, no a un primer envío.",
+      "criterio": "Reporte actualizado enviado a Alberto, con fecha de corte, fuentes y datos pendientes de confirmación identificados.",
+      "estado": "todo", "estadoPorConfirmar": false,
+      "prioridad": "", "proyecto": "Energía", "equipo": "Baterías",
+      "responsable": "Cristian", "supervisor": "", "solicitante": "Alberto (destinatario del reporte)", "dependenciaExterna": "",
+      "proximaAccion": "Validar el inventario y cruzarlo con las novedades de Sebastián.",
+      "fechas": { "original": "", "reprogramada": "", "condicionadas": [] },
+      "subtareas": [
+        { "id": "s1", "texto": "Verificar modelo, capacidad, ubicación y responsable de cada batería", "hecha": false },
+        { "id": "s2", "texto": "Confirmar cuáles están instaladas y cuáles siguen disponibles", "hecha": false },
+        { "id": "s3", "texto": "Incorporar la información de Sebastián del 30/10 sobre OPP 26", "hecha": false },
+        { "id": "s4", "texto": "Identificar datos sin verificar, diferenciando fallas de batería de fallas del conector o alimentación", "hecha": false },
+        { "id": "s5", "texto": "Preparar y enviar a Alberto la actualización", "hecha": false }
+      ],
+      "notas": "Antecedente completado: reporte inicial enviado a Alberto el 21/10/2026.\nDatos históricos del reporte del 21/10 (no asumir que siguen vigentes sin comprobarlos):\n- Una batería de 768 Wh instalada en NO-AN-V3-001.\n- Una batería de 512 Wh en poder de Sebastián, pendiente de instalación.\n- Una DELTA 2 Black E980 de 980 Wh en el Departamento de Ensamblaje, pendiente de instalación.\nNo asumir que la batería de OPP 26 corresponde a una de estas tres sin evidencia.\nCristian: consolidación y elaboración del reporte. Prioridad y fecha de entrega por confirmar.\nEl criterio de finalización es una propuesta.",
+      "enlaces": [
+        "https://suspensionesccs-group.slack.com/archives/D0CAAF0B83G/p1792591839039849",
+        "https://suspensionesccs-group.slack.com/archives/D0CAAF0EERL/p1793386880807059"
+      ],
+      "hito": false, "transversal": false, "archivada": false, "vinculadas": ["plan-accion-opp-26"]
+    },
+    {
+      "id": "plan-accion-opp-26",
+      "titulo": "Definir el plan de acción del nodo OPP 26",
+      "objetivo": "Definir y coordinar una intervención con responsables, recursos y verificaciones de cierre para recuperar y comprobar la operación del nodo OPP 26.",
+      "descripcion": "Planificación de la intervención en el nodo OPP 26. La ejecución técnica de las reparaciones es una fase posterior a la aprobación del plan y su seguimiento se registra en esta misma tarjeta.",
+      "criterio": "Plan documentado y validado con responsables, recursos, secuencia y fecha de intervención. La aprobación del plan no significa que la reparación esté ejecutada.",
+      "estado": "todo", "estadoPorConfirmar": false,
+      "prioridad": "", "proyecto": "Nodos", "equipo": "Nodo OPP 26",
+      "responsable": "", "supervisor": "", "solicitante": "Sebastián (reporte del 30/10/2026)", "dependenciaExterna": "",
+      "proximaAccion": "Confirmar responsables y disponibilidad de la caja para preparar la intervención.",
+      "fechas": { "original": "", "reprogramada": "", "condicionadas": [] },
+      "subtareas": [
+        { "id": "s1", "texto": "Confirmar estado actual y asignar responsables técnicos", "hecha": false },
+        { "id": "s2", "texto": "Localizar la caja y definir diagnóstico e intervención del conector externo", "hecha": false },
+        { "id": "s3", "texto": "Evaluar las bases del panel solar y definir su reparación o sustitución", "hecha": false },
+        { "id": "s4", "texto": "Verificar alimentación y funcionamiento de la EcoFlow", "hecha": false },
+        { "id": "s5", "texto": "Verificar conectividad, consumo de datos y posibilidades de acceso remoto", "hecha": false },
+        { "id": "s6", "texto": "Preparar recursos, presupuesto y fecha de intervención para aprobación", "hecha": false },
+        { "id": "s7", "texto": "Registrar pruebas, resultados y pendientes posteriores", "hecha": false }
+      ],
+      "notas": "Contexto reportado por Sebastián el 30/10/2026 (hechos históricos, no acciones nuevas):\n- El nodo está desconectado desde el 15/10 y la EcoFlow está desactivada desde esa fecha.\n- La carga se detenía en 30 % y después en 5 %.\n- El 21/10 retiraron la batería, la limpiaron y la probaron conectada a otra alimentación, distinta de la planta; funcionó y cargó correctamente.\n- La falla apunta al conector externo del nodo; no es un diagnóstico definitivo.\n- Queda localizar la caja para reparar ese conector.\n- Las bases del panel solar se deterioraron por el sol (reporte del 18/10).\n- La alimentación está operando desde la red.\n- Conectividad y consumo de datos sin verificar.\n- No hay acceso remoto disponible para revisar el equipo.\nResponsables de coordinación y de ejecución técnica por confirmar. Prioridad y fecha de entrega por confirmar.\nEl criterio de finalización es una propuesta.",
+      "enlaces": ["https://suspensionesccs-group.slack.com/archives/D0CAAF0EERL/p1793386880807059"],
+      "hito": false, "transversal": false, "archivada": false, "vinculadas": ["reporte-baterias"]
+    }
+  ]
+}

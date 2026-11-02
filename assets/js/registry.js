@@ -51,6 +51,11 @@ export const TREE = {
           ]
         },
         {
+          id: 'kanban', title: 'Kanban', icon: 'kanban',
+          desc: 'Actividades del laboratorio: investigaciones, reportes e intervenciones en los nodos, con sus pendientes, bloqueos y avances.',
+          load: () => import('./modules/neo-kanban.js')
+        },
+        {
           id: 'presupuestos', title: 'Presupuestos', icon: 'wallet',
           desc: 'Productos que se necesitan comprar: compara opciones y aprueba compras dentro de un presupuesto máximo.',
           load: () => import('./modules/presupuestos.js')

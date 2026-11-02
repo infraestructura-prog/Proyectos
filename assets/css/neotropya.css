@@ -542,3 +542,56 @@ body[data-area="neotropya"] .kb-idle { border-top-color: var(--neo-border); }
 .pp-vlink { display: inline-flex; align-items: center; gap: 4px; color: var(--neo-text-2); font-weight: 700; font-size: 12px; }
 .pp-vlink:hover { color: var(--neo-forest); }
 @media (prefers-reduced-motion: reduce) { .pp-play img, .pp-playbtn { transition: none; } .pp-play:hover .pp-playbtn { transform: none; } }
+
+/* ═════════ Neotropya › Kanban (motor común .ik, estética del laboratorio) ═════════ */
+body[data-area="neotropya"] .page:has(.ik-neo) { max-width: none; }
+body[data-area="neotropya"] .ik-neo { --c-todo: #6E9DB5; --c-doing: #F2A365; --c-testing: #8B8FD6; --c-blocked: #D9604A; --c-done: #6FB08A; }
+body[data-area="neotropya"] .ik-neo .ik-storage { color: var(--neo-text-2); }
+body[data-area="neotropya"] .ik-neo .ik-data [aria-pressed="true"] { border-color: var(--neo-forest) !important; color: var(--neo-forest) !important; }
+body[data-area="neotropya"] .ik-neo .ik-col { background: rgba(255,255,255,.72); border: 1px solid var(--neo-border); border-top: 4px solid var(--col); border-radius: var(--neo-radius); box-shadow: var(--neo-shadow); }
+body[data-area="neotropya"] .ik-neo .ik-col.drop-target { background: var(--neo-cream); }
+body[data-area="neotropya"] .ik-neo .ik-col-head { border-bottom-color: var(--neo-border); }
+body[data-area="neotropya"] .ik-neo .ik-col-head h2 { font-family: var(--neo-font); text-transform: none; letter-spacing: 0; font-size: 17px; font-weight: 900; color: var(--neo-text); }
+body[data-area="neotropya"] .ik-neo .ik-col-head h2::before { border-radius: 50%; }
+body[data-area="neotropya"] .ik-neo .ik-col-head p { color: var(--neo-text-2); }
+body[data-area="neotropya"] .ik-neo .ik-col-head .n { font-family: var(--neo-font); font-weight: 800; background: var(--neo-soft); color: var(--neo-text-2); border: 0; border-radius: 999px; }
+body[data-area="neotropya"] .ik-neo .ik-empty { color: var(--neo-text-3); border-color: var(--neo-border-hi); border-radius: var(--neo-radius-xs); }
+body[data-area="neotropya"] .ik-neo .ik-card { background: #fff; border: 1px solid var(--neo-border); border-left: 4px solid var(--col, var(--neo-border-hi)); border-radius: var(--neo-radius-sm); box-shadow: 0 1px 2px rgba(38,59,50,.06); }
+body[data-area="neotropya"] .ik-neo .ik-card:hover { border-color: var(--neo-sage); border-left-color: var(--col); box-shadow: var(--neo-shadow); }
+body[data-area="neotropya"] .ik-neo .ik-col.c-todo .ik-card { --col: var(--c-todo); } body[data-area="neotropya"] .ik-neo .ik-col.c-doing .ik-card { --col: var(--c-doing); }
+body[data-area="neotropya"] .ik-neo .ik-col.c-testing .ik-card { --col: var(--c-testing); } body[data-area="neotropya"] .ik-neo .ik-col.c-blocked .ik-card { --col: var(--c-blocked); }
+body[data-area="neotropya"] .ik-neo .ik-col.c-done .ik-card { --col: var(--c-done); }
+body[data-area="neotropya"] .ik-neo .ik-proj { font-family: var(--neo-font); font-weight: 800; letter-spacing: .05em; font-size: 11.5px; color: var(--neo-forest); }
+body[data-area="neotropya"] .ik-neo .ik-prio { border-radius: 999px; padding: 2px 9px; background: var(--neo-soft); border-color: var(--neo-border); color: var(--neo-text-2); }
+body[data-area="neotropya"] .ik-neo .ik-prio.p-critica { color: #fff; background: var(--neo-err); border-color: var(--neo-err); }
+body[data-area="neotropya"] .ik-neo .ik-prio.p-alta { color: var(--neo-warn); background: var(--neo-warn-bg); border-color: #EBB99A; }
+body[data-area="neotropya"] .ik-neo .ik-prio.p-media { color: var(--neo-upd); background: var(--neo-upd-bg); border-color: #EBCF9C; }
+body[data-area="neotropya"] .ik-neo .ik-prio.p-baja { color: var(--neo-todo); background: var(--neo-todo-bg); border-color: #B5D0DC; }
+body[data-area="neotropya"] .ik-neo .ik-title { color: var(--neo-text); font-weight: 800; }
+body[data-area="neotropya"] .ik-neo .ik-title:hover { color: var(--neo-forest); }
+body[data-area="neotropya"] .ik-neo .ik-title:focus-visible { outline-color: var(--neo-forest); }
+body[data-area="neotropya"] .ik-neo .ik-tag { border-radius: 999px; padding: 2px 8px; }
+body[data-area="neotropya"] .ik-neo .ik-tag.t-confirm { color: var(--neo-upd); background: var(--neo-upd-bg); border-color: #EBCF9C; }
+body[data-area="neotropya"] .ik-neo .ik-tag.t-late { color: var(--neo-err); background: var(--neo-err-bg); border-color: #EDB6AC; }
+body[data-area="neotropya"] .ik-neo .ik-tag.t-hito { color: var(--neo-ok); background: var(--neo-ok-bg); border-color: #B9DCC5; }
+body[data-area="neotropya"] .ik-neo .ik-tag.t-trans { color: var(--neo-forest); background: var(--neo-soft); border-color: var(--neo-sage); }
+body[data-area="neotropya"] .ik-neo .ik-block { background: var(--neo-err-bg); border-color: #EDB6AC; color: var(--neo-text); border-radius: var(--neo-radius-xs); }
+body[data-area="neotropya"] .ik-neo .ik-block b { color: var(--neo-err); }
+body[data-area="neotropya"] .ik-neo .ik-meta dt { font-family: var(--neo-font); font-weight: 800; color: var(--neo-text-3); letter-spacing: .04em; }
+body[data-area="neotropya"] .ik-neo .ik-meta dd { color: var(--neo-text); font-weight: 600; }
+body[data-area="neotropya"] .ik-neo .ik-prog .bar { background: var(--neo-soft); }
+body[data-area="neotropya"] .ik-neo .ik-prog .bar span { background: var(--neo-forest); }
+body[data-area="neotropya"] .ik-neo .ik-card-foot { border-top-color: var(--neo-border); }
+body[data-area="neotropya"] .ik-neo .ik-pick { background: #fff; border-color: var(--neo-border); color: var(--neo-text-2); border-radius: var(--neo-radius-xs); font-family: var(--neo-font); font-weight: 800; text-transform: none; letter-spacing: 0; }
+body[data-area="neotropya"] .ik-neo .ik-pick .n { font-family: var(--neo-font); }
+body[data-area="neotropya"] .ik-neo .ik-pick[aria-pressed="true"] { background: var(--neo-cream); color: var(--neo-text); border-color: var(--col); }
+body[data-area="neotropya"] .ik-neo .ik-archived li { background: var(--neo-cream); }
+/* Ventanas del tablero (se abren fuera de .ik-neo, dentro de la misma área) */
+body[data-area="neotropya"] .ik-ttl { color: var(--neo-text); }
+body[data-area="neotropya"] .ik-subs li { background: var(--neo-cream); }
+body[data-area="neotropya"] .ik-subs .ik-done { color: var(--neo-text-3); }
+body[data-area="neotropya"] .ik-hist { color: var(--neo-text-2); }
+body[data-area="neotropya"] .ik-hist b { color: var(--neo-text); }
+body[data-area="neotropya"] .ik-impopt { border-color: var(--neo-border); }
+body[data-area="neotropya"] .ik-impopt:has(input:checked) { border-color: var(--neo-forest); background: var(--neo-cream); }
+body[data-area="neotropya"] .ik-impopt.danger:has(input:checked) { border-color: var(--neo-err); background: var(--neo-err-bg); }

@@ -273,7 +273,7 @@ Archivos: `assets/js/modules/presupuestos.js` (interfaz) y `assets/js/modules/pr
 
 ## Kanban de Infraestructura (Infraestructura › Kanban)
 
-- Código en `assets/js/modules/infra-kanban.js`, estilos en `assets/css/infra.css` (`.ik-*`). Datos iniciales en `assets/data/infra-kanban.json`, tomados del To-do list.
+- Configuración del tablero en `assets/js/modules/infra-kanban.js`; la lógica es común con Neotropya y está en `assets/js/modules/kanban-core.js`. Estilos en `assets/css/infra.css` (`.ik-*`). Datos iniciales en `assets/data/infra-kanban.json`, tomados del To-do list.
 - **Columnas:** To do, Doing, Testing, Blocked y Done.
 - **Reglas de estado:**
   - Pasar a Blocked pide el motivo y la acción para desbloquear.
@@ -287,6 +287,22 @@ Archivos: `assets/js/modules/presupuestos.js` (interfaz) y `assets/js/modules/pr
   - Los datos iniciales se cargan una sola vez.
   - **No se comparte entre equipos** ni se sincroniza con Google Sheets, Slack u otras fuentes.
   - Para compartir el tablero entre varias personas haría falta un almacenamiento común. Está pendiente de definir.
+- **Importar JSON** (igual en Infraestructura y Neotropya):
+  - Por defecto **incorpora o actualiza por ID**. Las tarjetas del archivo que ya existen se sustituyen por la versión del archivo y quedan registradas en su historial. Las nuevas se agregan al final de su columna, y las que no están en el archivo se conservan. No se duplica ni se borra nada.
+  - **Reemplazar el tablero completo** es una opción aparte. La ventana dice cuántas tarjetas se eliminarían.
+  - Un archivo solo se acepta en el tablero cuyo `id` coincide: `infra-kanban` o `neotropya-kanban`.
+
+## Kanban de Neotropya (Neotropya › Kanban)
+
+- Configuración en `assets/js/modules/neo-kanban.js` y lógica común en `kanban-core.js`. Estilos del área en `assets/css/neotropya.css` (`.ik-neo`).
+- **Datos iniciales:** `assets/data/neotropya-kanban.json`, con tres tarjetas. Se cargan una sola vez por navegador.
+  - Investigación de sujeción nodo–moto: Doing.
+  - Actualización del reporte de baterías: To do.
+  - Plan de acción del nodo OPP 26: To do.
+  - Los hechos históricos de Slack están en las notas de cada tarjeta y los mensajes, en sus enlaces.
+  - Los criterios de finalización son propuestas.
+- **Separación de Infraestructura:** formato `ccs-kanban-v1`, identificador `neotropya-kanban` y clave de localStorage `ccs-neotropya-kanban-v1`. Los archivos de un tablero no se pueden importar en el otro.
+- Mismas columnas, reglas de estado, exportación e importación que el Kanban de Infraestructura.
 
 ## Investigaciones (Neotropya › Nodos › Investigaciones)
 
