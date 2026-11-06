@@ -361,7 +361,16 @@ Un estado nuevo en la hoja necesita una regla aquí; si no, cae en `other`.
   - La conclusión atribuye al control un SRI ligeramente superior, pero A y B tienen el mismo rango.
   - El Excel no trae imágenes: las tarjetas usan una muestra ilustrativa.
 - **Acople universal nodo–moto** (`assets/js/modules/inv-acople.js`):
-  - Solo consulta. Los datos están en `assets/data/investigaciones/acople-nodo-moto.json`, tomados del informe «Investigación moto–nodo | 01» (v0.1, 05/11/2026) y del pedido del equipo. No usa Google Sheets, no se sincroniza con Amazon, no actualiza precios y no crea productos en Presupuestos.
+  - Los datos iniciales están en `assets/data/investigaciones/acople-nodo-moto.json`, tomados del informe «Investigación moto–nodo | 01» (v0.1, 05/11/2026) y del pedido del equipo. No usa Google Sheets, no se sincroniza con Amazon, no actualiza precios y no crea productos en Presupuestos.
+  - **Edición:**
+    - Cada tarjeta tiene un lápiz para editarla o eliminarla, y cada desplegable tiene «Agregar modelo» o «Agregar opción de compra».
+    - Los cambios se guardan solo en `localStorage` de ese navegador, con la clave `ccs-inv-acople-v1`, y no se comparten con otros equipos ni tocan el archivo de datos.
+    - «Exportar JSON» e «Importar JSON» (formato `ccs-investigacion-acople-v1`) respaldan o trasladan los datos. «Restaurar datos de la investigación» vuelve a los originales.
+  - **Validación del formulario:**
+    - Los enlaces deben ser `https://`. La imagen puede ser `https://` o una ruta `/assets/img/…`.
+    - El precio solo se guarda si tiene importe, moneda y fecha.
+    - Cada dato técnico lleva su nivel: Confirmado, Investigación, Hipótesis o Pendiente.
+  - **Nombre del desplegable:** si se agrega una opción de otra tienda, «Bases y maletas disponibles en Amazon» pasa a llamarse «Bases y maletas: opciones de compra».
   - Tiene dos desplegables, cerrados al inicio, que se pueden abrir a la vez. Cuáles están abiertos se recuerda durante la sesión con la clave `ccs-inv-acople-abiertos` de `sessionStorage`.
   - **Modelos de referencia** (`motos[]`):
     - Cada tarjeta muestra solo foto, marca y modelo, y hay búsqueda por marca o modelo.

@@ -676,3 +676,12 @@ body[data-area="neotropya"] .kb-col.tone-violet { --col-accent: #C3B6E0; } body[
   .ac-row { grid-template-columns: 1fr; }
 }
 .ac-detail .ac-dimg.is-empty { height: 110px; }
+/* Acople · edición de tarjetas */
+.ac-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 28px; }
+.ac-edit.icon-btn { width: 30px; height: 30px; min-height: 30px; padding: 0; flex-shrink: 0; color: var(--neo-text-2); }
+.ac-edit.icon-btn svg { width: 16px; height: 16px; }
+.ac-tools .btn { margin-left: auto; }
+.ac-detform { display: grid; gap: 10px; }
+.ac-detrow { display: grid; grid-template-columns: minmax(140px, 200px) 1fr 150px; gap: 8px; align-items: center; }
+.ac-detrow label { font-size: 13px; font-weight: 600; color: var(--neo-text-2); }
+@media (max-width: 640px) { .ac-detrow { grid-template-columns: 1fr; gap: 4px; } }
