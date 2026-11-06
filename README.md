@@ -360,6 +360,24 @@ Un estado nuevo en la hoja necesita una regla aquí; si no, cae en `other`.
   - En D, los importes listados suman 352,29, pero el total escrito es 354,07.
   - La conclusión atribuye al control un SRI ligeramente superior, pero A y B tienen el mismo rango.
   - El Excel no trae imágenes: las tarjetas usan una muestra ilustrativa.
+- **Acople universal nodo–moto** (`assets/js/modules/inv-acople.js`):
+  - Solo consulta. Los datos están en `assets/data/investigaciones/acople-nodo-moto.json`, tomados del informe «Investigación moto–nodo | 01» (v0.1, 05/11/2026) y del pedido del equipo. No usa Google Sheets, no se sincroniza con Amazon, no actualiza precios y no crea productos en Presupuestos.
+  - Tiene dos desplegables, cerrados al inicio, que se pueden abrir a la vez. Cuáles están abiertos se recuerda durante la sesión con la clave `ccs-inv-acople-abiertos` de `sessionStorage`.
+  - **Modelos de referencia** (`motos[]`):
+    - Cada tarjeta muestra solo foto, marca y modelo, y hay búsqueda por marca o modelo.
+    - Cada foto guarda en `foto` su fuente, la página, la URL original y la fecha de consulta. Las fotos están en `assets/img/motos/`.
+    - Una moto sin identificar lleva `pendiente: true` y `foto: null`, como «Socialista».
+  - **Bases y maletas de Amazon** (`productos[]`):
+    - `tipo` es `base`, `maleta` o `conjunto`.
+    - Cada dato de `detalle` lleva un `nivel`: `confirmado` (ficha comercial), `investigacion` (recogido en la investigación), `hipotesis` (adaptación al nodo) o `pendiente`.
+    - `precio` solo se muestra si trae `monto`, `moneda` y `fecha`. `imagen` vacía muestra «Imagen pendiente».
+  - Para ampliar basta con agregar elementos a `motos` o `productos`, sin tocar el módulo.
+- Recursos pendientes del acople:
+  - Las fichas de Amazon no se pudieron consultar porque Amazon bloquea el acceso automatizado. Los dos productos no tienen imagen, sus características quedan como «Investigación» y el precio, como no confirmado.
+  - Falta identificar la moto «Socialista».
+  - Fotos que no salen de una ficha de producto del fabricante:
+    - Horse II y TX 200 vienen de notas de lanzamiento de Empire Keeway.
+    - La ficha de la TX II 150 muestra por error el título de la Xpress Lite. La imagen y el nombre de su archivo sí corresponden a la TX II 150.
 
 ## Temas por área
 

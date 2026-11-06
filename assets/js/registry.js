@@ -28,6 +28,11 @@ export const TREE = {
                   id: 'pinturas', title: 'Pinturas y recubrimientos para la maleta', icon: 'palette',
                   desc: 'Comparación de alternativas de protección superficial y comportamiento térmico para el proyecto NODO',
                   load: () => import('./modules/inv-pinturas.js')
+                },
+                {
+                  id: 'acople-nodo-moto', title: 'Acople universal nodo–moto', icon: 'wrench',
+                  desc: 'Investigación de modelos de motocicletas y soluciones comerciales de montaje para desarrollar un sistema de sujeción adaptable',
+                  load: () => import('./modules/inv-acople.js')
                 }
               ]
             },
