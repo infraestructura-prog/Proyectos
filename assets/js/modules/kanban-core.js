@@ -69,6 +69,40 @@ export function validateBoard(obj, boardId, boardName = 'este tablero') {
   return { ok: true, value: cards };
 }
 
+/* Archivo de UNA actividad para crear una tarjeta nueva desde «Nueva tarjeta › Cargar JSON».
+   Acepta { schema: 'ccs-kanban-tarjeta-v1', tablero, tarjeta: {...} }, la tarjeta sola, o un archivo
+   «ccs-kanban-v1» con una única tarjeta. Devuelve la tarjeta normalizada (sin historial) o un error. */
+const CARD_SCHEMA = 'ccs-kanban-tarjeta-v1';
+export function parseCardFile(obj, boardId) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return { ok: false, error: 'El archivo no contiene un objeto JSON.' };
+  let t = obj, board = '';
+  if (obj.schema === CARD_SCHEMA) { t = obj.tarjeta; board = obj.tablero; }
+  else if (obj.schema === SCHEMA) {
+    board = obj.id;
+    if (!Array.isArray(obj.tarjetas) || obj.tarjetas.length !== 1) return { ok: false, error: `El archivo tiene ${Array.isArray(obj.tarjetas) ? obj.tarjetas.length : 0} tarjetas. Para varias usa «Importar JSON» del tablero.` };
+    t = obj.tarjetas[0];
+  } else if (obj.schema) return { ok: false, error: `Formato «${String(obj.schema).slice(0, 40)}» no reconocido (se esperaba «${CARD_SCHEMA}»).` };
+  if (board && board !== boardId) return { ok: false, error: `La actividad es para el tablero «${String(board).slice(0, 40)}» y este es «${boardId}». Los tableros se mantienen separados.` };
+  if (!t || typeof t !== 'object') return { ok: false, error: 'Falta la tarjeta en el archivo.' };
+  const c = normCard(t);
+  if (!c.titulo) return { ok: false, error: 'La actividad no tiene «titulo».' };
+  // Las columnas que exigen un formulario solo se respetan si el archivo trae esos datos; si no, la tarjeta entra en To do.
+  const okState = { todo: true, doing: true, blocked: !!(c.bloqueo && c.bloqueo.motivo && c.bloqueo.accion),
+    testing: !!(c.testing && c.testing.comprobar && c.testing.esperado), done: !!(c.cierre && c.cierre.nota) }[c.estado];
+  const aviso = okState ? '' : `El estado «${colTitle(c.estado)}» necesita sus datos (bloqueo, prueba o cierre); la tarjeta entrará en To do.`;
+  if (!okState) c.estado = 'todo';
+  c.historial = []; c.archivada = false;
+  return { ok: true, value: c, aviso };
+}
+const cardTemplate = boardId => ({
+  schema: CARD_SCHEMA, tablero: boardId,
+  tarjeta: { id: '', titulo: 'Verbo + qué se hará', objetivo: 'Resultado esperado', descripcion: '', criterio: '', estado: 'todo', prioridad: '',
+    proyecto: '', equipo: '', responsable: '', supervisor: '', solicitante: '', dependenciaExterna: '', proximaAccion: '',
+    fechas: { original: '', reprogramada: '', condicionadas: [] }, subtareas: [{ texto: 'Primera subtarea', hecha: false }],
+    notas: '', enlaces: [], vinculadas: [], transversal: false, hito: false, estadoPorConfirmar: false,
+    bloqueo: null }
+});
+
 const storageFor = key => ({
   read() { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch { return null; } },
   write(v) { try { localStorage.setItem(key, JSON.stringify(v)); return true; } catch { return false; } }
@@ -379,9 +413,11 @@ export function mountKanban(root, cfg) {
   }
 
   /* ── Detalle / edición ── */
-  function openCard(c = null) {
+  /* preset: tarjeta leída de un archivo de actividad (parseCardFile); se revisa en el formulario antes de guardar. */
+  function openCard(c = null, preset = null) {
     const isNew = !c;
-    const d = normCard(c ? JSON.parse(JSON.stringify(c)) : { id: uid('t'), titulo: '', estado: 'todo', proyecto: cfg.proyectoNuevo || '' });
+    const d = normCard(c ? JSON.parse(JSON.stringify(c)) : preset ? preset.card : { id: uid('t'), titulo: '', estado: 'todo', proyecto: cfg.proyectoNuevo || '' });
+    if (preset && (!d.id || byId(d.id))) d.id = uid('t');   // nunca pisa una tarjeta existente
     const newLinked = []; // tarjetas creadas desde subtareas (se guardan al confirmar)
     const optP = PRIOS.map(p => `<option value="${p.id}" ${p.id === d.prioridad ? 'selected' : ''}>${p.label}</option>`).join('');
     const proys = [...new Set([...(cfg.proyectos || []), ...B.cards.map(x => x.proyecto)].filter(Boolean))];
@@ -393,9 +429,13 @@ export function mountKanban(root, cfg) {
     const hist = [...d.historial].reverse();
     const m = openModal({ html: `<form novalidate>
       <div class="modal-head"><div><p class="kicker">${isNew ? 'Nueva tarjeta' : `${esc(colTitle(d.estado))}${d.estadoPorConfirmar ? ' · estado por confirmar' : ''}${d.archivada ? ' · archivada' : ''}`}</p>
-        <h2 data-modal-title>${isNew ? 'Nueva tarjeta' : esc(d.titulo)}</h2></div>
+        <h2 data-modal-title>${isNew ? 'Nueva tarjeta' : esc(d.titulo)}</h2>
+        ${isNew ? `<div class="ik-fromfile"><button type="button" class="btn btn-sm" data-file="pick">${ICON.upload}Cargar JSON</button>
+          <button type="button" class="btn btn-sm btn-ghost" data-file="template">${ICON.download}Plantilla</button>
+          <input type="file" accept="application/json,.json" data-cardfile hidden></div>` : ''}</div>
         <button type="button" class="btn btn-ghost icon-btn" data-close aria-label="Cerrar">${ICON.close}</button></div>
       <div class="modal-body">
+        ${preset ? `<div style="margin-bottom:14px">${alertBox('info', `Datos cargados desde «${esc(preset.file)}»`, `<p>Revisa los campos y pulsa «Guardar» para crear la tarjeta en ${esc(colTitle(d.estado))}.</p>${preset.aviso ? `<p>${esc(preset.aviso)}</p>` : ''}`)}</div>` : ''}
         ${d.estado === 'blocked' && d.bloqueo ? `<div style="margin-bottom:14px">${alertBox('err', `Bloqueada · depende de ${esc(d.bloqueo.quien || 'dependencia por identificar')}`, `<p>${esc(d.bloqueo.motivo)}</p><p><b style="display:inline">Para desbloquear:</b> ${esc(d.bloqueo.accion)}</p>`)}</div>` : ''}
         ${d.estado === 'testing' && d.testing ? `<div style="margin-bottom:14px">${alertBox('info', 'En prueba', `<p><b style="display:inline">Comprobar:</b> ${esc(d.testing.comprobar)}</p><p><b style="display:inline">Resultado esperado:</b> ${esc(d.testing.esperado)}</p>`)}</div>` : ''}
         ${d.estado === 'done' && d.cierre ? `<div style="margin-bottom:14px">${alertBox('info', `Completada${d.cierre.fecha ? ' el ' + fmtD(d.cierre.fecha) : ''}`, `<p>${esc(d.cierre.nota)}</p>`)}</div>` : ''}
@@ -434,7 +474,7 @@ export function mountKanban(root, cfg) {
     </form>`, initialFocus: isNew ? '#cf-titulo' : undefined });
 
     const form = m.el.querySelector('form');
-    let dirty = false;
+    let dirty = !!preset;
     form.addEventListener('input', () => { dirty = true; });
     m.setCanClose(() => !dirty || window.confirm('Hay cambios sin guardar. ¿Quieres descartarlos?'));
 
@@ -462,6 +502,22 @@ export function mountKanban(root, cfg) {
     });
     form.addEventListener('change', e => { if (e.target.dataset.sub === 'toggle') { d.subtareas[Number(e.target.dataset.i)].hecha = e.target.checked; dirty = true; } });
     form.querySelector('#cf-newsub').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); form.querySelector('[data-sub="add"]').click(); } });
+
+    if (isNew) {
+      const fileIn = m.el.querySelector('[data-cardfile]');
+      m.el.querySelector('[data-file="pick"]').addEventListener('click', () => fileIn.click());
+      m.el.querySelector('[data-file="template"]').addEventListener('click', () => downloadJson(cardTemplate(BOARD_ID), `plantilla-tarjeta-${cfg.fileSlug}.json`));
+      fileIn.addEventListener('change', async () => {
+        const file = fileIn.files && fileIn.files[0]; fileIn.value = '';
+        if (!file) return;
+        if (file.size > 1024 * 1024) { toast('El archivo es demasiado grande (máximo 1 MB).', 'err'); return; }
+        let obj; try { obj = JSON.parse(await file.text()); } catch { toast('El archivo no es un JSON válido.', 'err', 7000); return; }
+        const r = parseCardFile(obj, BOARD_ID);
+        if (!r.ok) { toast('No se cargó: ' + r.error, 'err', 9000); return; }
+        if (dirty && !window.confirm('El formulario tiene datos. ¿Reemplazarlos por los del archivo?')) return;
+        m.close('force'); setTimeout(() => openCard(null, { card: r.value, file: file.name, aviso: r.aviso }), 0);
+      });
+    }
 
     m.el.addEventListener('click', async e => {
       const o = e.target.closest('[data-open]'); if (o) { m.close('dismiss'); const x = byId(o.dataset.open); if (x) setTimeout(() => openCard(x), 0); return; }
@@ -501,7 +557,7 @@ export function mountKanban(root, cfg) {
       if (pc !== target.estadoPorConfirmar) log(target, 'confirmacion', pc ? 'Marcada como «estado por confirmar».' : 'Estado confirmado.');
       target.estadoPorConfirmar = pc;
       if (isNew) {
-        target.creada = nowIso(); target.historial = [{ fecha: target.creada, tipo: 'creada', de: '', a: target.estado, nota: 'Tarjeta creada.' }];
+        target.creada = nowIso(); target.historial = [{ fecha: target.creada, tipo: 'creada', de: '', a: target.estado, nota: preset ? `Tarjeta creada desde el archivo «${preset.file}».` : 'Tarjeta creada.' }];
         B.cards.push(target); place(target, target.estado, null);
       } else {
         log(target, 'edicion', JSON.stringify([target.fechas, target.responsable, target.prioridad]) !== before ? 'Datos editados (fechas, responsable o prioridad).' : 'Datos editados.');
@@ -517,11 +573,14 @@ export function mountKanban(root, cfg) {
   }
 
   /* ── Exportar / importar ── */
-  function exportJson() {
-    const blob = new Blob([JSON.stringify({ schema: SCHEMA, id: BOARD_ID, exportado: nowIso(), tarjetas: B.cards }, null, 2)], { type: 'application/json' });
+  function downloadJson(obj, name) {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement('a'), { href: url, download: `${cfg.fileSlug}-${todayStr()}.json` });
+    const a = Object.assign(document.createElement('a'), { href: url, download: name });
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+  function exportJson() {
+    downloadJson({ schema: SCHEMA, id: BOARD_ID, exportado: nowIso(), tarjetas: B.cards }, `${cfg.fileSlug}-${todayStr()}.json`);
     toast('Respaldo exportado.');
   }
 
@@ -558,6 +617,11 @@ export function mountKanban(root, cfg) {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { toast('El archivo es demasiado grande (máximo 5 MB).', 'err'); return; }
     let obj; try { obj = JSON.parse(await file.text()); } catch { toast('El archivo no es un JSON válido.', 'err', 7000); return; }
+    if (obj && obj.schema === CARD_SCHEMA) {   // archivo de una sola actividad: se abre como tarjeta nueva para revisarla
+      const one = parseCardFile(obj, BOARD_ID);
+      if (!one.ok) { toast('No se cargó: ' + one.error, 'err', 9000); return; }
+      openCard(null, { card: one.value, file: file.name, aviso: one.aviso }); return;
+    }
     const r = validateBoard(obj, BOARD_ID, cfg.boardName);
     if (!r.ok) { toast('No se importó: ' + r.error, 'err', 9000); return; }
     const plan = importPlan(r.value);

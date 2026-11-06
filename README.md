@@ -291,6 +291,18 @@ Archivos: `assets/js/modules/presupuestos.js` (interfaz) y `assets/js/modules/pr
   - Por defecto **incorpora o actualiza por ID**. Las tarjetas del archivo que ya existen se sustituyen por la versión del archivo y quedan registradas en su historial. Las nuevas se agregan al final de su columna, y las que no están en el archivo se conservan. No se duplica ni se borra nada.
   - **Reemplazar el tablero completo** es una opción aparte. La ventana dice cuántas tarjetas se eliminarían.
   - Un archivo solo se acepta en el tablero cuyo `id` coincide: `infra-kanban` o `neotropya-kanban`.
+- **Nueva tarjeta desde un archivo de actividad** (igual en los dos tableros):
+  - En «Nueva tarjeta», **Cargar JSON** rellena el formulario con el archivo; se revisa y se pulsa «Guardar». **Plantilla** descarga un ejemplo con todos los campos. «Importar JSON» del tablero también acepta este archivo y abre el mismo formulario.
+  - Formato `ccs-kanban-tarjeta-v1`:
+    ```json
+    { "schema": "ccs-kanban-tarjeta-v1", "tablero": "infra-kanban",
+      "tarjeta": { "titulo": "Instalar…", "objetivo": "…", "estado": "todo", "responsable": "", "proyecto": "",
+                   "fechas": { "original": "2026-11-10" }, "subtareas": [{ "texto": "…" }], "enlaces": ["https://…"] } }
+    ```
+    Los campos son los mismos que en el respaldo del tablero. También se acepta la tarjeta sola o un archivo `ccs-kanban-v1` con una única tarjeta.
+  - `titulo` es obligatorio en el archivo, y el formulario pide además el `objetivo`. Un `tablero` distinto se rechaza.
+  - Si el `id` falta o ya existe, se genera otro: nunca sobrescribe una tarjeta. Para actualizar una existente se usa «Importar JSON».
+  - `estado` puede ser `todo` o `doing`. `blocked`, `testing` y `done` solo se respetan si traen `bloqueo` (motivo y acción), `testing` (comprobar y esperado) o `cierre` (nota); si no, la tarjeta entra en To do con un aviso. El historial del archivo se ignora y se registra «Tarjeta creada desde el archivo…».
 
 ## Kanban de Neotropya (Neotropya › Kanban)
 

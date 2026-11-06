@@ -478,3 +478,6 @@ body[data-area="infraestructura"] .page:has(.ik) { max-width: none; }
 .ik-extbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin: -6px 0 14px; padding: 8px 12px; border: 1px solid var(--in-steel); border-radius: 6px; font-size: 13px; color: var(--in-text-2); }
 .ik-extbar p { margin: 0; flex: 1 1 260px; }
 .ik-extbar.err { border-color: rgba(239,107,94,.6); }
+
+/* Kanban · cargar una actividad desde un archivo JSON en «Nueva tarjeta» */
+.ik-fromfile { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
