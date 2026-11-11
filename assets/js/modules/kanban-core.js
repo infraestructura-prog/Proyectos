@@ -41,8 +41,11 @@ function normCard(c, i = 0) {
     prioridad: PRIOS.some(p => p.id === c.prioridad) ? c.prioridad : '',
     proyecto: str(c.proyecto, 80), equipo: str(c.equipo, 160),
     responsable: str(c.responsable, 120), supervisor: str(c.supervisor, 120), solicitante: str(c.solicitante, 200), dependenciaExterna: str(c.dependenciaExterna, 160),
+    colaboradores: str(c.colaboradores, 300),
+    referencias: (Array.isArray(c.referencias) ? c.referencias : []).filter(x => typeof x === 'string' && x.trim()).map(x => x.trim().slice(0, 30)).slice(0, 20),
     proximaAccion: str(c.proximaAccion, 600),
-    fechas: { original: date(f.original), reprogramada: date(f.reprogramada),
+    // «revision»: fecha de revisión acordada (no es cierre ni vence la tarjeta). «plazo»: plazo sin día fijo («Esta semana…»).
+    fechas: { original: date(f.original), reprogramada: date(f.reprogramada), revision: date(f.revision), plazo: str(f.plazo, 160),
       condicionadas: (Array.isArray(f.condicionadas) ? f.condicionadas : []).map(x => ({ fecha: date(x && x.fecha), condicion: str(x && x.condicion, 200) })).filter(x => x.fecha || x.condicion).slice(0, 20) },
     subtareas: (Array.isArray(c.subtareas) ? c.subtareas : []).map((s, k) => ({ id: str(s && s.id, 40) || `s${k + 1}`, texto: str(s && s.texto, 300), hecha: !!(s && s.hecha) })).filter(s => s.texto).slice(0, 60),
     notas: str(c.notas, 4000),
@@ -73,6 +76,9 @@ export function validateBoard(obj, boardId, boardName = 'este tablero') {
    Acepta { schema: 'ccs-kanban-tarjeta-v1', tablero, tarjeta: {...} }, la tarjeta sola, o un archivo
    «ccs-kanban-v1» con una única tarjeta. Devuelve la tarjeta normalizada (sin historial) o un error. */
 const CARD_SCHEMA = 'ccs-kanban-tarjeta-v1';
+// Las columnas que exigen un formulario solo se respetan si el archivo trae esos datos; si no, la tarjeta entra en To do.
+const stateOk = c => ({ todo: true, doing: true, blocked: !!(c.bloqueo && c.bloqueo.motivo && c.bloqueo.accion),
+  testing: !!(c.testing && c.testing.comprobar && c.testing.esperado), done: !!(c.cierre && c.cierre.nota) })[c.estado];
 export function parseCardFile(obj, boardId) {
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return { ok: false, error: 'El archivo no contiene un objeto JSON.' };
   let t = obj, board = '';
@@ -86,9 +92,7 @@ export function parseCardFile(obj, boardId) {
   if (!t || typeof t !== 'object') return { ok: false, error: 'Falta la tarjeta en el archivo.' };
   const c = normCard(t);
   if (!c.titulo) return { ok: false, error: 'La actividad no tiene «titulo».' };
-  // Las columnas que exigen un formulario solo se respetan si el archivo trae esos datos; si no, la tarjeta entra en To do.
-  const okState = { todo: true, doing: true, blocked: !!(c.bloqueo && c.bloqueo.motivo && c.bloqueo.accion),
-    testing: !!(c.testing && c.testing.comprobar && c.testing.esperado), done: !!(c.cierre && c.cierre.nota) }[c.estado];
+  const okState = stateOk(c);
   const aviso = okState ? '' : `El estado «${colTitle(c.estado)}» necesita sus datos (bloqueo, prueba o cierre); la tarjeta entrará en To do.`;
   if (!okState) c.estado = 'todo';
   c.historial = []; c.archivada = false;
@@ -97,11 +101,133 @@ export function parseCardFile(obj, boardId) {
 const cardTemplate = boardId => ({
   schema: CARD_SCHEMA, tablero: boardId,
   tarjeta: { id: '', titulo: 'Verbo + qué se hará', objetivo: 'Resultado esperado', descripcion: '', criterio: '', estado: 'todo', prioridad: '',
-    proyecto: '', equipo: '', responsable: '', supervisor: '', solicitante: '', dependenciaExterna: '', proximaAccion: '',
-    fechas: { original: '', reprogramada: '', condicionadas: [] }, subtareas: [{ texto: 'Primera subtarea', hecha: false }],
+    proyecto: '', equipo: '', responsable: '', supervisor: '', solicitante: '', dependenciaExterna: '', colaboradores: '', referencias: [], proximaAccion: '',
+    fechas: { original: '', reprogramada: '', revision: '', plazo: '', condicionadas: [] }, subtareas: [{ texto: 'Primera subtarea', hecha: false }],
     notas: '', enlaces: [], vinculadas: [], transversal: false, hito: false, estadoPorConfirmar: false,
     bloqueo: null }
 });
+
+/* Archivo de ACTUALIZACIÓN (p. ej. los compromisos de una reunión): amplía las tarjetas que ya existen sin tocar
+   su estado, historial, bloqueo, cierre ni las subtareas ya marcadas, y crea las que falten. Volver a cargarlo no
+   duplica nada: las subtareas se reconocen por id o por texto y las notas solo se agregan si no están ya.
+   { schema: 'ccs-kanban-actualizacion-v1', tablero, titulo, fecha, cambios: [
+       { id, alias?: [ids], buscar?: [[palabras del título]], tarjeta?: { datos base si hay que crearla },
+         ampliar?: { alcance, notas, subtareas: [{ id, texto }], marcarHechas: [{ id, contiene }], referencias: [],
+                     colaboradores, dependencia, responsableSiVacio, solicitanteSiVacio, revision, plazo,
+                     vinculadas: [ids de otros cambios o tarjetas], enlaces: [] } } ] }
+   La tarjeta se busca por id, después por alias y después por palabras del título (todas, sin tildes).
+   Si coinciden varias, ese cambio no se aplica y se informa. Sin coincidencia y sin «tarjeta», tampoco. */
+const UPDATE_SCHEMA = 'ccs-kanban-actualizacion-v1';
+const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+export function parseUpdateFile(obj, boardId) {
+  const str = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+  const date = v => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : '');
+  const arr = (v, n) => (Array.isArray(v) ? v.filter(x => typeof x === 'string' && x.trim()).map(x => x.trim()).slice(0, n) : []);
+  if (!obj || typeof obj !== 'object' || obj.schema !== UPDATE_SCHEMA) return { ok: false, error: `El archivo no es una actualización de tablero (se esperaba «${UPDATE_SCHEMA}»).` };
+  if (obj.tablero !== boardId) return { ok: false, error: `La actualización es para el tablero «${String(obj.tablero || 'sin identificar').slice(0, 40)}» y este es «${boardId}». Los tableros se mantienen separados.` };
+  if (!Array.isArray(obj.cambios) || !obj.cambios.length) return { ok: false, error: 'La actualización no tiene cambios.' };
+  if (obj.cambios.length > 200) return { ok: false, error: 'La actualización tiene demasiados cambios.' };
+  const cambios = obj.cambios.map(ch => {
+    const a = (ch && ch.ampliar) || {};
+    return {
+      id: str(ch && ch.id, 80), alias: arr(ch && ch.alias, 10),
+      buscar: (Array.isArray(ch && ch.buscar) ? ch.buscar : []).map(g => arr(g, 6).map(fold)).filter(g => g.length).slice(0, 6),
+      tarjeta: ch && ch.tarjeta && typeof ch.tarjeta === 'object' && !Array.isArray(ch.tarjeta) ? ch.tarjeta : null,
+      ampliar: {
+        alcance: str(a.alcance, 1500), notas: str(a.notas, 2000),
+        subtareas: (Array.isArray(a.subtareas) ? a.subtareas : []).map(s => ({ id: str(s && s.id, 40), texto: str(s && s.texto, 300) })).filter(s => s.id && s.texto).slice(0, 40),
+        marcarHechas: (Array.isArray(a.marcarHechas) ? a.marcarHechas : []).map(s => ({ id: str(s && s.id, 40), contiene: fold(str(s && s.contiene, 80)) })).filter(s => s.id && s.contiene).slice(0, 20),
+        referencias: arr(a.referencias, 20), colaboradores: str(a.colaboradores, 300), dependencia: str(a.dependencia, 160),
+        responsableSiVacio: str(a.responsableSiVacio, 120), solicitanteSiVacio: str(a.solicitanteSiVacio, 200),
+        revision: date(a.revision), plazo: str(a.plazo, 160), vinculadas: arr(a.vinculadas, 30), enlaces: arr(a.enlaces, 20).filter(httpsUrl)
+      }
+    };
+  });
+  const bad = cambios.findIndex(c => !c.id || (c.tarjeta && !(typeof c.tarjeta.titulo === 'string' && c.tarjeta.titulo.trim())));
+  if (bad >= 0) return { ok: false, error: `El cambio n.º ${bad + 1} no tiene «id» o su tarjeta no tiene «titulo».` };
+  if (new Set(cambios.map(c => c.id)).size !== cambios.length) return { ok: false, error: 'Hay cambios con el mismo «id».' };
+  return { ok: true, value: { titulo: str(obj.titulo, 200) || 'actualización', fecha: date(obj.fecha), cambios } };
+}
+
+/* Calcula, sin modificar el tablero, cómo quedaría cada tarjeta. Devuelve los elementos del plan:
+   { ch, accion: 'crear' | 'ampliar' | 'igual' | 'ambigua' | 'sin-tarjeta', next (tarjeta resultante), cambios [textos], candidatos [] } */
+export function planUpdate(cards, upd) {
+  const byId = id => cards.find(c => c.id === id);
+  const claimed = new Map();
+  const items = upd.cambios.map(ch => {
+    let t = byId(ch.id) || ch.alias.map(byId).find(Boolean) || null, amb = null;
+    if (!t) for (const g of ch.buscar) {
+      const m = cards.filter(c => g.every(w => fold(c.titulo).includes(w)));
+      if (m.length === 1) { t = m[0]; break; }
+      if (m.length > 1) { amb = m; break; }
+    }
+    if (t && claimed.has(t.id)) { amb = [t]; t = null; }   // dos cambios no pueden ampliar la misma tarjeta
+    if (t) claimed.set(t.id, ch.id);
+    return { ch, target: t, candidatos: amb || [] };
+  });
+  const idMap = new Map();
+  items.forEach(it => { if (it.target) idMap.set(it.ch.id, it.target.id); else if (!it.candidatos.length && it.ch.tarjeta) idMap.set(it.ch.id, it.ch.id); });
+  const resolveId = id => idMap.get(id) || (byId(id) ? id : null);
+  const touched = new Map();   // id → tarjeta resultante
+
+  items.forEach(it => {
+    if (it.candidatos.length) { it.accion = 'ambigua'; return; }
+    if (!it.target && !it.ch.tarjeta) { it.accion = 'sin-tarjeta'; return; }
+    const a = it.ch.ampliar, cambios = [];
+    let c;
+    if (it.target) { c = normCard(JSON.parse(JSON.stringify(it.target))); it.accion = 'ampliar'; }
+    else {
+      c = normCard({ ...it.ch.tarjeta, id: it.ch.id }); c.historial = []; c.archivada = false;
+      if (!stateOk(c)) c.estado = 'todo';
+      it.accion = 'crear';
+    }
+    const addNote = txt => { if (txt && !fold(c.notas).includes(fold(txt))) { c.notas = (c.notas ? c.notas + '\n\n' : '') + txt; return true; } return false; };
+    if (a.alcance && !fold(c.descripcion).includes(fold(a.alcance))) { c.descripcion = (c.descripcion ? c.descripcion + '\n\n' : '') + a.alcance; cambios.push('alcance ampliado'); }
+    let n = 0;
+    a.subtareas.forEach(s => { if (!c.subtareas.some(x => x.id === s.id || fold(x.texto) === fold(s.texto))) { c.subtareas.push({ id: s.id, texto: s.texto, hecha: false }); n++; } });
+    if (n) cambios.push(plural(n, 'subtarea nueva', 'subtareas nuevas'));
+    let k = 0;
+    a.marcarHechas.forEach(m => { const s = c.subtareas.find(x => x.id === m.id && fold(x.texto).includes(m.contiene)); if (s && !s.hecha) { s.hecha = true; k++; } });
+    if (k) cambios.push(plural(k, 'subtarea marcada como hecha', 'subtareas marcadas como hechas'));
+    const refs = a.referencias.filter(r => !c.referencias.includes(r));
+    if (refs.length) { c.referencias.push(...refs); cambios.push(`referencias ${refs.join(', ')}`); }
+    const colabs = a.colaboradores.split(',').map(x => x.trim()).filter(x => x && !fold(c.colaboradores).split(/\s*,\s*/).includes(fold(x)));
+    if (colabs.length) { c.colaboradores = [c.colaboradores, ...colabs].filter(Boolean).join(', '); cambios.push(`colaboradores: ${colabs.join(', ')}`); }
+    if (a.dependencia) {
+      if (!c.dependenciaExterna) { c.dependenciaExterna = a.dependencia; cambios.push('dependencia registrada'); }
+      else if (fold(c.dependenciaExterna) !== fold(a.dependencia) && addNote(`Dependencia adicional: ${a.dependencia}`)) cambios.push('dependencia adicional en notas');
+    }
+    if (a.responsableSiVacio && !c.responsable) { c.responsable = a.responsableSiVacio; cambios.push(`responsable: ${c.responsable}`); }
+    if (a.solicitanteSiVacio && !c.solicitante) { c.solicitante = a.solicitanteSiVacio; cambios.push('solicitante registrado'); }
+    if (a.revision && (!c.fechas.revision || c.fechas.revision < a.revision)) { c.fechas.revision = a.revision; cambios.push(`revisión ${fmtD(a.revision)}`); }
+    if (a.plazo && !c.fechas.plazo) { c.fechas.plazo = a.plazo; cambios.push('plazo registrado'); }
+    if (addNote(a.notas)) cambios.push('notas agregadas');
+    const links = a.enlaces.filter(u => !c.enlaces.includes(u));
+    if (links.length) { c.enlaces.push(...links); cambios.push(plural(links.length, 'enlace', 'enlaces')); }
+    a.vinculadas.map(resolveId).filter(v => v && v !== c.id && !c.vinculadas.includes(v)).forEach(v => { c.vinculadas.push(v); if (!cambios.includes('vínculos')) cambios.push('vínculos'); });
+    if (it.accion === 'ampliar' && !cambios.length) it.accion = 'igual';
+    if (it.accion === 'ampliar' && c.estado === 'done') cambios.push('sigue en Done: lo nuevo no la reabre');
+    it.next = c; it.cambios = cambios; touched.set(c.id, it);
+  });
+
+  // Los vínculos son recíprocos: la tarjeta enlazada también apunta de vuelta.
+  [...touched.values()].forEach(it => it.next.vinculadas.forEach(v => {
+    let other = touched.get(v);
+    if (!other) {
+      const base = byId(v); if (!base) return;
+      other = { ch: null, accion: 'igual', next: normCard(JSON.parse(JSON.stringify(base))), cambios: [] };
+      touched.set(v, other); items.push(other);
+    }
+    if (!other.next.vinculadas.includes(it.next.id)) {
+      other.next.vinculadas.push(it.next.id);
+      if (!other.cambios.includes('vínculos')) other.cambios.push('vínculos');
+      if (other.accion === 'igual') other.accion = 'ampliar';
+    }
+  }));
+  return items;
+}
 
 const storageFor = key => ({
   read() { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch { return null; } },
@@ -164,7 +290,7 @@ export function mountKanban(root, cfg) {
     if (c.archivada) return false;
     if (!f.transversal && c.transversal) return false;
     const q = f.q.trim().toLowerCase();
-    if (q && ![c.titulo, c.descripcion, c.objetivo, c.equipo, c.subtareas.map(s => s.texto).join(' '), c.bloqueo ? c.bloqueo.motivo : ''].join(' ').toLowerCase().includes(q)) return false;
+    if (q && ![c.titulo, c.descripcion, c.objetivo, c.equipo, c.colaboradores, c.referencias.join(' '), c.subtareas.map(s => s.texto).join(' '), c.bloqueo ? c.bloqueo.motivo : ''].join(' ').toLowerCase().includes(q)) return false;
     if (f.resp && (f.resp === '__none' ? c.responsable : c.responsable !== f.resp)) return false;
     if (f.prio && (f.prio === '__none' ? c.prioridad : c.prioridad !== f.prio)) return false;
     if (f.proy && c.proyecto !== f.proy) return false;
@@ -231,11 +357,15 @@ export function mountKanban(root, cfg) {
         ${od ? `<span class="ik-tag t-late">${small(ICON.warn)}Vencida · ${fmtD(d)}</span>` : ''}
         ${c.hito ? '<span class="ik-tag t-hito">Hito</span>' : ''}
         ${c.transversal ? '<span class="ik-tag t-trans">Transversal</span>' : ''}
+        ${c.referencias.map(r => `<span class="ik-tag t-ref" title="Referencia de seguimiento">${esc(r)}</span>`).join('')}
       </div>
       ${c.estado === 'blocked' && c.bloqueo ? `<div class="ik-block"><b>${small(ICON.lock)}Depende de: ${esc(c.bloqueo.quien || 'dependencia por identificar')}</b><span>${esc(c.bloqueo.motivo)}</span></div>` : ''}
       <dl class="ik-meta">
         <div><dt>Responsable</dt><dd>${esc(c.responsable || 'Por asignar')}</dd></div>
         ${d && !od ? `<div><dt>Fecha objetivo</dt><dd>${fmtD(d)}</dd></div>` : ''}
+        ${c.fechas.revision ? `<div><dt>Revisión</dt><dd>${fmtD(c.fechas.revision)}</dd></div>` : ''}
+        ${c.fechas.plazo ? `<div><dt>Plazo</dt><dd>${esc(c.fechas.plazo)}</dd></div>` : ''}
+        ${c.estado !== 'blocked' && c.dependenciaExterna ? `<div><dt>Depende de</dt><dd>${esc(c.dependenciaExterna)}</dd></div>` : ''}
         ${pr.total ? `<div class="ik-prog"><dt>Subtareas</dt><dd><span class="bar"><span style="width:${Math.round(pr.hechas / pr.total * 100)}%"></span></span>${pr.hechas}/${pr.total}</dd></div>` : ''}
       </dl>
       <div class="ik-card-foot">
@@ -450,10 +580,14 @@ export function mountKanban(root, cfg) {
           ${inp('responsable', 'Responsable de ejecución', d.responsable, { hint: 'Vacío = «Por asignar».' })}
           ${inp('supervisor', 'Supervisión', d.supervisor)}
           ${inp('solicitante', 'Solicitante o interlocutor', d.solicitante, { hint: 'Quien pide o con quien se coordina; no es necesariamente quien ejecuta.' })}
-          ${inp('dependenciaExterna', 'Departamento o proveedor del que depende', d.dependenciaExterna)}
+          ${inp('dependenciaExterna', 'Departamento o proveedor del que depende', d.dependenciaExterna, { hint: 'Registrar una dependencia no bloquea la tarjeta.' })}
+          ${inp('colaboradores', 'Colaboradores o apoyo', d.colaboradores, { hint: 'Separados por comas. No son responsables de la tarjeta.' })}
+          ${inp('referencias', 'Referencias de seguimiento', d.referencias.join(', '), { hint: 'Por ejemplo, códigos de una reunión (I02, M03…). Separadas por comas.' })}
           ${inp('proximaAccion', 'Próxima acción', d.proximaAccion, { full: true })}
           ${inp('fOriginal', 'Fecha original', d.fechas.original, { type: 'date' })}
           ${inp('fReprog', 'Fecha reprogramada', d.fechas.reprogramada, { type: 'date', hint: 'La fecha original se conserva.' })}
+          ${inp('fRevision', 'Fecha de revisión', d.fechas.revision, { type: 'date', hint: 'Revisión de avance acordada. No es fecha de cierre ni hace vencer la tarjeta.' })}
+          ${inp('fPlazo', 'Plazo sin día fijo', d.fechas.plazo, { hint: 'Por ejemplo: «Esta semana (9–15/11/2026)».' })}
           ${inp('condicionadas', 'Fechas condicionadas o previstas', d.fechas.condicionadas.map(x => `${fmtD(x.fecha)} — ${x.condicion}`).join('\n'), { full: true, area: true, rows: 2, hint: 'Una por línea con el formato «dd/mm/aaaa — condición». No cambian el estado de la tarea.' })}
           <fieldset class="field full ik-subs"><legend>Subtareas</legend>
             <ul data-subs></ul>
@@ -550,7 +684,8 @@ export function mountKanban(root, cfg) {
       Object.assign(target, {
         titulo: g('titulo'), objetivo: g('objetivo'), descripcion: g('descripcion'), criterio: g('criterio'), prioridad: g('prioridad'), proyecto: g('proyecto'), equipo: g('equipo'),
         responsable: g('responsable'), supervisor: g('supervisor'), solicitante: g('solicitante'), dependenciaExterna: g('dependenciaExterna'), proximaAccion: g('proximaAccion'),
-        fechas: { original: g('fOriginal'), reprogramada: g('fReprog'), condicionadas: cond },
+        colaboradores: g('colaboradores'), referencias: g('referencias').split(',').map(x => x.trim()).filter(Boolean).slice(0, 20),
+        fechas: { original: g('fOriginal'), reprogramada: g('fReprog'), revision: g('fRevision'), plazo: g('fPlazo'), condicionadas: cond },
         subtareas: d.subtareas, notas: g('notas'), enlaces: links, vinculadas: d.vinculadas
       });
       const pc = form.elements.porConfirmar.checked;
@@ -622,6 +757,7 @@ export function mountKanban(root, cfg) {
       if (!one.ok) { toast('No se cargó: ' + one.error, 'err', 9000); return; }
       openCard(null, { card: one.value, file: file.name, aviso: one.aviso }); return;
     }
+    if (obj && obj.schema === UPDATE_SCHEMA) { importUpdate(obj, file.name); return; }
     const r = validateBoard(obj, BOARD_ID, cfg.boardName);
     if (!r.ok) { toast('No se importó: ' + r.error, 'err', 9000); return; }
     const plan = importPlan(r.value);
@@ -658,6 +794,50 @@ export function mountKanban(root, cfg) {
       if (!plan.nuevas.length && !plan.actualizadas.length) { m.close('force'); toast('No hubo cambios: el tablero ya tenía esas tarjetas.'); return; }
       applyMerge(plan, file.name); persist(); m.close('force'); render();
       toast(`Importación: ${plan.nuevas.length} nuevas, ${plan.actualizadas.length} actualizadas; ${plan.fuera.length} conservadas sin cambios.`, 'ok', 7000);
+    });
+  }
+
+  /* Actualización (ccs-kanban-actualizacion-v1): muestra qué se crea, qué se amplía y qué no se aplica, y solo
+     cambia el tablero al confirmar. Nunca mueve una tarjeta existente de columna ni borra nada. */
+  function importUpdate(obj, fileName) {
+    const r = parseUpdateFile(obj, BOARD_ID);
+    if (!r.ok) { toast('No se importó: ' + r.error, 'err', 9000); return; }
+    const upd = r.value, plan = planUpdate(B.cards, upd);
+    const of = a => plan.filter(it => it.accion === a);
+    const crear = of('crear'), ampliar = of('ampliar'), igual = of('igual'), fallan = plan.filter(it => it.accion === 'ambigua' || it.accion === 'sin-tarjeta');
+    const name = it => esc(it.next ? it.next.titulo : (it.ch.tarjeta && it.ch.tarjeta.titulo) || it.ch.id);
+    const refs = it => (it.next && it.next.referencias.length ? ` <span class="dim">· ${esc(it.next.referencias.join(' / '))}</span>` : '');
+    const block = (title, list, row) => (list.length ? `<section class="sec"><h3 class="sec-title">${title} (${list.length})</h3><ul class="ik-updlist">${list.map(row).join('')}</ul></section>` : '');
+    const m = openModal({ html: `<form novalidate>
+      <div class="modal-head"><div><p class="kicker">${esc(fileName)}</p><h2 data-modal-title>${esc(upd.titulo)}</h2></div>
+        <button type="button" class="btn btn-ghost icon-btn" data-close aria-label="Cancelar">${ICON.close}</button></div>
+      <div class="modal-body">
+        <p class="muted" style="margin-bottom:12px">Las tarjetas existentes conservan su columna, historial, bloqueo, cierre y subtareas hechas: solo se les agrega lo nuevo. Ninguna tarjeta se borra.</p>
+        ${block('Tarjetas nuevas', crear, it => `<li><b>${name(it)}</b>${refs(it)} <span class="dim">· entra en ${esc(colTitle(it.next.estado))}</span></li>`)}
+        ${block('Tarjetas que se amplían', ampliar, it => `<li><b>${name(it)}</b>${refs(it)} <span class="dim">· sigue en ${esc(colTitle(it.next.estado))}</span><br><small>${esc(it.cambios.join(' · '))}</small></li>`)}
+        ${block('No se aplican', fallan, it => `<li><b>${name(it)}</b><br><small>${it.accion === 'ambigua'
+          ? `Coincide con más de una tarjeta o con una ya usada (${esc(it.candidatos.map(c => c.titulo).join(' / '))}). Amplíala a mano.`
+          : 'No se encontró la tarjeta en este tablero.'}</small></li>`)}
+        ${igual.length ? `<p class="muted">${plural(igual.length, 'tarjeta ya tiene', 'tarjetas ya tienen')} estos datos y no cambia${igual.length === 1 ? '' : 'n'}.</p>` : ''}
+      </div>
+      <div class="modal-foot"><button type="button" class="btn" data-close>Cancelar</button>
+        <button type="submit" class="btn btn-primary" ${crear.length || ampliar.length ? '' : 'disabled'}>${ICON.upload}<span>Aplicar actualización</span></button></div>
+    </form>` });
+    m.el.querySelector('form').addEventListener('submit', ev => {
+      ev.preventDefault();
+      const at = nowIso();
+      ampliar.forEach(it => {
+        const i = B.cards.findIndex(x => x.id === it.next.id); if (i < 0) return;
+        it.next.historial.push({ fecha: at, tipo: 'actualizacion', de: it.next.estado, a: it.next.estado, nota: `Actualizada con «${upd.titulo}» (${fileName}): ${it.cambios.join(', ')}.` });
+        B.cards[i] = it.next;
+      });
+      crear.forEach(it => {
+        const c = it.next; c.creada = at;
+        c.historial = [{ fecha: at, tipo: 'importacion', de: '', a: c.estado, nota: `Creada desde «${upd.titulo}» (${fileName}).` }];
+        B.cards.push(c); place(c, c.estado, null);
+      });
+      persist(); m.close('force'); render();
+      toast(`Actualización aplicada: ${crear.length} nuevas, ${ampliar.length} ampliadas${fallan.length ? `, ${fallan.length} sin aplicar` : ''}.`, 'ok', 8000);
     });
   }
 

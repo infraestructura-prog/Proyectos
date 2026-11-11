@@ -685,3 +685,7 @@ body[data-area="neotropya"] .kb-col.tone-violet { --col-accent: #C3B6E0; } body[
 .ac-detrow { display: grid; grid-template-columns: minmax(140px, 200px) 1fr 150px; gap: 8px; align-items: center; }
 .ac-detrow label { font-size: 13px; font-weight: 600; color: var(--neo-text-2); }
 @media (max-width: 640px) { .ac-detrow { grid-template-columns: 1fr; gap: 4px; } }
+
+/* Kanban: referencias de seguimiento y resumen de actualizaciones */
+body[data-area="neotropya"] .ik-neo .ik-tag.t-ref { color: var(--neo-text-2); background: #fff; border-color: var(--neo-border); font-weight: 700; }
+body[data-area="neotropya"] .ik-updlist li { border-color: var(--neo-border); background: #fff; }

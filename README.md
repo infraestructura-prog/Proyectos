@@ -303,6 +303,22 @@ Archivos: `assets/js/modules/presupuestos.js` (interfaz) y `assets/js/modules/pr
   - `titulo` es obligatorio en el archivo, y el formulario pide además el `objetivo`. Un `tablero` distinto se rechaza.
   - Si el `id` falta o ya existe, se genera otro: nunca sobrescribe una tarjeta. Para actualizar una existente se usa «Importar JSON».
   - `estado` puede ser `todo` o `doing`. `blocked`, `testing` y `done` solo se respetan si traen `bloqueo` (motivo y acción), `testing` (comprobar y esperado) o `cierre` (nota); si no, la tarjeta entra en To do con un aviso. El historial del archivo se ignora y se registra «Tarjeta creada desde el archivo…».
+- **Archivo de actualización** (por ejemplo, los compromisos de una reunión). Se carga con «Importar JSON» y antes de aplicarse muestra qué tarjetas se crean, cuáles se amplían y cuáles no se aplican.
+  - Formato `ccs-kanban-actualizacion-v1` con `tablero`, `titulo`, `fecha` y una lista `cambios`. Cada cambio tiene:
+    - `id`: identificador estable.
+    - `alias` y `buscar`: otros ids, o palabras del título sin tildes, para reconocer una tarjeta que ya existe con otro nombre.
+    - `tarjeta`: datos base, si hay que crearla.
+    - `ampliar`: `alcance`, `notas`, `subtareas` [{id, texto}], `marcarHechas` [{id, contiene}], `referencias`, `colaboradores`, `dependencia`, `responsableSiVacio`, `solicitanteSiVacio`, `revision`, `plazo`, `vinculadas` y `enlaces`.
+  - Una tarjeta existente conserva su columna, historial, bloqueo, cierre, subtareas hechas, responsable y dependencia; solo se le agrega lo nuevo. Una tarjeta en Done no se reabre.
+  - Volver a cargar el mismo archivo no duplica nada: las subtareas se reconocen por id o por texto, y las notas solo se agregan si no están ya.
+  - Si un cambio coincide con varias tarjetas, no se aplica y se avisa. Un `tablero` distinto se rechaza.
+  - Los vínculos entre tarjetas son recíprocos.
+- **Campos de seguimiento:**
+  - **Fecha de revisión** (`fechas.revision`): revisión de avance acordada. No es una fecha de cierre ni hace vencer la tarjeta.
+  - **Plazo sin día fijo** (`fechas.plazo`): por ejemplo, «Esta semana (9–15/11/2026)».
+  - **Colaboradores** (`colaboradores`): apoyo, no responsables.
+  - **Referencias** (`referencias`): códigos de una reunión, como I02 o M03. No son el id de la tarjeta.
+  - La tarjeta muestra las referencias como etiquetas, y también la revisión, el plazo y la dependencia, aunque no esté bloqueada. Registrar una dependencia no bloquea la tarjeta.
 
 ## Kanban de Neotropya (Neotropya › Kanban)
 

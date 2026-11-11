@@ -481,3 +481,9 @@ body[data-area="infraestructura"] .page:has(.ik) { max-width: none; }
 
 /* Kanban · cargar una actividad desde un archivo JSON en «Nueva tarjeta» */
 .ik-fromfile { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+/* Referencias de seguimiento (p. ej. códigos de una reunión) y resumen de actualizaciones */
+.ik-tag.t-ref { color: var(--in-text-2); border-color: var(--in-steel); background: transparent; font-family: var(--mono, monospace); font-weight: 600; }
+.ik-updlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+.ik-updlist li { padding: 7px 10px; border: 1px solid var(--in-steel); border-radius: 6px; line-height: 1.35; }
+.ik-updlist small { color: var(--muted, var(--in-text-2)); font-size: 12.5px; }
