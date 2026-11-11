@@ -5,8 +5,10 @@
    en el tablero cuyo «id» coincide, para que los datos de un área no se mezclen con los de otra.
    No sincroniza con Google Sheets, Slack ni otras fuentes. */
 import { esc, ICON, openModal, confirmDialog, toast, alertBox, fmtDate } from '../ui.js';
+import { ruleFor, applySubtaskRules, aggregate, mondayOf, weekLabel, weekObjId, weekOfObj, CONSOLIDACIONES } from './kanban-estructura.js';
 
 const SCHEMA = 'ccs-kanban-v1';
+const ESTRUCTURA_VERSION = 2;   // 2 = tarjetas agrupadas en macroobjetivos (campos macro / objetivoEsp / clasificada)
 
 const COLS = [
   { id: 'todo', title: 'To do', help: 'Pendiente de iniciar.' },
@@ -47,7 +49,9 @@ function normCard(c, i = 0) {
     // «revision»: fecha de revisión acordada (no es cierre ni vence la tarjeta). «plazo»: plazo sin día fijo («Esta semana…»).
     fechas: { original: date(f.original), reprogramada: date(f.reprogramada), revision: date(f.revision), plazo: str(f.plazo, 160),
       condicionadas: (Array.isArray(f.condicionadas) ? f.condicionadas : []).map(x => ({ fecha: date(x && x.fecha), condicion: str(x && x.condicion, 200) })).filter(x => x.fecha || x.condicion).slice(0, 20) },
-    subtareas: (Array.isArray(c.subtareas) ? c.subtareas : []).map((s, k) => ({ id: str(s && s.id, 40) || `s${k + 1}`, texto: str(s && s.texto, 300), hecha: !!(s && s.hecha) })).filter(s => s.texto).slice(0, 60),
+    // «fase»: objetivo específico al que pertenece la subtarea de una actividad principal. «equivale»: id del hito que ya la registra.
+    subtareas: (Array.isArray(c.subtareas) ? c.subtareas : []).map((s, k) => ({ id: str(s && s.id, 40) || `s${k + 1}`, texto: str(s && s.texto, 300), hecha: !!(s && s.hecha),
+      fase: str(s && s.fase, 80), equivale: str(s && s.equivale, 80) })).filter(s => s.texto).slice(0, 60),
     notas: str(c.notas, 4000),
     enlaces: (Array.isArray(c.enlaces) ? c.enlaces : []).filter(u => typeof u === 'string' && httpsUrl(u)).slice(0, 20),
     bloqueo: blk(c.bloqueo), testing: c.testing ? { comprobar: str(c.testing.comprobar, 600), esperado: str(c.testing.esperado, 600) } : null,
@@ -55,7 +59,14 @@ function normCard(c, i = 0) {
     historial: (Array.isArray(c.historial) ? c.historial : []).filter(h => h && typeof h === 'object').map(h => ({ fecha: str(h.fecha, 40), tipo: str(h.tipo, 30), de: str(h.de, 20), a: str(h.a, 20), nota: str(h.nota, 1200) })).slice(-200),
     hito: !!c.hito, transversal: !!c.transversal, archivada: !!c.archivada,
     vinculadas: (Array.isArray(c.vinculadas) ? c.vinculadas : []).filter(x => typeof x === 'string').slice(0, 30),
-    orden: Number.isFinite(c.orden) ? c.orden : i, creada: str(c.creada, 40)
+    orden: Number.isFinite(c.orden) ? c.orden : i, creada: str(c.creada, 40),
+    // Estructura: macroobjetivo y objetivo específico; «clasificada» = ya migrada o asignada a mano (no se reclasifica).
+    macro: str(c.macro, 60), objetivoEsp: str(c.objetivoEsp, 80), clasificada: !!c.clasificada,
+    // Identificadores anteriores de la misma actividad (p. ej. tras consolidar duplicados).
+    alias: (Array.isArray(c.alias) ? c.alias : []).filter(x => typeof x === 'string' && x.trim()).map(x => x.trim().slice(0, 80)).slice(0, 10),
+    // Tarjeta consolidada en otro tablero: se conserva con sus datos, pero solo se consulta desde aquí.
+    enlace: c.enlace && typeof c.enlace === 'object' && str(c.enlace.tablero, 60) && str(c.enlace.id, 80)
+      ? { tablero: str(c.enlace.tablero, 60), id: str(c.enlace.id, 80), fecha: str(c.enlace.fecha, 40) } : null
   };
 }
 
@@ -154,7 +165,7 @@ export function parseUpdateFile(obj, boardId) {
 /* Calcula, sin modificar el tablero, cómo quedaría cada tarjeta. Devuelve los elementos del plan:
    { ch, accion: 'crear' | 'ampliar' | 'igual' | 'ambigua' | 'sin-tarjeta', next (tarjeta resultante), cambios [textos], candidatos [] } */
 export function planUpdate(cards, upd) {
-  const byId = id => cards.find(c => c.id === id);
+  const byId = id => cards.find(c => c.id === id) || cards.find(c => c.alias.includes(id));
   const claimed = new Map();
   const items = upd.cambios.map(ch => {
     let t = byId(ch.id) || ch.alias.map(byId).find(Boolean) || null, amb = null;
@@ -169,7 +180,7 @@ export function planUpdate(cards, upd) {
   });
   const idMap = new Map();
   items.forEach(it => { if (it.target) idMap.set(it.ch.id, it.target.id); else if (!it.candidatos.length && it.ch.tarjeta) idMap.set(it.ch.id, it.ch.id); });
-  const resolveId = id => idMap.get(id) || (byId(id) ? id : null);
+  const resolveId = id => idMap.get(id) || (byId(id) ? byId(id).id : null);
   const touched = new Map();   // id → tarjeta resultante
 
   items.forEach(it => {
@@ -234,6 +245,59 @@ const storageFor = key => ({
   write(v) { try { localStorage.setItem(key, JSON.stringify(v)); return true; } catch { return false; } }
 });
 
+/* Respaldo recuperable del estado anterior a una migración. Se guarda UNA vez por tablero (no se sobrescribe)
+   con el mismo formato de un archivo exportado, para poder importarlo de nuevo. */
+const backupKey = key => key + '-respaldo-reorganizacion';
+function backupOnce(key, raw, boardId) {
+  try {
+    if (!raw || localStorage.getItem(backupKey(key))) return;
+    localStorage.setItem(backupKey(key), JSON.stringify({ ...raw, schema: SCHEMA, id: boardId, respaldadoEn: nowIso(),
+      respaldo: 'Estado del tablero antes de la reorganización en macroobjetivos (copia automática, sin cambios).' }));
+  } catch { /* sin almacenamiento: la migración sigue, pero no hay copia */ }
+}
+
+/* Consolida duplicados entre tableros (CONSOLIDACIONES). Solo actúa si los dos tableros ya existen en este
+   navegador y la tarjeta de origen aún no es un enlace. La tarjeta canónica recibe notas, enlaces, subtareas e
+   historial de la otra (sin repetir lo que ya tiene); la de origen se conserva entera y queda como enlace.
+   Idempotente: una segunda pasada no cambia nada. Devuelve true si escribió algo. */
+function runConsolidations() {
+  let changed = false;
+  CONSOLIDACIONES.forEach(({ origen, destino }) => {
+    const so = storageFor(origen.key), sd = storageFor(destino.key);
+    const ro = so.read(), rd = sd.read();
+    if (!ro || !rd || !Array.isArray(ro.tarjetas) || !Array.isArray(rd.tarjetas)) return;
+    const io = ro.tarjetas.findIndex(c => c && c.id === origen.id), id = rd.tarjetas.findIndex(c => c && c.id === destino.id);
+    if (io < 0 || id < 0) return;
+    const o = normCard(ro.tarjetas[io]), d = normCard(rd.tarjetas[id]);
+    if (o.enlace) return;
+    backupOnce(origen.key, ro, origen.board); backupOnce(destino.key, rd, destino.board);
+    const at = nowIso(), tag = `[${origen.nombre} · ${o.id}]`;
+    if (!d.alias.includes(o.id)) d.alias.push(o.id);
+    const ref = `${origen.nombre.slice(0, 5)} · ${o.id}`.slice(0, 30);
+    if (!d.referencias.includes(ref)) d.referencias.push(ref);
+    const head = `Consolidada con «${o.titulo}» del Kanban de ${origen.nombre} (${o.id})`;
+    if (!fold(d.notas).includes(fold(head))) {
+      const parts = [`${head} el ${fmtD(at.slice(0, 10))}: describía el mismo trabajo. Datos de esa tarjeta:`,
+        `- Estado: ${colTitle(o.estado)}${o.estado !== d.estado ? ` (aquí se conserva ${colTitle(d.estado)})` : ''}.`,
+        `- Responsable: ${o.responsable || 'por asignar'}${o.responsable && o.responsable !== d.responsable ? ` (aquí: ${d.responsable || 'por asignar'})` : ''}.`,
+        o.objetivo ? `- Objetivo: ${o.objetivo}` : '', o.descripcion ? `- Descripción: ${o.descripcion}` : '',
+        o.criterio ? `- Criterio: ${o.criterio}` : '', o.notas ? `- Notas: ${o.notas}` : ''].filter(Boolean);
+      d.notas = (d.notas ? d.notas + '\n\n' : '') + parts.join('\n');
+    }
+    o.enlaces.forEach(u => { if (!d.enlaces.includes(u)) d.enlaces.push(u); });
+    o.subtareas.forEach(s => { const x = d.subtareas.find(y => fold(y.texto) === fold(s.texto)); if (x) x.hecha = x.hecha || s.hecha; else d.subtareas.push({ ...s, id: 'c-' + s.id, fase: '' }); });
+    const seen = new Set(d.historial.map(h => h.fecha + '|' + h.nota));
+    o.historial.filter(h => h.tipo !== 'clasificacion').forEach(h => { const nh = { ...h, nota: `${tag} ${h.nota}` }; if (!seen.has(nh.fecha + '|' + nh.nota)) d.historial.push(nh); });
+    d.historial.sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+    d.historial.push({ fecha: at, tipo: 'consolidacion', de: d.estado, a: d.estado, nota: `${head}. Su historial se incorporó aquí con el prefijo ${tag}; allí queda como enlace de solo lectura.` });
+    o.enlace = { tablero: destino.board, id: destino.id, fecha: at };
+    o.historial.push({ fecha: at, tipo: 'consolidacion', de: o.estado, a: o.estado, nota: `Consolidada en «${d.titulo}» (Kanban de ${destino.nombre}). Se consulta desde aquí y se edita allí.` });
+    ro.tarjetas[io] = o; rd.tarjetas[id] = d;
+    if (sd.write(rd) && so.write(ro)) changed = true;   // primero la canónica: si falla, el origen sigue intacto
+  });
+  return changed;
+}
+
 const targetDate = c => c.fechas.reprogramada || c.fechas.original;
 const isOverdue = c => { const d = targetDate(c); return !!d && d < todayStr() && c.estado !== 'done'; };
 const depOf = c => (c.estado === 'blocked' && c.bloqueo && c.bloqueo.quien) || c.dependenciaExterna || '';
@@ -245,7 +309,11 @@ const progress = c => ({ hechas: c.subtareas.filter(s => s.hecha).length, total:
 export function mountKanban(root, cfg) {
   const BOARD_ID = cfg.boardId;
   const storage = storageFor(cfg.storeKey);
+  const E = cfg.estructura || null;          // macroobjetivos de este tablero (kanban-estructura.js)
+  const VIEW_KEY = cfg.storeKey + '-vista';  // preferencia de vista de este navegador (comodidad, no datos)
+  const pref = { get() { try { return localStorage.getItem(VIEW_KEY); } catch { return null; } }, set(v) { try { localStorage.setItem(VIEW_KEY, v); } catch { /* sin almacenamiento */ } } };
   const B ={ cards: [], savedAt: null, ready: false, error: '', mobileCol: 'todo',
+    view: E ? (pref.get() === 'all' ? 'all' : 'macro') : 'all', macro: null, openObj: new Set(), nodos: {},
     f: { q: '', resp: '', prio: '', proy: '', dep: '', vencidas: false, transversal: false, archivadas: false, ext: true },
     ext: { items: [], state: cfg.external ? 'loading' : 'off', error: '' } };
   let alive = true, dragId = null;
@@ -253,10 +321,20 @@ export function mountKanban(root, cfg) {
   const wrap = inner => `<div class="ik ${cfg.cls || ''}">${inner}</div>`;
   root.innerHTML = wrap(`${cfg.hero('')}<div class="skeleton" style="height:300px"></div>`);
 
-  async function load() {
+  function readSaved() {
     const saved = storage.read();
     const check = saved ? validateBoard({ ...saved, schema: SCHEMA, id: BOARD_ID }, BOARD_ID) : null;
-    if (check && check.ok) { B.cards = check.value; B.savedAt = saved.savedAt || null; B.ready = true; render(); return; }
+    if (!check || !check.ok) return null;
+    B.cards = check.value; B.savedAt = saved.savedAt || null;
+    const nv = saved.estructura && saved.estructura.nodosVistos;
+    B.nodos = nv && typeof nv === 'object' && !Array.isArray(nv) ? nv : {};
+    return saved;
+  }
+
+  async function load() {
+    if (E) runConsolidations();
+    const saved = readSaved();
+    if (saved) { B.ready = true; migrate(saved); render(); deepLink(); return; }
     // Primera visita en este navegador: se cargan los datos iniciales una sola vez y se guardan.
     try {
       const res = await fetch(cfg.dataUrl, { cache: 'no-store' });
@@ -271,26 +349,126 @@ export function mountKanban(root, cfg) {
           nota: `${cfg.seedNote}${c.estadoPorConfirmar ? ' · estado por confirmar' : ''}${c.estado === 'blocked' && c.bloqueo ? ` · bloqueo documentado: ${c.bloqueo.motivo}` : ''}` }];
         return c;
       });
-      B.ready = true; persist(); render();
+      B.ready = true; persist();
+      if (E && runConsolidations()) readSaved();
+      migrate(null); render(); deepLink();
     } catch (e) { B.error = 'No se pudieron cargar los datos iniciales del tablero (' + e.message + ').'; render(); }
   }
 
   function persist() {
     B.savedAt = nowIso();
-    if (!storage.write({ schema: SCHEMA, id: BOARD_ID, savedAt: B.savedAt, tarjetas: B.cards }))
+    if (!storage.write({ schema: SCHEMA, id: BOARD_ID, savedAt: B.savedAt, estructura: { version: ESTRUCTURA_VERSION, nodosVistos: B.nodos }, tarjetas: B.cards }))
       toast('No se pudo guardar en este navegador (almacenamiento no disponible).', 'err', 7000);
+  }
+
+  /* ── Migración a macroobjetivos ──
+     Solo toca tarjetas no clasificadas: les asigna macroobjetivo/objetivo por regla (o «Por clasificar»), marca la
+     fase de sus subtareas y deja constancia en el historial. No cambia estados, fechas ni responsables.
+     Antes de la primera migración se guarda una copia del tablero tal como estaba. */
+  function classify(list) {
+    if (!E || !list.length) return 0;
+    const at = nowIso();
+    list.forEach(c => {
+      const r = ruleFor(E, c), m = r && macroOf(r[0]);
+      c.macro = m ? m.id : ''; c.objetivoEsp = m ? r[1] : '';
+      applySubtaskRules(E, c);
+      c.clasificada = true;
+      c.historial.push({ fecha: at, tipo: 'clasificacion', de: c.estado, a: c.estado,
+        nota: m ? `Reorganización: asociada a «${m.letra} · ${m.titulo}»${c.objetivoEsp ? ` › «${objTitle(m, c.objetivoEsp)}»` : ' como actividad principal'}. Estado sin cambios.`
+          : 'Reorganización: queda «Por clasificar» (sin relación clara con un macroobjetivo). Estado sin cambios.' });
+    });
+    return list.length;
+  }
+  function migrate(rawSaved) {
+    if (!E) return;
+    const pending = B.cards.filter(c => !c.clasificada && !c.enlace && !isConsolOrigin(c));
+    if (!pending.length) return;
+    if (rawSaved) backupOnce(cfg.storeKey, rawSaved, BOARD_ID);
+    classify(pending); persist();
+  }
+
+  /* Abre la tarjeta indicada en la ruta (…/kanban?tarjeta=id), también por un identificador anterior. */
+  function deepLink() {
+    const q = new URLSearchParams(location.hash.split('?')[1] || '');
+    const t = q.get('tarjeta'); if (!t) return;
+    const c = byId(t) || B.cards.find(x => x.alias.includes(t));
+    if (c) setTimeout(() => openCard(c), 0);
   }
   const byId = id => B.cards.find(c => c.id === id);
   const log = (c, tipo, nota, de = c.estado, a = c.estado) => c.historial.push({ fecha: nowIso(), tipo, de, a, nota });
+
+  /* ── Estructura (macroobjetivo → objetivo específico → actividades) ── */
+  const macroOf = id => (E && id ? E.macros.find(m => m.id === id) : null) || null;
+  function objTitle(m, oid) {
+    const o = m.objetivos.find(x => x.id === oid); if (o) return o.titulo;
+    if (weekOfObj(oid)) return weekLabel(weekOfObj(oid));
+    if (oid.startsWith('nodo:')) return `Nodo ${oid.slice(5)}`;
+    return oid;
+  }
+  // Actividades que cuentan en la estructura: sin archivar y sin las consolidadas en otro tablero (se cuentan allí).
+  const structCards = () => B.cards.filter(c => !c.archivada && !c.enlace);
+  const isConsolOrigin = c => CONSOLIDACIONES.some(x => x.origen.board === BOARD_ID && x.origen.id === c.id);
+  const unclassified = () => structCards().filter(c => !macroOf(c.macro) && !isConsolOrigin(c));
+
+  /* Nodos de la hoja: cada nodo visto en curso tiene su objetivo. Si deja de aparecer en curso, se consulta su
+     estado en la fuente: solo cuenta como terminado si la hoja lo da por desplegado o completado. */
+  function nodeActs() {
+    if (!cfg.external) return [];
+    const live = B.ext.state === 'ok';
+    const refs = new Set([...Object.keys(B.nodos), ...(live ? B.ext.items.map(x => x.ref) : [])]);
+    return [...refs].sort((a, b) => a.localeCompare(b, 'es')).map(ref => {
+      const x = live ? B.ext.items.find(i => i.ref === ref) : null;
+      if (x) return { ref, kind: 'ext', x, estado: x.estado };
+      if (!live) return { ref, kind: 'sin-fuente', estado: null };
+      const s = cfg.external.lookup ? cfg.external.lookup(ref) : null;
+      if (s && s.terminado) return { ref, kind: 'terminado', estado: 'done', texto: s.estado };
+      return { ref, kind: s ? 'otro' : 'no-encontrado', estado: null, texto: s ? s.estado : '' };
+    });
+  }
+
+  function objectivesOf(m, cards) {
+    const list = m.objetivos.map(o => ({ id: o.id, titulo: o.titulo }));
+    const extra = [...new Set(cards.map(c => c.objetivoEsp).filter(o => o && !list.some(x => x.id === o)))].sort();
+    extra.forEach(id => list.push({ id, titulo: objTitle(m, id) }));
+    if (m.nodos) nodeActs().forEach(n => list.push({ id: 'nodo:' + n.ref, titulo: `Nodo ${n.ref}`, nodo: n.ref }));
+    return list;
+  }
+
+  function summarize(m) {
+    const cards = structCards().filter(c => c.macro === m.id);
+    const nodes = m.nodos ? nodeActs() : [];
+    const agg = aggregate([...cards.map(c => ({ estado: c.estado, hito: c.hito })), ...nodes.map(n => ({ estado: n.estado }))]);
+    const blocks = [...cards.filter(c => c.estado === 'blocked').map(c => ({ titulo: c.titulo, quien: (c.bloqueo && c.bloqueo.quien) || c.dependenciaExterna }))
+      , ...nodes.filter(n => n.estado === 'blocked').map(n => ({ titulo: n.x.titulo, quien: n.x.bloqueo && n.x.bloqueo.quien }))];
+    let next = null;
+    for (const st of ['doing', 'todo', 'testing', 'blocked']) {
+      const c = cards.filter(x => x.estado === st && x.proximaAccion).sort((a, b) => a.orden - b.orden)[0];
+      if (c) { next = { c, texto: c.proximaAccion }; break; }
+    }
+    return { m, cards, nodes, agg, objs: objectivesOf(m, cards), blocks, next };
+  }
+
+  /* Tarjeta consolidada en otro tablero: datos vivos de la canónica (o null si ese tablero no está en este navegador). */
+  function linkTarget(c) {
+    const cons = CONSOLIDACIONES.find(x => x.destino.board === (c.enlace && c.enlace.tablero));
+    if (!cons) return null;
+    const raw = storageFor(cons.destino.key).read();
+    const t = raw && Array.isArray(raw.tarjetas) ? raw.tarjetas.find(x => x && x.id === c.enlace.id) : null;
+    return { cons, card: t ? normCard(t) : null };
+  }
   const reindex = col => B.cards.filter(c => c.estado === col && !c.archivada).sort((a, b) => a.orden - b.orden).forEach((c, i) => { c.orden = i + 1; });
 
   /* ── Filtros ── */
-  function visible(c) {
+  // En la vista de macroobjetivos las transversales ya están agrupadas (macroobjetivo propio), así que no se ocultan.
+  const filtering = () => { const f = B.f; return !!(f.q.trim() || f.resp || f.prio || f.proy || f.dep || f.vencidas); };
+  function visible(c, inMacros = false) {
     const f = B.f;
     if (c.archivada) return false;
-    if (!f.transversal && c.transversal) return false;
+    if (!inMacros && !f.transversal && c.transversal) return false;
     const q = f.q.trim().toLowerCase();
-    if (q && ![c.titulo, c.descripcion, c.objetivo, c.equipo, c.colaboradores, c.referencias.join(' '), c.subtareas.map(s => s.texto).join(' '), c.bloqueo ? c.bloqueo.motivo : ''].join(' ').toLowerCase().includes(q)) return false;
+    const m = macroOf(c.macro);
+    if (q && ![c.titulo, c.descripcion, c.objetivo, c.equipo, c.responsable, c.colaboradores, c.referencias.join(' '), c.alias.join(' '), c.subtareas.map(s => s.texto).join(' '),
+      c.bloqueo ? c.bloqueo.motivo : '', m ? m.titulo : '', m && c.objetivoEsp ? objTitle(m, c.objetivoEsp) : ''].join(' ').toLowerCase().includes(q)) return false;
     if (f.resp && (f.resp === '__none' ? c.responsable : c.responsable !== f.resp)) return false;
     if (f.prio && (f.prio === '__none' ? c.prioridad : c.prioridad !== f.prio)) return false;
     if (f.proy && c.proyecto !== f.proy) return false;
@@ -308,14 +486,20 @@ export function mountKanban(root, cfg) {
   async function loadExternal(force = false) {
     if (!cfg.external) return;
     B.ext.state = 'loading'; if (B.ready) render();
-    try { B.ext.items = (await cfg.external.load(force)).filter(x => x && COL_IDS.includes(x.estado)); B.ext.state = 'ok'; B.ext.error = ''; }
+    try {
+      B.ext.items = (await cfg.external.load(force)).filter(x => x && COL_IDS.includes(x.estado)); B.ext.state = 'ok'; B.ext.error = '';
+      // Se recuerda QUÉ nodos estuvieron en curso (solo su identificador y el día; su estado se lee siempre de la hoja),
+      // para que un nodo que sale de la consulta no se dé por terminado sin comprobarlo en la fuente.
+      const nuevos = B.ext.items.filter(x => x.ref && !B.nodos[x.ref]);
+      if (E && B.ready && nuevos.length) { nuevos.forEach(x => { B.nodos[x.ref] = todayStr(); }); persist(); }
+    }
     catch (e) { B.ext.state = 'error'; B.ext.error = e && e.message || 'error desconocido'; }
     if (alive && B.ready) render();
   }
 
-  function visibleExt(x) {
+  function visibleExt(x, inMacros = false) {
     const f = B.f;
-    if (!f.ext || f.vencidas) return false;
+    if ((!inMacros && !f.ext) || f.vencidas) return false;
     const q = f.q.trim().toLowerCase();
     if (q && ![x.titulo, x.ref, x.responsable, x.demora, ...(x.tags || [])].join(' ').toLowerCase().includes(q)) return false;
     if (f.resp && (f.resp === '__none' ? x.responsable : x.responsable !== f.resp)) return false;
@@ -344,15 +528,25 @@ export function mountKanban(root, cfg) {
   }
 
   /* ── Tarjeta compacta ── */
-  function cardHtml(c, i, n) {
+  /* opts.fixed: tarjeta dentro de un desglose o de «Por clasificar» (sin arrastre ni orden; el estado se cambia con su selector).
+     opts.macroTag: muestra a qué macroobjetivo pertenece (vista «Todas las actividades»). opts.col: muestra la columna. */
+  function macroTagHtml(c) {
+    if (!E) return '';
+    const m = macroOf(c.macro);
+    return m ? `<span class="ik-tag t-macro" title="${esc(m.titulo)}${c.objetivoEsp ? ' › ' + esc(objTitle(m, c.objetivoEsp)) : ''}">${esc(m.letra)} · ${esc(m.titulo)}</span>`
+      : isConsolOrigin(c) ? '' : '<span class="ik-tag t-unclass">Por clasificar</span>';
+  }
+  function cardHtml(c, i, n, opts = {}) {
     const pr = progress(c), d = targetDate(c), od = isOverdue(c);
-    return `<li class="ik-card prio-${c.prioridad || 'none'} ${c.hito ? 'is-hito' : ''}" draggable="true" data-id="${esc(c.id)}">
+    const eqs = c.subtareas.filter(s => s.equivale && byId(s.equivale)).length;
+    return `<li class="ik-card prio-${c.prioridad || 'none'} ${c.hito ? 'is-hito' : ''} ${opts.fixed ? `ik-fixed c-${c.estado}` : ''}" ${opts.fixed ? '' : 'draggable="true"'} data-id="${esc(c.id)}">
       <div class="ik-card-top">
-        <span class="ik-proj">${esc(c.proyecto || 'Sin proyecto')}</span>
+        <span class="ik-proj">${esc(c.proyecto || 'Sin proyecto')}${opts.col ? ` · <span class="ik-colname">${esc(colTitle(c.estado))}</span>` : ''}</span>
         <span class="ik-prio p-${c.prioridad || 'none'}">${c.prioridad ? esc(prioLabel(c.prioridad)) : 'Prioridad por confirmar'}</span>
       </div>
       <button type="button" class="ik-title" data-act="open" data-id="${esc(c.id)}">${esc(c.titulo)}</button>
       <div class="ik-tags">
+        ${opts.macroTag ? macroTagHtml(c) : ''}
         ${c.estadoPorConfirmar ? '<span class="ik-tag t-confirm">Estado por confirmar</span>' : ''}
         ${od ? `<span class="ik-tag t-late">${small(ICON.warn)}Vencida · ${fmtD(d)}</span>` : ''}
         ${c.hito ? '<span class="ik-tag t-hito">Hito</span>' : ''}
@@ -368,13 +562,166 @@ export function mountKanban(root, cfg) {
         ${c.estado !== 'blocked' && c.dependenciaExterna ? `<div><dt>Depende de</dt><dd>${esc(c.dependenciaExterna)}</dd></div>` : ''}
         ${pr.total ? `<div class="ik-prog"><dt>Subtareas</dt><dd><span class="bar"><span style="width:${Math.round(pr.hechas / pr.total * 100)}%"></span></span>${pr.hechas}/${pr.total}</dd></div>` : ''}
       </dl>
+      ${eqs ? `<p class="ik-eqnote">${eqs === 1 ? 'Una subtarea ya está registrada como hito' : `${eqs} subtareas ya están registradas como hitos`}: cuenta${eqs === 1 ? '' : 'n'} una sola vez.</p>` : ''}
       <div class="ik-card-foot">
         <label class="sr-only" for="st-${esc(c.id)}">Estado de «${esc(c.titulo)}»</label>
         <select id="st-${esc(c.id)}" class="select ik-state" data-act="state" data-id="${esc(c.id)}">${COLS.map(col => `<option value="${col.id}" ${col.id === c.estado ? 'selected' : ''}>${col.title}</option>`).join('')}</select>
-        <button type="button" class="btn btn-ghost icon-btn ik-mv" data-act="up" data-id="${esc(c.id)}" ${i === 0 ? 'disabled' : ''} aria-label="Subir «${esc(c.titulo)}»">▲</button>
-        <button type="button" class="btn btn-ghost icon-btn ik-mv" data-act="down" data-id="${esc(c.id)}" ${i === n - 1 ? 'disabled' : ''} aria-label="Bajar «${esc(c.titulo)}»">▼</button>
+        ${opts.fixed ? '' : `<button type="button" class="btn btn-ghost icon-btn ik-mv" data-act="up" data-id="${esc(c.id)}" ${i === 0 ? 'disabled' : ''} aria-label="Subir «${esc(c.titulo)}»">▲</button>
+        <button type="button" class="btn btn-ghost icon-btn ik-mv" data-act="down" data-id="${esc(c.id)}" ${i === n - 1 ? 'disabled' : ''} aria-label="Bajar «${esc(c.titulo)}»">▼</button>`}
       </div>
     </li>`;
+  }
+
+  /* Tarjeta consolidada en otro tablero: solo lectura, con el estado vivo de la canónica. */
+  function linkCardHtml(c) {
+    const lt = linkTarget(c), t = lt && lt.card, name = lt ? lt.cons.destino.nombre : 'otro tablero';
+    return `<li class="ik-card ik-sync ik-link c-${(t || c).estado}" data-link="${esc(c.id)}">
+      <div class="ik-card-top"><span class="ik-proj">Transversal · ${esc(name)}</span><span class="ik-src">${small(ICON.list)}Enlace</span></div>
+      <button type="button" class="ik-title" data-act="link-open" data-id="${esc(c.id)}">${esc(t ? t.titulo : c.titulo)}</button>
+      <dl class="ik-meta"><div><dt>Estado en ${esc(name)}</dt><dd>${esc(colTitle((t || c).estado))}</dd></div><div><dt>Responsable</dt><dd>${esc((t || c).responsable || 'Por asignar')}</dd></div></dl>
+      <p class="ik-syncnote">${t ? `Actividad consolidada en el Kanban de ${esc(name)}: se edita allí. Esta tarjeta (${esc(c.id)}) se conserva como referencia.` : `La actividad canónica no está guardada en este navegador; abre el Kanban de ${esc(name)} para verla.`}</p>
+    </li>`;
+  }
+
+  /* ── Vista de macroobjetivos ── */
+  const LOCK = small(ICON.lock);
+  function distHtml(agg) {
+    const parts = [...COLS.filter(col => agg.dist[col.id]).map(col => ({ id: col.id, t: col.title, n: agg.dist[col.id] })),
+      ...(agg.dist.confirmar ? [{ id: 'confirm', t: 'Por confirmar', n: agg.dist.confirmar }] : [])];
+    if (!parts.length) return '<p class="ik-none">Sin actividades registradas.</p>';
+    return `<div class="ik-dist"><div class="ik-dist-bar" role="img" aria-label="Actividades por estado: ${esc(parts.map(p => `${p.t} ${p.n}`).join(', '))}">${parts.map(p => `<span class="ik-seg c-${p.id}" style="flex:${p.n}"></span>`).join('')}</div>
+      <ul class="ik-dist-legend">${parts.map(p => `<li class="c-${p.id}">${esc(p.t)} <b>${p.n}</b></li>`).join('')}</ul></div>`;
+  }
+  function macroCardHtml(s, matches) {
+    const { m, agg } = s, pct = agg.total ? Math.round(agg.hechas / agg.total * 100) : 0;
+    return `<li class="ik-card ik-macro" data-macro="${esc(m.id)}">
+      <div class="ik-card-top"><span class="ik-proj"><span class="ik-letter" aria-hidden="true">${esc(m.letra)}</span>Macroobjetivo</span>
+        ${m.transversal ? '<span class="ik-tag t-trans">Transversal</span>' : ''}</div>
+      <button type="button" class="ik-title" data-act="macro" data-macro="${esc(m.id)}">${esc(m.titulo)}</button>
+      <p class="ik-obj">${esc(m.resultado)}</p>
+      <div class="ik-tags">${agg.parcial ? `<span class="ik-tag t-partial">${LOCK}Bloqueo parcial</span>` : ''}${agg.dist.confirmar ? `<span class="ik-tag t-confirm">${agg.dist.confirmar} por confirmar en la fuente</span>` : ''}</div>
+      <dl class="ik-meta">
+        <div><dt>Objetivos</dt><dd>${s.objs.length}</dd></div><div><dt>Actividades</dt><dd>${agg.total}</dd></div>
+        <div class="ik-prog"><dt>Completadas</dt><dd><span class="bar"><span style="width:${pct}%"></span></span>${agg.hechas}/${agg.total}</dd></div>
+      </dl>
+      ${distHtml(agg)}
+      ${s.blocks.length ? `<div class="ik-block"><b>${LOCK}${plural(s.blocks.length, 'bloqueo activo', 'bloqueos activos')}</b>${s.blocks.slice(0, 3).map(b => `<span>${esc(b.titulo)}${b.quien ? ` · depende de ${esc(b.quien)}` : ''}</span>`).join('')}${s.blocks.length > 3 ? `<span>y ${s.blocks.length - 3} más</span>` : ''}</div>` : ''}
+      ${s.next ? `<div class="ik-next"><b>Próxima acción</b><span>${esc(s.next.texto)} <span class="dim">· ${esc(s.next.c.titulo)}</span></span></div>` : ''}
+      ${matches ? `<div class="ik-matches"><b>${plural(matches.length, 'coincidencia', 'coincidencias')}</b><ul>${matches.map(x => `<li><button type="button" class="ik-mlink" data-act="${x.ext ? 'ext-open' : 'open'}" data-id="${esc(x.id)}">${esc(x.titulo)}</button> <span class="dim">· ${esc(colTitle(x.estado))}</span></li>`).join('')}</ul></div>` : ''}
+      <div class="ik-card-foot"><button type="button" class="btn btn-sm ik-open" data-act="macro" data-macro="${esc(m.id)}">Ver desglose <span aria-hidden="true">→</span></button></div>
+    </li>`;
+  }
+
+  function macroBoardHtml(sums) {
+    const filt = filtering();
+    const items = sums.map(s => {
+      if (!filt) return { s, matches: null };
+      const matches = [...s.cards.filter(c => visible(c, true)).map(c => ({ id: c.id, titulo: c.titulo, estado: c.estado })),
+        ...s.nodes.filter(n => n.kind === 'ext' && visibleExt(n.x, true)).map(n => ({ id: n.x.id, titulo: n.x.titulo, estado: n.x.estado, ext: true }))];
+      return matches.length ? { s, matches } : null;
+    }).filter(Boolean);
+    const nCol = id => items.filter(it => it.s.agg.estado === id).length;
+    return `<div class="ik-colpick" role="group" aria-label="Elegir columna">${COLS.map(col => `<button type="button" class="ik-pick c-${col.id}" data-act="pick" data-col="${col.id}" aria-pressed="${B.mobileCol === col.id}">${col.title} <span class="n">${nCol(col.id)}</span></button>`).join('')}</div>
+      <div class="ik-board ik-macroboard" data-mobile="${B.mobileCol}">${COLS.map(col => {
+        const list = items.filter(it => it.s.agg.estado === col.id);
+        return `<section class="ik-col c-${col.id}" data-col="${col.id}" aria-labelledby="ik-h-${col.id}">
+          <header class="ik-col-head"><div><h2 id="ik-h-${col.id}">${col.title}</h2><p>${MACRO_HELP[col.id]}</p></div><span class="n" aria-label="${list.length} macroobjetivos">${list.length}</span></header>
+          <ul class="ik-list">${list.map(it => macroCardHtml(it.s, it.matches)).join('')}${list.length ? '' : `<li class="ik-empty">${filt ? 'Sin coincidencias.' : 'Ningún macroobjetivo.'}</li>`}</ul>
+        </section>`;
+      }).join('')}</div>`;
+  }
+  const MACRO_HELP = {
+    todo: 'Ninguna actividad empezada.', doing: 'Avance parcial o en ejecución.', testing: 'Ejecución terminada; quedan verificaciones.',
+    blocked: 'Lo pendiente depende de resolver bloqueos.', done: 'Todas las actividades completadas.'
+  };
+
+  /* Secciones bajo el tablero: «Por clasificar» y las actividades transversales consolidadas en otro tablero. */
+  function pendingHtml() {
+    const filt = filtering();
+    const list = unclassified().filter(c => !filt || visible(c, true));
+    const links = B.cards.filter(c => !c.archivada && (c.enlace || isConsolOrigin(c)));
+    return `${list.length || (!filt && unclassified().length) ? `<section class="panel ik-pending" aria-labelledby="ik-pend-t">
+        <h2 id="ik-pend-t">Por clasificar <span class="n">${list.length}</span></h2>
+        <p class="ik-sechelp">Tarjetas sin una relación clara con un macroobjetivo. Se conservan con su estado; ábrelas y elige su grupo en «Macroobjetivo y objetivo específico».</p>
+        <ul class="ik-list ik-grid">${list.map(c => cardHtml(c, 0, 1, { fixed: true, col: true })).join('')}</ul></section>` : ''}
+      ${links.length && !filt ? `<section class="panel ik-pending ik-linksec" aria-labelledby="ik-link-t">
+        <h2 id="ik-link-t">Transversales con otro tablero</h2>
+        <ul class="ik-list ik-grid">${links.map(c => c.enlace ? linkCardHtml(c) : cardHtml(c, 0, 1, { fixed: true, col: true })).join('')}</ul>
+        ${links.some(c => !c.enlace) ? '<p class="ik-sechelp">Esta actividad se consolidará con su equivalente de Neotropya cuando abras ese Kanban en este navegador.</p>' : ''}</section>` : ''}`;
+  }
+
+  /* ── Desglose de un macroobjetivo ── */
+  function nodeActHtml(n) {
+    if (n.kind === 'ext') return extCardHtml(n.x);
+    const msg = n.kind === 'terminado' ? `Ya no está en curso. La hoja de Nodos lo registra como «${n.texto}»; por eso cuenta como completado.`
+      : n.kind === 'otro' ? `Ya no está en curso. La hoja lo registra como «${n.texto}»; no se cuenta como terminado.`
+        : n.kind === 'no-encontrado' ? 'Ya no aparece en la hoja de Nodos. Comprueba su estado en la fuente: no se cuenta como terminado.'
+          : 'No se pudo leer la hoja de Nodos: estado no disponible (no se cuenta como terminado).';
+    return `<li class="ik-card ik-sync ik-fixed c-${n.estado || 'confirm'}"><div class="ik-card-top"><span class="ik-proj">Nodos</span><span class="ik-src">${small(ICON.refresh)}${n.estado === 'done' ? 'Completado según la fuente' : 'Por confirmar'}</span></div>
+      <p class="ik-ttl-s">Nodo ${esc(n.ref)}</p><p class="ik-syncnote">${esc(msg)}</p></li>`;
+  }
+  function subPhaseHtml(items) {
+    return `<ul class="ik-phase">${items.map(({ c, s }) => `<li class="${s.hecha ? 'ok' : ''}"><span class="mk" aria-hidden="true">${s.hecha ? '✓' : '○'}</span>
+      <span>${esc(s.texto)}<span class="sr-only">${s.hecha ? ' (hecha)' : ' (pendiente)'}</span>${s.equivale && byId(s.equivale) ? ` <span class="dim">· registrada también como hito «${esc(byId(s.equivale).titulo)}»</span>` : ''}
+      <button type="button" class="ik-mlink dim" data-act="open" data-id="${esc(c.id)}">${esc(c.titulo)}</button></span></li>`).join('')}</ul>`;
+  }
+  function macroDetailHtml(m) {
+    const s = summarize(m), filt = filtering();
+    const objIds = new Set(s.objs.map(o => o.id));
+    const mains = s.cards.filter(c => !c.objetivoEsp || !objIds.has(c.objetivoEsp));
+    const fixed = c => cardHtml(c, 0, 1, { fixed: true, col: true });
+    const hit = c => filt && visible(c, true);
+    const related = [...new Set(s.cards.flatMap(c => c.vinculadas))].map(byId).filter(x => x && !x.archivada && x.macro !== m.id);
+    const week = mondayOf(todayStr()), weekCard = byId(weekObjId(week));
+    const unphased = mains.flatMap(c => c.subtareas.filter(x => !x.fase || !objIds.has(x.fase)).map(x => ({ c, s: x })));
+    const groups = s.objs.map((o, k) => {
+      const acts = s.cards.filter(c => c.objetivoEsp === o.id).sort((a, b) => COL_IDS.indexOf(a.estado) - COL_IDS.indexOf(b.estado) || a.orden - b.orden);
+      const node = o.nodo ? s.nodes.find(n => n.ref === o.nodo) : null;
+      const subs = mains.flatMap(c => c.subtareas.filter(x => x.fase === o.id).map(x => ({ c, s: x })));
+      const agg = aggregate([...acts.map(c => ({ estado: c.estado })), ...(node ? [{ estado: node.estado }] : [])]);
+      const matched = acts.some(hit) || (node && node.kind === 'ext' && filt && visibleExt(node.x, true)) || (filt && subs.some(x => fold(x.s.texto).includes(fold(B.f.q))));
+      const open = B.openObj.has(m.id + '/' + o.id) || matched;
+      const subDone = subs.filter(x => x.s.hecha).length;
+      return `<details class="ik-objgrp c-${agg.total ? agg.estado : 'empty'}" data-obj="${esc(m.id + '/' + o.id)}" ${open ? 'open' : ''}>
+        <summary><span class="ik-objn">${k + 1}</span><span class="ik-objt">${esc(o.titulo)}</span>
+          <span class="ik-objmeta">${[agg.total ? `<span class="ik-chip c-${agg.estado}">${esc(colTitle(agg.estado))}</span> ${agg.hechas}/${agg.total} ${agg.total === 1 ? 'actividad completada' : 'actividades completadas'}` : subs.length ? '' : 'Sin actividades',
+            subs.length ? `subtareas de la actividad principal: ${subDone}/${subs.length}` : '',
+            agg.parcial ? `<span class="ik-warn">${LOCK}bloqueo parcial</span>` : agg.estado === 'blocked' && agg.total ? `<span class="ik-warn">${LOCK}bloqueado</span>` : '',
+            matched ? '<b>coincide con la búsqueda</b>' : ''].filter(Boolean).join(' · ')}</span></summary>
+        <div class="ik-objbody">
+          ${acts.length || node ? `<ul class="ik-list ik-grid">${acts.map(fixed).join('')}${node ? nodeActHtml(node) : ''}</ul>` : ''}
+          ${subs.length ? `<p class="ik-phase-h">Fase de la actividad principal</p>${subPhaseHtml(subs)}` : ''}
+          ${!acts.length && !node && !subs.length ? '<p class="ik-none">Sin actividades registradas en este objetivo.</p>' : ''}
+        </div></details>`;
+    }).join('');
+    return `<section class="panel ik-detail" aria-labelledby="ik-mt">
+        <button type="button" class="btn btn-sm btn-ghost ik-back" data-act="macro-back"><span aria-hidden="true">←</span> Macroobjetivos</button>
+        <div class="ik-detail-head">
+          <span class="ik-letter big" aria-hidden="true">${esc(m.letra)}</span>
+          <div><p class="kicker">Macroobjetivo${m.transversal ? ' · transversal' : ''}</p><h2 id="ik-mt">${esc(m.titulo)}</h2><p class="ik-obj">${esc(m.resultado)}</p></div>
+        </div>
+        <div class="ik-detail-stats">
+          <p><span class="ik-chip c-${s.agg.estado}">${esc(colTitle(s.agg.estado))}</span>${s.agg.parcial ? ` <span class="ik-tag t-partial">${LOCK}Bloqueo parcial</span>` : ''}
+            <span class="dim">Resumen calculado a partir de las actividades. No cambia sus estados.</span></p>
+          <p>${plural(s.objs.length, 'objetivo', 'objetivos')} · ${plural(s.agg.total, 'actividad', 'actividades')} · <b>${s.agg.hechas}/${s.agg.total}</b> completadas</p>
+          ${distHtml(s.agg)}
+          ${s.blocks.length ? `<div class="ik-block"><b>${LOCK}${plural(s.blocks.length, 'bloqueo activo', 'bloqueos activos')}</b>${s.blocks.map(b => `<span>${esc(b.titulo)}${b.quien ? ` · depende de ${esc(b.quien)}` : ''}</span>`).join('')}</div>` : ''}
+          ${s.next ? `<div class="ik-next"><b>Próxima acción</b><span>${esc(s.next.texto)} <span class="dim">· ${esc(s.next.c.titulo)}</span></span></div>` : ''}
+          ${m.nodos && cfg.external ? `<p class="ik-sechelp">Los nodos se leen de ${esc(cfg.external.sourceName)}: no se editan ni se mueven aquí.</p>` : ''}
+          ${m.semanal ? `<div class="ik-weekbar"><p class="ik-sechelp">Una actividad por semana con dos comprobaciones: horas de formación cubiertas y avances de la semana reportados. No se crean tarjetas diarias.</p>
+            ${weekCard ? `<button type="button" class="btn btn-sm" data-act="open" data-id="${esc(weekCard.id)}">Abrir la actividad de esta semana</button>` : `<button type="button" class="btn btn-sm btn-primary" data-act="week-new">${ICON.plus}Crear la actividad de esta semana</button>`}</div>` : ''}
+        </div>
+      </section>
+      ${mains.length ? `<section class="ik-objsec" aria-label="Actividad principal"><h3 class="ik-sech">Actividad principal</h3>
+        <ul class="ik-list ik-grid">${mains.map(fixed).join('')}</ul>
+        ${mains.some(c => c.subtareas.some(x => x.fase)) ? '<p class="ik-sechelp">Sus subtareas aparecen en el objetivo específico (fase) al que corresponden.</p>' : ''}
+        ${unphased.length ? `<p class="ik-phase-h">Subtareas sin fase asignada</p>${subPhaseHtml(unphased)}` : ''}</section>` : ''}
+      <section class="ik-objsec" aria-label="Objetivos específicos"><h3 class="ik-sech">Objetivos específicos</h3>
+        <div class="ik-objtools"><button type="button" class="btn btn-sm btn-ghost" data-act="obj-all" data-open="1">Desplegar todo</button><button type="button" class="btn btn-sm btn-ghost" data-act="obj-all" data-open="0">Plegar todo</button></div>
+        ${groups || '<p class="ik-none">Sin objetivos específicos todavía.</p>'}</section>
+      ${related.length ? `<section class="ik-objsec" aria-label="Relacionadas"><h3 class="ik-sech">Relacionadas en otros macroobjetivos</h3>
+        <ul class="ik-rel">${related.map(x => { const rm = macroOf(x.macro); return `<li><button type="button" class="ik-mlink" data-act="open" data-id="${esc(x.id)}">${esc(x.titulo)}</button> <span class="dim">· ${esc(colTitle(x.estado))} · ${rm ? esc(rm.letra + ' · ' + rm.titulo) : 'Por clasificar'}</span></li>`; }).join('')}</ul>
+        <p class="ik-sechelp">Solo se enlazan: cada actividad se registra y se cuenta en su propio macroobjetivo.</p></section>` : ''}`;
   }
 
   /* ── Tablero ── */
@@ -382,22 +729,47 @@ export function mountKanban(root, cfg) {
     if (!alive) return;
     const hero = cfg.hero(`<button class="btn btn-primary" data-act="new">${ICON.plus}<span>Nueva tarjeta</span></button>`);
     if (B.error) { root.innerHTML = wrap(`${hero}${alertBox('err', 'No se pudo abrir el tablero', `<p>${esc(B.error)}</p>`, '<button class="btn btn-sm" onclick="location.reload()">Reintentar</button>')}`); return; }
-    const f = B.f, active = B.cards.filter(c => !c.archivada);
+    const f = B.f, active = B.cards.filter(c => !c.archivada && !c.enlace);
     const uniq = a => [...new Set(a.filter(Boolean))].sort((x, y) => x.localeCompare(y, 'es'));
     const opt = (arr, v, all, extra = '') => `<option value="">${all}</option>${extra}` + arr.map(x => `<option value="${esc(x)}" ${x === v ? 'selected' : ''}>${esc(x)}</option>`).join('');
     const sel = (v, val) => (v === val ? 'selected' : '');
-    const vis = active.filter(visible);
+    const vis = active.filter(c => visible(c));
     const ext = B.ext.state === 'ok' ? B.ext.items : [];
-    const visExt = ext.filter(visibleExt);
+    const visExt = ext.filter(x => visibleExt(x));
+    const links = f.transversal ? B.cards.filter(c => c.enlace && !c.archivada) : [];
     const respAll = [...active.map(c => c.responsable), ...ext.map(x => x.responsable)];
     const proyAll = [...active.map(c => c.proyecto), ...ext.map(x => x.proyecto)];
     const nCol = id => vis.filter(c => c.estado === id).length + visExt.filter(x => x.estado === id).length;
     const archived = B.cards.filter(c => c.archivada);
+    const mode = E ? B.view : 'all';
+    const detail = mode === 'macro' && macroOf(B.macro);
+    let hasBackup = false; try { hasBackup = !!localStorage.getItem(backupKey(cfg.storeKey)); } catch { /* sin almacenamiento */ }
+
+    let countTxt;
+    if (mode === 'all') countTxt = `Mostrando ${vis.length} de ${active.filter(c => f.transversal || !c.transversal).length} tarjetas${f.transversal || !cfg.scopeLabel ? '' : ` ${esc(cfg.scopeLabel)}`}${cfg.external && f.ext && ext.length ? ` · ${visExt.length} sincronizada${visExt.length === 1 ? '' : 's'} desde ${esc(cfg.external.sourceName)}` : ''}`;
+    else {
+      const sc = structCards(), nPend = unclassified().length, nNodes = E.macros.some(m => m.nodos) ? nodeActs().length : 0;
+      countTxt = `${plural(E.macros.length, 'macroobjetivo', 'macroobjetivos')} · ${plural(sc.length - nPend - sc.filter(isConsolOrigin).length + nNodes, 'actividad agrupada', 'actividades agrupadas')}${nPend ? ` · ${nPend} por clasificar` : ''}${filtering() ? ` · ${sc.filter(c => visible(c, true)).length} coinciden con la búsqueda o los filtros` : ''}`;
+    }
+
+    const allBoard = `<div class="ik-colpick" role="group" aria-label="Elegir columna">${COLS.map(col => `<button type="button" class="ik-pick c-${col.id}" data-act="pick" data-col="${col.id}" aria-pressed="${B.mobileCol === col.id}">${col.title} <span class="n">${nCol(col.id)}</span></button>`).join('')}</div>
+
+      <div class="ik-board" data-mobile="${B.mobileCol}">${COLS.map(col => {
+        const cards = vis.filter(c => c.estado === col.id).sort((a, b) => a.orden - b.orden);
+        const extCol = visExt.filter(x => x.estado === col.id);
+        const linkCol = links.filter(c => { const lt = linkTarget(c); return ((lt && lt.card) || c).estado === col.id; });
+        const total = active.filter(c => c.estado === col.id && (f.transversal || !c.transversal)).length + (f.ext ? ext.filter(x => x.estado === col.id).length : 0);
+        return `<section class="ik-col c-${col.id}" data-col="${col.id}" aria-labelledby="ik-h-${col.id}">
+          <header class="ik-col-head"><div><h2 id="ik-h-${col.id}">${col.title}</h2><p>${col.help}</p></div>
+            <span class="n" aria-label="${cards.length + extCol.length} tarjetas">${cards.length + extCol.length === total ? total : `${cards.length + extCol.length}/${total}`}</span></header>
+          <ul class="ik-list" data-col="${col.id}">${cards.map((c, i) => cardHtml(c, i, cards.length, { macroTag: true })).join('')}${extCol.map(extCardHtml).join('')}${linkCol.map(linkCardHtml).join('')}${cards.length + extCol.length + linkCol.length ? '' : '<li class="ik-empty">Sin tarjetas.</li>'}</ul>
+        </section>`;
+      }).join('')}</div>`;
 
     root.innerHTML = `<div class="ik ${cfg.cls || ''}">${hero}
       <section class="panel toolbar ik-tools" aria-label="Búsqueda y filtros">
-        <div class="search">${ICON.search}<label class="sr-only" for="ik-q">Buscar por título, descripción o equipo</label>
-          <input id="ik-q" type="search" placeholder="Buscar por título, descripción o equipo…" value="${esc(f.q)}"></div>
+        <div class="search">${ICON.search}<label class="sr-only" for="ik-q">Buscar actividades por título, descripción, equipo o responsable</label>
+          <input id="ik-q" type="search" placeholder="Buscar actividades (también dentro de los macroobjetivos)…" value="${esc(f.q)}"></div>
         <label class="sr-only" for="ik-resp">Responsable</label>
         <select id="ik-resp" class="select" data-f="resp">${opt(uniq(respAll), f.resp, 'Responsable: todos', `<option value="__none" ${sel(f.resp, '__none')}>Por asignar</option>`)}</select>
         <label class="sr-only" for="ik-prio">Prioridad</label>
@@ -407,33 +779,26 @@ export function mountKanban(root, cfg) {
         <label class="sr-only" for="ik-dep">Dependencia</label>
         <select id="ik-dep" class="select" data-f="dep"><option value="">Dependencia: todas</option><option value="__con" ${sel(f.dep, '__con')}>Con dependencia</option><option value="__sin" ${sel(f.dep, '__sin')}>Sin dependencia</option>${uniq(active.map(depOf)).map(x => `<option value="${esc(x)}" ${sel(f.dep, x)}>${esc(x)}</option>`).join('')}</select>
         <label class="check"><input type="checkbox" data-f="vencidas" ${f.vencidas ? 'checked' : ''}> Solo vencidas</label>
-        <label class="check"><input type="checkbox" data-f="transversal" ${f.transversal ? 'checked' : ''}> Mostrar actividades transversales</label>
-        ${cfg.external ? `<label class="check"><input type="checkbox" data-f="ext" ${f.ext ? 'checked' : ''}> ${esc(cfg.external.toggle)}</label>` : ''}
+        ${mode === 'all' ? `<label class="check"><input type="checkbox" data-f="transversal" ${f.transversal ? 'checked' : ''}> Mostrar actividades transversales</label>
+        ${cfg.external ? `<label class="check"><input type="checkbox" data-f="ext" ${f.ext ? 'checked' : ''}> ${esc(cfg.external.toggle)}</label>` : ''}` : ''}
       </section>
+      ${E ? `<div class="ik-views" role="group" aria-label="Vista del tablero">
+        <button type="button" class="ik-view" data-act="view" data-view="macro" aria-pressed="${mode === 'macro'}">Macroobjetivos</button>
+        <button type="button" class="ik-view" data-act="view" data-view="all" aria-pressed="${mode === 'all'}">Todas las actividades</button></div>` : ''}
       <div class="ik-bar">
-        <p class="count" aria-live="polite">Mostrando ${vis.length} de ${active.filter(c => f.transversal || !c.transversal).length} tarjetas${f.transversal || !cfg.scopeLabel ? '' : ` ${esc(cfg.scopeLabel)}`}${cfg.external && f.ext && ext.length ? ` · ${visExt.length} sincronizada${visExt.length === 1 ? '' : 's'} desde ${esc(cfg.external.sourceName)}` : ''}</p>
+        <p class="count" aria-live="polite">${countTxt}</p>
         <div class="ik-data">
           <button type="button" class="btn btn-sm" data-act="export">${ICON.download}Exportar JSON</button>
           <button type="button" class="btn btn-sm" data-act="import">${ICON.upload}Importar JSON</button>
           <button type="button" class="btn btn-sm btn-ghost" data-act="archived" aria-pressed="${f.archivadas}">Archivadas (${archived.length})</button>
+          ${hasBackup ? `<button type="button" class="btn btn-sm btn-ghost" data-act="backup" title="Copia automática del tablero tal como estaba antes de agruparlo en macroobjetivos">${ICON.download}Respaldo previo</button>` : ''}
           <input type="file" accept="application/json,.json" data-import hidden>
         </div>
       </div>
       <p class="ik-storage">Los cambios se guardan solo en este navegador y no se comparten entre equipos. Usa «Exportar JSON» para respaldarlos o llevarlos a otro equipo.${B.savedAt ? ` Último guardado: ${esc(fmtDate(B.savedAt))}.` : ''}</p>
       ${cfg.external ? extStatus() : ''}
 
-      <div class="ik-colpick" role="group" aria-label="Elegir columna">${COLS.map(col => `<button type="button" class="ik-pick c-${col.id}" data-act="pick" data-col="${col.id}" aria-pressed="${B.mobileCol === col.id}">${col.title} <span class="n">${nCol(col.id)}</span></button>`).join('')}</div>
-
-      <div class="ik-board" data-mobile="${B.mobileCol}">${COLS.map(col => {
-        const cards = vis.filter(c => c.estado === col.id).sort((a, b) => a.orden - b.orden);
-        const extCol = visExt.filter(x => x.estado === col.id);
-        const total = active.filter(c => c.estado === col.id && (f.transversal || !c.transversal)).length + (f.ext ? ext.filter(x => x.estado === col.id).length : 0);
-        return `<section class="ik-col c-${col.id}" data-col="${col.id}" aria-labelledby="ik-h-${col.id}">
-          <header class="ik-col-head"><div><h2 id="ik-h-${col.id}">${col.title}</h2><p>${col.help}</p></div>
-            <span class="n" aria-label="${cards.length + extCol.length} tarjetas">${cards.length + extCol.length === total ? total : `${cards.length + extCol.length}/${total}`}</span></header>
-          <ul class="ik-list" data-col="${col.id}">${cards.map((c, i) => cardHtml(c, i, cards.length)).join('')}${extCol.map(extCardHtml).join('')}${cards.length + extCol.length ? '' : '<li class="ik-empty">Sin tarjetas.</li>'}</ul>
-        </section>`;
-      }).join('')}</div>
+      ${mode === 'all' ? allBoard : detail ? macroDetailHtml(detail) : macroBoardHtml(E.macros.map(summarize)) + pendingHtml()}
 
       ${f.archivadas ? `<section class="panel ik-archived" aria-labelledby="ik-arch-t"><h2 id="ik-arch-t">Tarjetas archivadas</h2>
         ${archived.length ? `<ul>${archived.map(c => `<li><span><b>${esc(c.titulo)}</b> <span class="dim">· ${esc(colTitle(c.estado))}</span></span>
@@ -448,7 +813,9 @@ export function mountKanban(root, cfg) {
       render(); const n = root.querySelector(`[data-f="${k}"]`); n && n.focus();
     }));
     root.querySelector('[data-import]').addEventListener('change', onImport);
-    bindDrag();
+    // Los desplegables recuerdan si están abiertos mientras se navega por el tablero.
+    root.querySelectorAll('details.ik-objgrp').forEach(d => d.addEventListener('toggle', () => { if (d.open) B.openObj.add(d.dataset.obj); else B.openObj.delete(d.dataset.obj); }));
+    if (mode === 'all') bindDrag();
   }
 
   /* ── Arrastrar y soltar (escritorio) ── */
@@ -483,6 +850,7 @@ export function mountKanban(root, cfg) {
   /* ── Cambio de estado con sus reglas ── */
   async function moveCard(id, to, beforeId = null) {
     const c = byId(id); if (!c || !COL_IDS.includes(to)) return render();
+    if (c.enlace) { toast('Esta actividad está consolidada en otro tablero: su estado se cambia allí.', 'err', 7000); return render(); }
     const from = c.estado;
     if (from === to) { place(c, to, beforeId); persist(); render(); return; }
     const extra = await transitionForm(c, from, to);
@@ -544,10 +912,53 @@ export function mountKanban(root, cfg) {
 
   /* ── Detalle / edición ── */
   /* preset: tarjeta leída de un archivo de actividad (parseCardFile); se revisa en el formulario antes de guardar. */
+  /* Tarjeta consolidada en otro tablero: consulta de solo lectura con los datos vivos de la canónica. */
+  function openLink(c) {
+    const lt = linkTarget(c), t = lt && lt.card, name = lt ? lt.cons.destino.nombre : 'otro tablero';
+    const href = lt ? `${lt.cons.destino.ruta}?tarjeta=${encodeURIComponent(c.enlace.id)}` : '';
+    const pr = t ? progress(t) : null;
+    openModal({ html: `<div class="modal-head"><div><p class="kicker">Enlace transversal · solo lectura</p><h2 data-modal-title>${esc(t ? t.titulo : c.titulo)}</h2></div>
+        <button type="button" class="btn btn-ghost icon-btn" data-close aria-label="Cerrar">${ICON.close}</button></div>
+      <div class="modal-body">
+        ${alertBox('info', `Consolidada en el Kanban de ${esc(name)}`, `<p>Esta actividad y «${esc(c.titulo)}» (${esc(c.id)}) describían el mismo trabajo. Se edita en ${esc(name)}; aquí solo se consulta, para no mantener dos copias.</p>`)}
+        ${t ? `<dl class="ik-ro">
+          <div><dt>Estado</dt><dd>${esc(colTitle(t.estado))}</dd></div><div><dt>Responsable</dt><dd>${esc(t.responsable || 'Por asignar')}</dd></div>
+          <div><dt>Prioridad</dt><dd>${esc(prioLabel(t.prioridad))}</dd></div>${pr.total ? `<div><dt>Subtareas</dt><dd>${pr.hechas}/${pr.total}</dd></div>` : ''}
+          ${t.proximaAccion ? `<div class="full"><dt>Próxima acción</dt><dd>${esc(t.proximaAccion)}</dd></div>` : ''}
+          ${t.estado === 'blocked' && t.bloqueo ? `<div class="full"><dt>Bloqueo</dt><dd>${esc(t.bloqueo.motivo)}${t.bloqueo.quien ? ` · depende de ${esc(t.bloqueo.quien)}` : ''}</dd></div>` : ''}
+          <div class="full"><dt>Objetivo</dt><dd>${esc(t.objetivo)}</dd></div></dl>`
+          : `<p>La actividad canónica no está guardada en este navegador. Abre el Kanban de ${esc(name)} para verla.</p>`}
+        <details class="ik-orig"><summary>Datos que tenía esta tarjeta en este tablero</summary>
+          <p><b>Estado:</b> ${esc(colTitle(c.estado))} · <b>Responsable:</b> ${esc(c.responsable || 'por asignar')}</p>
+          ${c.notas ? `<p class="ik-pre">${esc(c.notas)}</p>` : ''}
+          ${c.historial.length ? `<ol class="ik-hist">${[...c.historial].reverse().map(h => `<li><span class="mono dim">${esc(fmtDate(h.fecha))}</span> ${esc(h.nota)}</li>`).join('')}</ol>` : ''}
+        </details>
+      </div>
+      <div class="modal-foot"><button type="button" class="btn" data-close>Cerrar</button>${href ? `<a class="btn btn-primary" href="${esc(href)}">Abrir en ${esc(name)}</a>` : ''}</div>` });
+  }
+
+  /* Opciones «macroobjetivo › objetivo específico» del formulario. */
+  function estructuraOptions(cur) {
+    const weeks = new Set([...B.cards.map(c => c.objetivoEsp).filter(weekOfObj), weekObjId(mondayOf(todayStr()))]);
+    return `<option value="|" ${cur === '|' ? 'selected' : ''}>Por clasificar</option>` + E.macros.map(m => {
+      const objs = [...m.objetivos.map(o => [o.id, o.titulo]), ...(m.semanal ? [...weeks].sort().map(w => [w, objTitle(m, w)]) : [])];
+      if (cur.startsWith(m.id + '|') && !objs.some(([id]) => cur === `${m.id}|${id}`) && cur !== m.id + '|') objs.push([cur.slice(m.id.length + 1), objTitle(m, cur.slice(m.id.length + 1))]);
+      return `<optgroup label="${esc(m.letra + ' · ' + m.titulo)}"><option value="${esc(m.id)}|" ${cur === m.id + '|' ? 'selected' : ''}>${esc(m.letra)} · Actividad principal (con fases)</option>
+        ${objs.map(([id, t]) => `<option value="${esc(m.id + '|' + id)}" ${cur === m.id + '|' + id ? 'selected' : ''}>${esc(m.letra)} › ${esc(t)}</option>`).join('')}</optgroup>`;
+    }).join('');
+  }
+
   function openCard(c = null, preset = null) {
+    if (c && c.enlace) { openLink(c); return; }
     const isNew = !c;
     const d = normCard(c ? JSON.parse(JSON.stringify(c)) : preset ? preset.card : { id: uid('t'), titulo: '', estado: 'todo', proyecto: cfg.proyectoNuevo || '' });
     if (preset && (!d.id || byId(d.id))) d.id = uid('t');   // nunca pisa una tarjeta existente
+    // Grupo inicial: el de la tarjeta; en una nueva, el macroobjetivo abierto o la regla que le corresponda.
+    if (E && isNew && !d.clasificada) {
+      const r = ruleFor(E, d);
+      if (r) [d.macro, d.objetivoEsp] = r; else if (B.view === 'macro' && macroOf(B.macro)) d.macro = B.macro;
+    }
+    const estrCur = E && macroOf(d.macro) ? `${d.macro}|${d.objetivoEsp}` : '|';
     const newLinked = []; // tarjetas creadas desde subtareas (se guardan al confirmar)
     const optP = PRIOS.map(p => `<option value="${p.id}" ${p.id === d.prioridad ? 'selected' : ''}>${p.label}</option>`).join('');
     const proys = [...new Set([...(cfg.proyectos || []), ...B.cards.map(x => x.proyecto)].filter(Boolean))];
@@ -577,6 +988,9 @@ export function mountKanban(root, cfg) {
           <div class="field" data-f="prioridad"><label for="cf-prioridad">Prioridad</label><select id="cf-prioridad" name="prioridad" class="select" style="width:100%"><option value="">Por confirmar</option>${optP}</select></div>
           ${inp('proyecto', 'Proyecto o categoría', d.proyecto, { list: 'cf-proys' })}<datalist id="cf-proys">${proys.map(p => `<option value="${esc(p)}">`).join('')}</datalist>
           ${inp('equipo', 'Equipo o área', d.equipo)}
+          ${E ? `<div class="field full" data-f="estructura"><label for="cf-estructura">Macroobjetivo y objetivo específico</label>
+            <select id="cf-estructura" name="estructura" class="select" style="width:100%">${estructuraOptions(estrCur)}</select>
+            <p class="hint">Agrupa la tarjeta en la vista de macroobjetivos. No cambia su estado ni la une con otras tarjetas.</p></div>` : ''}
           ${inp('responsable', 'Responsable de ejecución', d.responsable, { hint: 'Vacío = «Por asignar».' })}
           ${inp('supervisor', 'Supervisión', d.supervisor)}
           ${inp('solicitante', 'Solicitante o interlocutor', d.solicitante, { hint: 'Quien pide o con quien se coordina; no es necesariamente quien ejecuta.' })}
@@ -613,28 +1027,36 @@ export function mountKanban(root, cfg) {
     m.setCanClose(() => !dirty || window.confirm('Hay cambios sin guardar. ¿Quieres descartarlos?'));
 
     const subsEl = form.querySelector('[data-subs]');
+    // En una actividad principal (macroobjetivo sin objetivo concreto), cada subtarea puede indicar su fase.
+    const phaseMacro = () => { if (!E || !form.elements.estructura) return null; const [mid, oid] = form.elements.estructura.value.split('|'); const mm = macroOf(mid); return mm && !oid && mm.objetivos.length ? mm : null; };
     const drawSubs = () => {
+      const pm = phaseMacro();
       subsEl.innerHTML = d.subtareas.length ? d.subtareas.map((s, i) => `<li>
-        <label class="check"><input type="checkbox" data-sub="toggle" data-i="${i}" ${s.hecha ? 'checked' : ''}> <span class="${s.hecha ? 'ik-done' : ''}">${esc(s.texto)}</span></label>
-        <span class="ik-subact"><button type="button" class="btn btn-sm btn-ghost" data-sub="link" data-i="${i}" title="Convertir en tarjeta vinculada">Convertir en tarjeta</button>
+        <label class="check"><input type="checkbox" data-sub="toggle" data-i="${i}" ${s.hecha ? 'checked' : ''}> <span class="${s.hecha ? 'ik-done' : ''}">${esc(s.texto)}${s.equivale && byId(s.equivale) ? ` <small class="dim">· también registrada como hito «${esc(byId(s.equivale).titulo)}»: cuenta una sola vez</small>` : ''}</span></label>
+        <span class="ik-subact">${pm ? `<label class="sr-only" for="cf-fase-${i}">Fase de «${esc(s.texto)}»</label><select id="cf-fase-${i}" class="select ik-fase" data-sub="fase" data-i="${i}"><option value="">Sin fase</option>${pm.objetivos.map(o => `<option value="${esc(o.id)}" ${s.fase === o.id ? 'selected' : ''}>${esc(o.titulo)}</option>`).join('')}</select>` : ''}
+        <button type="button" class="btn btn-sm btn-ghost" data-sub="link" data-i="${i}" title="Convertir en tarjeta vinculada">Convertir en tarjeta</button>
         <button type="button" class="btn btn-sm btn-ghost icon-btn" data-sub="del" data-i="${i}" aria-label="Quitar subtarea «${esc(s.texto)}»">${ICON.close}</button></span></li>`).join('')
         : '<li class="none">Sin subtareas.</li>';
     };
     drawSubs();
     form.addEventListener('click', e => {
-      const b = e.target.closest('[data-sub]'); if (!b || b.dataset.sub === 'toggle') return; // la casilla se gestiona en «change»
+      const b = e.target.closest('[data-sub]'); if (!b || b.dataset.sub === 'toggle' || b.dataset.sub === 'fase') return; // casilla y fase: en «change»
       const i = Number(b.dataset.i), act = b.dataset.sub;
       if (act === 'add') { const n = form.querySelector('#cf-newsub'); const t = n.value.trim(); if (!t) { n.focus(); return; } d.subtareas.push({ id: uid('s'), texto: t, hecha: false }); n.value = ''; n.focus(); }
       if (act === 'del') d.subtareas.splice(i, 1);
       if (act === 'link') {
-        const s = d.subtareas[i]; const nc = normCard({ id: uid('t'), titulo: s.texto, objetivo: s.texto, estado: 'todo', proyecto: d.proyecto, equipo: d.equipo, prioridad: d.prioridad, vinculadas: [d.id] });
+        const s = d.subtareas[i]; const nc = normCard({ id: uid('t'), titulo: s.texto, objetivo: s.texto, estado: 'todo', proyecto: d.proyecto, equipo: d.equipo, prioridad: d.prioridad, vinculadas: [d.id], objetivoEsp: s.fase });
         nc.creada = nowIso(); nc.historial = [{ fecha: nc.creada, tipo: 'creada', de: '', a: 'todo', nota: `Creada desde una subtarea de «${d.titulo || 'tarjeta'}».` }];
         newLinked.push(nc); d.vinculadas.push(nc.id); d.subtareas.splice(i, 1);
         toast(`Se creará la tarjeta «${s.texto}» al guardar.`);
       }
       dirty = true; drawSubs();
     });
-    form.addEventListener('change', e => { if (e.target.dataset.sub === 'toggle') { d.subtareas[Number(e.target.dataset.i)].hecha = e.target.checked; dirty = true; } });
+    form.addEventListener('change', e => {
+      if (e.target.dataset.sub === 'toggle') { d.subtareas[Number(e.target.dataset.i)].hecha = e.target.checked; dirty = true; }
+      if (e.target.dataset.sub === 'fase') { d.subtareas[Number(e.target.dataset.i)].fase = e.target.value; dirty = true; }
+      if (e.target.name === 'estructura') { dirty = true; drawSubs(); }
+    });
     form.querySelector('#cf-newsub').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); form.querySelector('[data-sub="add"]').click(); } });
 
     if (isNew) {
@@ -691,13 +1113,21 @@ export function mountKanban(root, cfg) {
       const pc = form.elements.porConfirmar.checked;
       if (pc !== target.estadoPorConfirmar) log(target, 'confirmacion', pc ? 'Marcada como «estado por confirmar».' : 'Estado confirmado.');
       target.estadoPorConfirmar = pc;
+      if (E && form.elements.estructura) {
+        const [mid, oid] = form.elements.estructura.value.split('|'), mm = macroOf(mid);
+        const nm = mm ? mid : '', no = mm ? (oid || '') : '';
+        if (!isNew && (nm !== target.macro || no !== target.objetivoEsp || !target.clasificada))
+          log(target, 'clasificacion', mm ? `Agrupada en «${mm.letra} · ${mm.titulo}»${no ? ` › «${objTitle(mm, no)}»` : ' como actividad principal'}. Estado sin cambios.` : 'Marcada «Por clasificar». Estado sin cambios.');
+        target.macro = nm; target.objetivoEsp = no; target.clasificada = true;
+      }
       if (isNew) {
         target.creada = nowIso(); target.historial = [{ fecha: target.creada, tipo: 'creada', de: '', a: target.estado, nota: preset ? `Tarjeta creada desde el archivo «${preset.file}».` : 'Tarjeta creada.' }];
         B.cards.push(target); place(target, target.estado, null);
       } else {
         log(target, 'edicion', JSON.stringify([target.fechas, target.responsable, target.prioridad]) !== before ? 'Datos editados (fechas, responsable o prioridad).' : 'Datos editados.');
       }
-      newLinked.forEach(nc => { B.cards.push(nc); place(nc, 'todo', null); });
+      // Las tarjetas creadas desde subtareas quedan en el mismo macroobjetivo (y en la fase de la subtarea, si la tenía).
+      newLinked.forEach(nc => { if (E) { nc.macro = target.macro; nc.objetivoEsp = target.macro ? (nc.objetivoEsp || target.objetivoEsp) : ''; nc.clasificada = true; } B.cards.push(nc); place(nc, 'todo', null); });
       persist(); dirty = false; m.close('force'); render();
       toast(isNew ? 'Tarjeta creada.' : 'Cambios guardados.');
     });
@@ -714,9 +1144,27 @@ export function mountKanban(root, cfg) {
     const a = Object.assign(document.createElement('a'), { href: url, download: name });
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
+  // El archivo sigue siendo «ccs-kanban-v1»: los respaldos anteriores (sin «estructura») se importan y se migran igual.
   function exportJson() {
-    downloadJson({ schema: SCHEMA, id: BOARD_ID, exportado: nowIso(), tarjetas: B.cards }, `${cfg.fileSlug}-${todayStr()}.json`);
+    downloadJson({ schema: SCHEMA, id: BOARD_ID, exportado: nowIso(),
+      estructura: E ? { version: ESTRUCTURA_VERSION, nodosVistos: B.nodos,
+        macroobjetivos: E.macros.map(m => ({ id: m.id, letra: m.letra, titulo: m.titulo, resultado: m.resultado, objetivos: m.objetivos })) } : undefined,
+      tarjetas: B.cards }, `${cfg.fileSlug}-${todayStr()}.json`);
     toast('Respaldo exportado.');
+  }
+  function downloadBackup() {
+    let raw = null; try { raw = JSON.parse(localStorage.getItem(backupKey(cfg.storeKey)) || 'null'); } catch { raw = null; }
+    if (!raw) { toast('No hay un respaldo previo en este navegador.', 'err'); return; }
+    downloadJson(raw, `${cfg.fileSlug}-respaldo-previo-reorganizacion.json`);
+    toast('Respaldo previo descargado. Se puede volver a importar con «Importar JSON».', 'ok', 7000);
+  }
+  // Tras importar: conserva la clasificación de las tarjetas que el archivo trae sin ella y migra las nuevas.
+  function afterImport(obj) {
+    const nv = obj && obj.estructura && obj.estructura.nodosVistos;
+    if (nv && typeof nv === 'object' && !Array.isArray(nv)) Object.keys(nv).forEach(k => { if (!B.nodos[k] && /^[\w .-]{1,40}$/.test(k)) B.nodos[k] = String(nv[k]).slice(0, 40); });
+    classify(B.cards.filter(c => !c.clasificada && !c.enlace && !isConsolOrigin(c)));
+    // Subtareas nuevas de una actividad principal ya clasificada (p. ej. desde un archivo de actualización): reciben su fase.
+    if (E) B.cards.filter(c => c.clasificada && !c.enlace).forEach(c => applySubtaskRules(E, c));
   }
 
   /* Importación. Por defecto incorpora o actualiza por ID: las tarjetas del archivo que ya existen se
@@ -726,7 +1174,18 @@ export function mountKanban(root, cfg) {
     const cur = new Map(B.cards.map(c => [c.id, c]));
     const ids = new Set(incoming.map(c => c.id));
     const nuevas = incoming.filter(c => !cur.has(c.id));
-    const actualizadas = incoming.filter(c => cur.has(c.id) && JSON.stringify(c) !== JSON.stringify(normCard(cur.get(c.id))));
+    // Un respaldo anterior a la reorganización no trae los campos de estructura: no cuenta como diferencia.
+    const STRUCT_H = ['clasificacion', 'consolidacion'];
+    const comparable = (inc, base) => {
+      const a = normCard(base), x = JSON.parse(JSON.stringify(inc));
+      if (!x.clasificada) {
+        Object.assign(x, { macro: a.macro, objetivoEsp: a.objetivoEsp, clasificada: a.clasificada, enlace: x.enlace || a.enlace });
+        x.subtareas.forEach(s => { const o = a.subtareas.find(y => y.id === s.id); if (o) { s.fase = s.fase || o.fase; s.equivale = s.equivale || o.equivale; } });
+        a.historial = a.historial.filter(h => !STRUCT_H.includes(h.tipo));
+      }
+      return JSON.stringify(x) === JSON.stringify(a);
+    };
+    const actualizadas = incoming.filter(c => cur.has(c.id) && !comparable(c, cur.get(c.id)));
     const iguales = incoming.length - nuevas.length - actualizadas.length;
     const fuera = B.cards.filter(c => !ids.has(c.id));
     return { nuevas, actualizadas, iguales, fuera };
@@ -736,6 +1195,14 @@ export function mountKanban(root, cfg) {
     const at = nowIso();
     plan.actualizadas.forEach(nc => {
       const i = B.cards.findIndex(x => x.id === nc.id); if (i < 0) return;
+      const old = B.cards[i];
+      if (!nc.clasificada && old.clasificada) {   // respaldo anterior a la reorganización: no pierde su grupo ni sus fases
+        Object.assign(nc, { macro: old.macro, objetivoEsp: old.objetivoEsp, clasificada: true });
+        nc.subtareas.forEach(s => { const o = old.subtareas.find(x => x.id === s.id); if (o) { s.fase = s.fase || o.fase; s.equivale = s.equivale || o.equivale; } });
+      }
+      if (!nc.enlace && old.enlace) nc.enlace = old.enlace;   // una consolidación no se deshace al importar
+      const seen = new Set(nc.historial.map(h => h.fecha + '|' + h.nota));   // ni se pierde su constancia en el historial
+      old.historial.filter(h => (h.tipo === 'clasificacion' || h.tipo === 'consolidacion') && !seen.has(h.fecha + '|' + h.nota)).forEach(h => nc.historial.push(h));
       nc.historial.push({ fecha: at, tipo: 'importacion', de: B.cards[i].estado, a: nc.estado, nota: `Actualizada desde el archivo «${fileName}».` });
       B.cards[i] = nc;
     });
@@ -787,12 +1254,12 @@ export function mountKanban(root, cfg) {
     form.addEventListener('submit', ev => {
       ev.preventDefault();
       if (form.elements.modo.value === 'replace') {
-        B.cards = r.value; persist(); m.close('force'); render();
+        B.cards = r.value; afterImport(obj); persist(); m.close('force'); render();
         toast(`Tablero reemplazado: ${r.value.length} tarjetas.`);
         return;
       }
       if (!plan.nuevas.length && !plan.actualizadas.length) { m.close('force'); toast('No hubo cambios: el tablero ya tenía esas tarjetas.'); return; }
-      applyMerge(plan, file.name); persist(); m.close('force'); render();
+      applyMerge(plan, file.name); afterImport(obj); persist(); m.close('force'); render();
       toast(`Importación: ${plan.nuevas.length} nuevas, ${plan.actualizadas.length} actualizadas; ${plan.fuera.length} conservadas sin cambios.`, 'ok', 7000);
     });
   }
@@ -836,7 +1303,7 @@ export function mountKanban(root, cfg) {
         c.historial = [{ fecha: at, tipo: 'importacion', de: '', a: c.estado, nota: `Creada desde «${upd.titulo}» (${fileName}).` }];
         B.cards.push(c); place(c, c.estado, null);
       });
-      persist(); m.close('force'); render();
+      afterImport(null); persist(); m.close('force'); render();
       toast(`Actualización aplicada: ${crear.length} nuevas, ${ampliar.length} ampliadas${fallan.length ? `, ${fallan.length} sin aplicar` : ''}.`, 'ok', 8000);
     });
   }
@@ -866,8 +1333,45 @@ export function mountKanban(root, cfg) {
       case 'restore': if (c) restore(c); break;
       case 'ext-open': { const x = B.ext.items.find(i => i.id === id); if (x) cfg.external.open(x.ref); break; }
       case 'ext-refresh': loadExternal(true); break;
+      case 'link-open': if (c) openLink(c); break;
+      case 'backup': downloadBackup(); break;
+      case 'view': {
+        B.view = b.dataset.view === 'all' ? 'all' : 'macro'; B.macro = null; pref.set(B.view); render();
+        const nb = root.querySelector(`[data-act="view"][data-view="${B.view}"]`); nb && nb.focus();
+        break;
+      }
+      case 'macro': {   // abre el desglose de un macroobjetivo
+        if (!macroOf(b.dataset.macro)) break;
+        B.macro = b.dataset.macro; render();
+        const h = root.querySelector('#ik-mt'); if (h) { h.setAttribute('tabindex', '-1'); h.focus(); h.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+        break;
+      }
+      case 'macro-back': {
+        const was = B.macro; B.macro = null; render();
+        const nb = root.querySelector(`[data-act="macro"][data-macro="${CSS.escape(was || '')}"]`); nb && nb.focus();
+        break;
+      }
+      case 'obj-all': root.querySelectorAll('details.ik-objgrp').forEach(d => { d.open = b.dataset.open === '1'; }); break;
+      case 'week-new': createWeek(); break;
     }
   });
+
+  /* Actividad semanal de formación y reporte (macroobjetivo semanal): una por semana, creada solo a petición. */
+  function createWeek() {
+    const m = E && E.macros.find(x => x.semanal); if (!m) return;
+    const mon = mondayOf(todayStr()), id = weekObjId(mon);
+    if (byId(id)) { openCard(byId(id)); return; }
+    const label = weekLabel(mon), at = nowIso();
+    const c = normCard({ id, titulo: `Completar la formación y el reporte · ${label.charAt(0).toLowerCase() + label.slice(1)}`,
+      objetivo: 'Horas de formación en IA de la semana cubiertas y avances de la semana reportados a Alberto.',
+      criterio: 'Las dos comprobaciones hechas, con su evidencia en la nota de cierre.', estado: 'todo', proyecto: 'Gestión departamental', equipo: 'Formación y reportes',
+      solicitante: 'Alberto (destinatario del reporte)', transversal: true, fechas: { plazo: label },
+      subtareas: [{ id: 'horas', texto: 'Horas de formación cubiertas' }, { id: 'reporte', texto: 'Avances de la semana reportados' }],
+      macro: m.id, objetivoEsp: id, clasificada: true });
+    c.creada = at; c.historial = [{ fecha: at, tipo: 'creada', de: '', a: 'todo', nota: `Actividad semanal creada (${label}). No se marcan sesiones ni reportes sin evidencia.` }];
+    B.cards.push(c); place(c, 'todo', null); persist(); render();
+    toast(`Actividad de la ${label.charAt(0).toLowerCase() + label.slice(1)} creada en To do.`);
+  }
   root.addEventListener('change', e => { if (e.target.dataset.act === 'state') moveCard(e.target.dataset.id, e.target.value); });
 
   function extStatus() {

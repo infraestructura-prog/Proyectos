@@ -689,3 +689,57 @@ body[data-area="neotropya"] .kb-col.tone-violet { --col-accent: #C3B6E0; } body[
 /* Kanban: referencias de seguimiento y resumen de actualizaciones */
 body[data-area="neotropya"] .ik-neo .ik-tag.t-ref { color: var(--neo-text-2); background: #fff; border-color: var(--neo-border); font-weight: 700; }
 body[data-area="neotropya"] .ik-updlist li { border-color: var(--neo-border); background: #fff; }
+
+/* Kanban · macroobjetivos (identidad clara y cálida del laboratorio) */
+body[data-area="neotropya"] .ik-neo .ik-views { border-color: var(--neo-border); border-radius: 999px; background: #fff; }
+body[data-area="neotropya"] .ik-neo .ik-view { background: #fff; color: var(--neo-text-2); font-family: var(--neo-font); text-transform: none; letter-spacing: 0; font-weight: 800; border-radius: 999px; }
+body[data-area="neotropya"] .ik-neo .ik-view + .ik-view { border-left: 0; }
+body[data-area="neotropya"] .ik-neo .ik-view[aria-pressed="true"] { background: var(--neo-forest); color: #fff; box-shadow: none; }
+body[data-area="neotropya"] .ik-neo .ik-view:focus-visible { outline-color: var(--neo-forest); outline-offset: 2px; }
+body[data-area="neotropya"] .ik-neo .ik-card.ik-fixed, body[data-area="neotropya"] .ik-neo .ik-card.ik-macro { border-left-color: var(--col, var(--neo-border-hi)); }
+body[data-area="neotropya"] .ik-neo .ik-letter { background: var(--neo-forest); color: #fff; border-radius: 999px; font-family: var(--neo-font); font-weight: 900; font-size: 12.5px; }
+body[data-area="neotropya"] .ik-neo .ik-letter.big { border-radius: 16px; font-size: 26px; background: linear-gradient(135deg, var(--neo-forest), var(--neo-forest-hi)); box-shadow: 0 6px 14px -8px rgba(49,92,73,.7); }
+body[data-area="neotropya"] .ik-neo .ik-dist-bar { background: var(--neo-soft); border-radius: 999px; }
+body[data-area="neotropya"] .ik-neo .ik-dist-bar .ik-seg { border-radius: 999px; }
+body[data-area="neotropya"] .ik-neo .ik-dist-bar .ik-seg.c-confirm { background: repeating-linear-gradient(45deg, var(--neo-border-hi) 0 3px, #fff 3px 6px); }
+body[data-area="neotropya"] .ik-neo .ik-dist-legend { color: var(--neo-text-2); font-weight: 600; }
+body[data-area="neotropya"] .ik-neo .ik-dist-legend li::before { border-radius: 50%; }
+body[data-area="neotropya"] .ik-neo .ik-dist-legend b { color: var(--neo-text); font-family: var(--neo-font); }
+body[data-area="neotropya"] .ik-neo .ik-next { background: var(--neo-cream); border-color: var(--neo-border-hi); color: var(--neo-text); border-radius: var(--neo-radius-xs); }
+body[data-area="neotropya"] .ik-neo .ik-next b { color: var(--neo-forest); font-family: var(--neo-font); text-transform: none; letter-spacing: 0; font-weight: 900; font-size: 12px; }
+body[data-area="neotropya"] .ik-neo .ik-matches { border-top-color: var(--neo-border); }
+body[data-area="neotropya"] .ik-neo .ik-matches b { color: var(--neo-forest); font-family: var(--neo-font); text-transform: none; letter-spacing: 0; font-weight: 900; }
+body[data-area="neotropya"] .ik-neo .ik-mlink { color: var(--neo-text); text-decoration-color: var(--neo-sage); }
+body[data-area="neotropya"] .ik-neo .ik-mlink:hover { color: var(--neo-forest); }
+body[data-area="neotropya"] .ik-neo .ik-mlink:focus-visible { outline-color: var(--neo-forest); }
+body[data-area="neotropya"] .ik-neo .ik-tag.t-macro { color: var(--neo-forest); background: var(--neo-soft); border-color: var(--neo-sage); }
+body[data-area="neotropya"] .ik-neo .ik-tag.t-unclass { color: var(--neo-upd); background: var(--neo-upd-bg); border-color: #EBCF9C; }
+body[data-area="neotropya"] .ik-neo .ik-tag.t-partial { color: var(--neo-err); background: var(--neo-err-bg); border-color: #EDB6AC; }
+body[data-area="neotropya"] .ik-neo .ik-colname, body[data-area="neotropya"] .ik-neo .ik-eqnote, body[data-area="neotropya"] .ik-neo .ik-none { color: var(--neo-text-3); }
+body[data-area="neotropya"] .ik-neo .ik-ttl-s { color: var(--neo-text); font-weight: 800; }
+body[data-area="neotropya"] .ik-neo .ik-sechelp { color: var(--neo-text-2); }
+body[data-area="neotropya"] .ik-neo .ik-pending { background: rgba(255,255,255,.72); border-color: var(--neo-border); border-radius: var(--neo-radius); }
+body[data-area="neotropya"] .ik-neo .ik-pending h2 .n { font-family: var(--neo-font); font-weight: 800; background: var(--neo-soft); border: 0; border-radius: 999px; color: var(--neo-text-2); }
+body[data-area="neotropya"] .ik-neo .ik-detail { background: #fff; border-color: var(--neo-border); border-radius: var(--neo-radius); box-shadow: var(--neo-shadow); }
+body[data-area="neotropya"] .ik-neo .ik-detail-head h2 { font-family: var(--neo-font); text-transform: none; letter-spacing: -.01em; font-weight: 900; color: var(--neo-text); }
+body[data-area="neotropya"] .ik-neo .ik-chip { border-radius: 999px; background: #fff; color: var(--neo-text); }
+body[data-area="neotropya"] .ik-neo .ik-chip::before { border-radius: 50%; }
+body[data-area="neotropya"] .ik-neo .ik-sech { font-family: var(--neo-font); text-transform: none; letter-spacing: 0; font-weight: 900; font-size: 16px; color: var(--neo-forest); }
+body[data-area="neotropya"] .ik-neo .ik-objgrp { background: rgba(255,255,255,.82); border-color: var(--neo-border); border-left-color: var(--col); border-radius: var(--neo-radius-sm); box-shadow: var(--neo-shadow); }
+body[data-area="neotropya"] .ik-neo .ik-objgrp.c-empty { --col: var(--neo-border-hi); }
+body[data-area="neotropya"] .ik-neo .ik-objgrp > summary:hover { background: var(--neo-cream); border-radius: var(--neo-radius-sm); }
+body[data-area="neotropya"] .ik-neo .ik-objgrp > summary:focus-visible { outline-color: var(--neo-forest); }
+body[data-area="neotropya"] .ik-neo .ik-objgrp > summary::after { color: var(--neo-forest); }
+body[data-area="neotropya"] .ik-neo .ik-objn { border-radius: 50%; border-color: var(--neo-sage); background: var(--neo-soft); color: var(--neo-forest); font-family: var(--neo-font); font-weight: 900; }
+body[data-area="neotropya"] .ik-neo .ik-objt { color: var(--neo-text); font-weight: 800; }
+body[data-area="neotropya"] .ik-neo .ik-objmeta { color: var(--neo-text-2); }
+body[data-area="neotropya"] .ik-neo .ik-objmeta b { color: var(--neo-forest); }
+body[data-area="neotropya"] .ik-neo .ik-warn { color: var(--neo-err); }
+body[data-area="neotropya"] .ik-neo .ik-phase-h { font-family: var(--neo-font); text-transform: none; letter-spacing: 0; font-weight: 800; color: var(--neo-text-3); }
+body[data-area="neotropya"] .ik-neo .ik-phase li { background: var(--neo-cream); color: var(--neo-text); border-radius: var(--neo-radius-xs); }
+body[data-area="neotropya"] .ik-neo .ik-phase li .mk { color: var(--neo-text-3); }
+body[data-area="neotropya"] .ik-neo .ik-phase li.ok .mk { color: var(--neo-ok); }
+body[data-area="neotropya"] .ik-neo .ik-dist-legend .c-confirm { --col: var(--neo-border-hi); }
+body[data-area="neotropya"] .ik-neo .ik-obj { color: var(--neo-text-2); }
+body[data-area="neotropya"] .ik-neo .ik-detail-stats { color: var(--neo-text); }
+body[data-area="neotropya"] .ik-neo .ik-objgrp .ik-block span, body[data-area="neotropya"] .ik-neo .ik-detail .ik-block span { color: var(--neo-text); }

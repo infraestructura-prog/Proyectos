@@ -6,6 +6,7 @@
    La lógica está en kanban-core.js; la estética, en neotropya.css (.ik-neo). */
 import { neoHero } from '../neo-theme.js';
 import { mountKanban } from './kanban-core.js';
+import { NEO_ESTRUCTURA } from './kanban-estructura.js';
 import { shared, refreshShared, statusKind, openNodeDetail } from './nodos-data.js';
 
 /* Estado del nodo en la hoja → columna y título de su tarjeta. Desplegados y completados no generan tarjeta.
@@ -36,6 +37,8 @@ export function mount(root) {
     proyectos: ['Nodos', 'Investigación', 'Energía', 'Conectividad', 'Fabricación digital'],
     proyectoNuevo: 'Nodos',
     seedNote: 'Carga inicial del tablero de Neotropya',
+    // Macroobjetivos (vista principal) y reglas de agrupación: kanban-estructura.js
+    estructura: NEO_ESTRUCTURA,
     external: {
       sourceName: 'Nodos (Google Sheets)', sourceTitle: 'Estado leído de la hoja de control de nodos', badge: 'Desde Nodos',
       toggle: 'Mostrar nodos en curso',
@@ -47,7 +50,9 @@ export function mount(root) {
         if (shared.mode !== 'live') throw new Error(shared.error || 'sin datos en vivo');
         return shared.data.map(nodeCard).filter(Boolean);
       },
-      open(ref) { const n = shared.data.find(x => x.id === ref); if (n) openNodeDetail(n); }
+      open(ref) { const n = shared.data.find(x => x.id === ref); if (n) openNodeDetail(n); },
+      // Estado de un nodo que ya no está en curso, leído de la hoja (solo «Desplegado» o «Completado» cuentan como terminado).
+      lookup(ref) { if (shared.mode !== 'live') return null; const n = shared.data.find(x => x.id === ref); return n ? { estado: n.estado, terminado: statusKind(n.estado) === 'ok' } : null; }
     }
   });
 }

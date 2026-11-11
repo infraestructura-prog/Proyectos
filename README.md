@@ -345,6 +345,55 @@ Archivos: `assets/js/modules/presupuestos.js` (interfaz) y `assets/js/modules/pr
   - Se ocultan con «Mostrar nodos en curso» y se recargan con «Actualizar».
   - Si la hoja no se puede leer, se avisa y el resto del tablero sigue funcionando. Los datos de demostración de Nodos nunca se muestran como estado real.
 
+## Macroobjetivos en los dos Kanban
+
+Navegación: **macroobjetivo → objetivo específico → actividades e hitos**. Catálogo y reglas en `assets/js/modules/kanban-estructura.js`; vistas en `kanban-core.js`.
+
+- **Vista «Macroobjetivos»** (principal):
+  - Cada macroobjetivo se coloca en la columna de su estado **calculado**:
+    - Done: todas las actividades completadas.
+    - To do: ninguna empezada.
+    - Blocked: todo lo pendiente está bloqueado.
+    - Testing: solo quedan verificaciones.
+    - Doing: el resto.
+  - Es un resumen: no se arrastra y nunca cambia los estados de sus actividades.
+  - La tarjeta muestra:
+    - el resultado esperado;
+    - el número de objetivos y de actividades;
+    - las completadas sobre el total y la distribución por estado;
+    - los bloqueos activos («Bloqueo parcial» si queda trabajo que puede continuar);
+    - la próxima acción.
+  - **Desglose:** «Ver desglose» abre la actividad principal y cada objetivo específico en desplegables (`<details>`, funcionan con teclado y en móvil).
+    - Las actividades conservan su tarjeta completa y su estado se cambia desde su selector.
+    - Las subtareas de una actividad principal se muestran en la fase (objetivo) que indica su campo `fase`.
+- **Vista «Todas las actividades»:** el tablero de siempre, con arrastre, más una etiqueta con el macroobjetivo de cada tarjeta.
+- **Búsqueda:** encuentra actividades dentro de macroobjetivos cerrados. Lista las coincidencias en la tarjeta del macroobjetivo y abre los objetivos que coinciden.
+- **Campos nuevos de tarjeta** (compatibles con los respaldos anteriores):
+  - `macro` y `objetivoEsp`: el grupo de la tarjeta.
+  - `clasificada`: ya migrada o elegida a mano; no se vuelve a clasificar.
+  - `alias`: identificadores anteriores de la misma actividad.
+  - `enlace`: la tarjeta está consolidada en otro tablero.
+  - En las subtareas, `fase` y `equivale`: id del hito que ya registra esa subtarea, para no contarla dos veces.
+- **Migración automática, una vez por navegador:**
+  - Antes de migrar se guarda una copia del tablero en `<clave>-respaldo-reorganizacion`, que se descarga con «Respaldo previo» y se puede reimportar.
+  - Solo se asocian las tarjetas cuya relación es inequívoca (por id). El resto queda en «Por clasificar» y se agrupa a mano en «Macroobjetivo y objetivo específico».
+  - No cambia estados, fechas, responsables ni historial; añade una entrada «Reorganización» al historial.
+  - Recargar o volver a desplegar no repite nada.
+- **Importar:**
+  - Un respaldo anterior sin estos campos se migra igual.
+  - Al actualizar por ID, una tarjeta que el archivo trae sin grupo conserva el que tenía.
+- **Consolidación nodo–moto:**
+  - «Investigar la sujeción moto-nodo» (`estudio-sujecion`, Infraestructura) se consolida en «Investigar la sujeción nodo–moto» de Neotropya. Esa tarjeta recibe sus notas, su historial (con prefijo) y el alias.
+  - La de Infraestructura se conserva como enlace de solo lectura y muestra el estado vivo de la canónica.
+  - Solo ocurre cuando los dos tableros existen en el mismo navegador.
+- **Nodos (Neotropya C):**
+  - Cada nodo visto en curso tiene su objetivo. Se guarda solo su id y el día, nunca su estado.
+  - Si un nodo sale de la consulta, cuenta como terminado solo si la hoja lo registra como «Desplegado» o «Completado». Si no, queda «por confirmar».
+- **Formación y reporte (Infraestructura E):**
+  - Un objetivo por semana (lunes a domingo).
+  - «Crear la actividad de esta semana» crea una sola tarjeta con dos comprobaciones: horas cubiertas y avances reportados.
+  - No se generan tarjetas diarias.
+
 ## Estados de los nodos (hoja de control de órdenes de fabricación)
 
 `statusKind` en `assets/js/modules/nodos-data.js` clasifica el texto de la columna de estado; no distingue mayúsculas:

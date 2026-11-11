@@ -3,6 +3,7 @@
    Persistencia: localStorage de este navegador + exportación/importación JSON. La lógica está en kanban-core.js. */
 import { infraHero } from '../infra-theme.js';
 import { mountKanban } from './kanban-core.js';
+import { INFRA_ESTRUCTURA } from './kanban-estructura.js';
 
 export function mount(root) {
   return mountKanban(root, {
@@ -12,6 +13,8 @@ export function mount(root) {
     proyectos: ['Mantenimiento', 'Taller', 'Oficinas', 'Desarrollo de proyectos', 'Neotropya / transversal', 'Gestión departamental'],
     proyectoNuevo: 'Mantenimiento',
     seedNote: 'Carga inicial desde el To-do list',
-    scopeLabel: 'de Infraestructura'
+    scopeLabel: 'de Infraestructura',
+    // Macroobjetivos (vista principal) y reglas de agrupación: kanban-estructura.js
+    estructura: INFRA_ESTRUCTURA
   });
 }
