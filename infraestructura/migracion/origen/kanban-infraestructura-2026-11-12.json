@@ -1,0 +1,2962 @@
+{
+  "schema": "ccs-kanban-v1",
+  "id": "infra-kanban",
+  "exportado": "2026-11-12T19:48:28.035Z",
+  "estructura": {
+    "version": 2,
+    "nodosVistos": {},
+    "macroobjetivos": [
+      {
+        "id": "activos",
+        "letra": "A",
+        "titulo": "Gestionar los activos y su mantenimiento",
+        "resultado": "Activos identificados y documentados, con seguimiento de sus intervenciones.",
+        "objetivos": [
+          {
+            "id": "inventario",
+            "titulo": "Inventariar y documentar activos"
+          },
+          {
+            "id": "seguimiento-digital",
+            "titulo": "Implementar su seguimiento digital"
+          },
+          {
+            "id": "entregas-sistema",
+            "titulo": "Registrar entregas y avances del sistema"
+          }
+        ]
+      },
+      {
+        "id": "espacios",
+        "letra": "B",
+        "titulo": "Organizar y equipar los espacios de trabajo",
+        "resultado": "Almacenamiento y mobiliario adecuados para las operaciones del departamento.",
+        "objetivos": [
+          {
+            "id": "almacenaje",
+            "titulo": "Organización y almacenaje del área de ensamblaje"
+          },
+          {
+            "id": "mueble-volantes",
+            "titulo": "Construcción e instalación del mueble de volantes"
+          }
+        ]
+      },
+      {
+        "id": "oficinas",
+        "letra": "C",
+        "titulo": "Acondicionar y conservar las oficinas",
+        "resultado": "Intervenciones identificadas resueltas y su comprobación registrada.",
+        "objetivos": [
+          {
+            "id": "entradas-agua",
+            "titulo": "Resolver las entradas de agua"
+          },
+          {
+            "id": "aire-acondicionado",
+            "titulo": "Completar la intervención del aire acondicionado y su cerramiento"
+          },
+          {
+            "id": "tomacorrientes",
+            "titulo": "Habilitar los tomacorrientes requeridos"
+          }
+        ]
+      },
+      {
+        "id": "puentes",
+        "letra": "D",
+        "titulo": "Recuperar la operatividad de puentes y elevadores",
+        "resultado": "Puentes y elevadores funcionando, con la intervención de cada equipo probada y aceptada.",
+        "objetivos": [
+          {
+            "id": "diagnostico",
+            "titulo": "Diagnóstico"
+          },
+          {
+            "id": "repuestos",
+            "titulo": "Repuestos y compras"
+          },
+          {
+            "id": "coordinacion",
+            "titulo": "Coordinación de intervención"
+          },
+          {
+            "id": "reparacion",
+            "titulo": "Reparación"
+          },
+          {
+            "id": "pruebas",
+            "titulo": "Pruebas y aceptación"
+          }
+        ]
+      },
+      {
+        "id": "formacion-reporte",
+        "letra": "E",
+        "titulo": "Completar la formación y el reporte semanal",
+        "resultado": "Cada semana, horas de formación en IA cubiertas y avances reportados a Alberto.",
+        "objetivos": []
+      }
+    ]
+  },
+  "tarjetas": [
+    {
+      "id": "censo-activos",
+      "titulo": "Completar el censo de activos",
+      "objetivo": "Inventario básico de activos completo, con manuales y despieces disponibles identificados y la información faltante documentada.",
+      "descripcion": "Revisar el inventario de activos, identificar qué manuales y despieces existen y documentar los vacíos de información.\n\nReunión 11/11/2026 (I09): incorporar al inventario los equipos del taller (puentes, compresor, nitrógeno, balanceadora y montadora/desmontadora), cargando sus datos disponibles y señalando los faltantes.",
+      "criterio": "Inventario revisado y vacíos de información identificados.",
+      "estado": "todo",
+      "estadoPorConfirmar": true,
+      "prioridad": "alta",
+      "proyecto": "Mantenimiento",
+      "equipo": "Activos del departamento",
+      "responsable": "Cristian",
+      "supervisor": "Fabricio",
+      "solicitante": "Alberto · reunión 11/11/2026",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [
+        "I09"
+      ],
+      "proximaAccion": "Confirmar el avance real del inventario.",
+      "fechas": {
+        "original": "2026-10-09",
+        "reprogramada": "",
+        "revision": "2026-11-13",
+        "plazo": "Esta semana (9–15/11/2026), sin día fijado",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "s1",
+          "texto": "Inventario básico de activos",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s2",
+          "texto": "Identificar manuales y despieces disponibles",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s3",
+          "texto": "Documentar la información faltante",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i09-a",
+          "texto": "I09 · Cargar los puentes con sus datos disponibles",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i09-b",
+          "texto": "I09 · Cargar el compresor con sus datos disponibles",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i09-c",
+          "texto": "I09 · Cargar el equipo de nitrógeno con sus datos disponibles",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i09-d",
+          "texto": "I09 · Cargar la balanceadora con sus datos disponibles",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i09-e",
+          "texto": "I09 · Cargar la montadora/desmontadora con sus datos disponibles",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i09-f",
+          "texto": "I09 · Señalar los datos faltantes de cada equipo",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Supervisión indicada: Fabricio. Avance por confirmar.\n\nReunión con Alberto 11/11/2026 · I09: encargo para esta semana (9–15/11/2026), sin día de entrega fijado; se presenta el avance en la revisión del viernes 13/11/2026 (sin hora definida). La revisión no es la fecha de finalización. Prioridad por confirmar.",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "todo",
+          "nota": "Carga inicial desde el To-do list · estado por confirmar"
+        },
+        {
+          "fecha": "2026-11-11T17:25:29.759Z",
+          "tipo": "actualizacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Actualizada con «Compromisos de la reunión con Alberto · 11/11/2026 (Infraestructura)» (actualizacion-infraestructura-reunion-2026-11-11.json): alcance ampliado, 6 subtareas nuevas, referencias I09, responsable: Cristian, solicitante registrado, revisión 13/11/2026, plazo registrado, notas agregadas."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: asociada a «A · Gestionar los activos y su mantenimiento» › «Inventariar y documentar activos». Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 1,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "activos",
+      "objetivoEsp": "inventario",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "almacenaje-ensamblaje",
+      "titulo": "Organizar y equipar el almacenaje del área de ensamblaje",
+      "objetivo": "Compartimentación, gavetas y almacenamiento modular definidos e implementados según el espacio disponible.",
+      "descripcion": "Definir e implementar compartimentación, gavetas y almacenamiento modular adecuado al espacio del área de ensamblaje.",
+      "criterio": "Soluciones acordadas instaladas y distribución del espacio verificada.",
+      "estado": "doing",
+      "estadoPorConfirmar": false,
+      "prioridad": "alta",
+      "proyecto": "Taller",
+      "equipo": "Área de ensamblaje",
+      "responsable": "",
+      "supervisor": "",
+      "solicitante": "",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "Confirmar el avance y comparar las cotizaciones de organizadores.",
+      "fechas": {
+        "original": "2026-10-23",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "s-67058137",
+          "texto": "Imprimir e instalar etiquetas",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "La fecha original (23/10/2026) era una meta de avance. Si una subtarea tiene ejecución independiente, se puede convertir en tarjeta vinculada.",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "todo",
+          "nota": "Carga inicial desde el To-do list · estado por confirmar"
+        },
+        {
+          "fecha": "2026-10-26T20:06:55.779Z",
+          "tipo": "estado",
+          "de": "todo",
+          "a": "doing",
+          "nota": "Movida de To do a Doing."
+        },
+        {
+          "fecha": "2026-10-26T20:06:55.779Z",
+          "tipo": "confirmacion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Estado confirmado al moverla a Doing."
+        },
+        {
+          "fecha": "2026-11-05T15:36:21.646Z",
+          "tipo": "edicion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Datos editados."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Reorganización: asociada a «B · Organizar y equipar los espacios de trabajo» › «Organización y almacenaje del área de ensamblaje». Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 2,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "espacios",
+      "objetivoEsp": "almacenaje",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "mueble-volantes",
+      "titulo": "Supervisar la construcción e instalación del mueble de volantes",
+      "objetivo": "Bases construidas y mueble de volantes instalado.",
+      "descripcion": "Supervisar la construcción de las bases y la instalación del mueble de volantes. El contacto y la coordinación con el herrero ya se completaron (hito aparte).",
+      "criterio": "Mueble instalado y revisado en estabilidad y funcionalidad.",
+      "estado": "done",
+      "estadoPorConfirmar": false,
+      "prioridad": "alta",
+      "proyecto": "Taller",
+      "equipo": "Mueble de volantes",
+      "responsable": "",
+      "supervisor": "",
+      "solicitante": "",
+      "dependenciaExterna": "Herrero",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "En espera de la disponibilidad del herrero",
+      "fechas": {
+        "original": "2026-10-27",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": [
+          {
+            "fecha": "2026-10-26",
+            "condicion": "Bases previstas"
+          },
+          {
+            "fecha": "2026-10-27",
+            "condicion": "Instalación prevista"
+          }
+        ]
+      },
+      "subtareas": [
+        {
+          "id": "s1",
+          "texto": "Contacto y coordinación del herrero",
+          "hecha": true,
+          "fase": "",
+          "equivale": "hito-herrero"
+        },
+        {
+          "id": "s2",
+          "texto": "Construcción de las bases",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s3",
+          "texto": "Instalación del mueble",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s4",
+          "texto": "Revisión de estabilidad y funcionalidad",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Inicio efectivo de la construcción por confirmar. La coordinación terminada no implica que la construcción esté completada.",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": {
+        "nota": "Se concreto con éxito la fabricación e instalación del mismo.",
+        "fecha": "2026-11-05"
+      },
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "todo",
+          "nota": "Carga inicial desde el To-do list · estado por confirmar"
+        },
+        {
+          "fecha": "2026-10-26T20:07:14.864Z",
+          "tipo": "estado",
+          "de": "todo",
+          "a": "doing",
+          "nota": "Movida de To do a Doing."
+        },
+        {
+          "fecha": "2026-10-26T20:07:14.864Z",
+          "tipo": "confirmacion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Estado confirmado al moverla a Doing."
+        },
+        {
+          "fecha": "2026-10-30T20:38:17.717Z",
+          "tipo": "bloqueo",
+          "de": "doing",
+          "a": "blocked",
+          "nota": "Bloqueada: En espera de la disponibilidad del herrero · depende de Herrero · para desbloquear: En espera de la disponibilidad del herrero"
+        },
+        {
+          "fecha": "2026-11-05T15:33:00.715Z",
+          "tipo": "desbloqueo",
+          "de": "blocked",
+          "a": "done",
+          "nota": "Desbloqueada. Motivo anterior: En espera de la disponibilidad del herrero (dependía de Herrero). Acción indicada: En espera de la disponibilidad del herrero"
+        },
+        {
+          "fecha": "2026-11-05T15:33:00.715Z",
+          "tipo": "cierre",
+          "de": "blocked",
+          "a": "done",
+          "nota": "Completada. Cierre / evidencia: Se concreto con éxito la fabricación e instalación del mismo."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "done",
+          "a": "done",
+          "nota": "Reorganización: asociada a «B · Organizar y equipar los espacios de trabajo» › «Construcción e instalación del mueble de volantes». Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [
+        "hito-herrero"
+      ],
+      "orden": 6,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "espacios",
+      "objetivoEsp": "mueble-volantes",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "tapa-drywall",
+      "titulo": "Fabricar e instalar la tapa del drywall",
+      "objetivo": "Tapa del área intervenida instalada y con su ajuste verificado.",
+      "descripcion": "Completar la fabricación de la tapa del drywall del área intervenida, instalarla y verificar su ajuste.",
+      "criterio": "Tapa instalada y ajuste verificado.",
+      "estado": "blocked",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Oficinas",
+      "equipo": "Drywall",
+      "responsable": "",
+      "supervisor": "",
+      "solicitante": "",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "En espera de la disponibilidad del herrero",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": [
+          {
+            "fecha": "2026-10-26",
+            "condicion": "Instalación solo si la tapa estaba lista"
+          }
+        ]
+      },
+      "subtareas": [
+        {
+          "id": "s1",
+          "texto": "Terminar la fabricación de la tapa",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s2",
+          "texto": "Instalar la tapa",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s3",
+          "texto": "Verificar el ajuste",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Último estado documentado: en fabricación. La instalación del 26/10/2026 era condicionada; no se asume realizada. La reparación del ducto es una actividad distinta, ya completada.",
+      "enlaces": [],
+      "bloqueo": {
+        "quien": "Dpto. Mecánica",
+        "motivo": "En desarrollo de un nuevo modelo",
+        "accion": "En espera de la disponibilidad del herrero"
+      },
+      "testing": {
+        "comprobar": "Facilidad de apertura y cierre",
+        "esperado": "Tapa instalada y ajuste verificado."
+      },
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "doing",
+          "nota": "Carga inicial desde el To-do list"
+        },
+        {
+          "fecha": "2026-10-29T16:25:12.939Z",
+          "tipo": "prueba",
+          "de": "doing",
+          "a": "testing",
+          "nota": "En prueba. Comprobar: Facilidad de apertura y cierre · Resultado esperado: Tapa instalada y ajuste verificado."
+        },
+        {
+          "fecha": "2026-10-30T20:40:25.285Z",
+          "tipo": "bloqueo",
+          "de": "testing",
+          "a": "blocked",
+          "nota": "Bloqueada: En desarrollo de un nuevo modelo · depende de Dpto. Mecánica · para desbloquear: En espera de la disponibilidad del herrero"
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "blocked",
+          "a": "blocked",
+          "nota": "Reorganización: asociada a «C · Acondicionar y conservar las oficinas» › «Completar la intervención del aire acondicionado y su cerramiento». Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 1,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "oficinas",
+      "objetivoEsp": "aire-acondicionado",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "puentes-elevadores",
+      "titulo": "Recuperar el funcionamiento de puentes y elevadores",
+      "objetivo": "Diagnóstico, repuestos e intervención coordinados para que los puentes y elevadores vuelvan a funcionar.",
+      "descripcion": "Coordinar el diagnóstico, los repuestos y la intervención necesaria para recuperar el funcionamiento de puentes y elevadores.",
+      "criterio": "Intervención y validación técnica documentadas por el personal competente.",
+      "estado": "doing",
+      "estadoPorConfirmar": false,
+      "prioridad": "critica",
+      "proyecto": "Mantenimiento",
+      "equipo": "Puentes y elevadores",
+      "responsable": "Cristian",
+      "supervisor": "",
+      "solicitante": "Ingeniería Mecánica (revisión técnica y especificaciones)",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "Confirmar estado de compra, despacho y llegada de las válvulas.",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "s1",
+          "texto": "Confirmar estado de compra, despacho y llegada de válvulas",
+          "hecha": true,
+          "fase": "repuestos",
+          "equivale": ""
+        },
+        {
+          "id": "s2",
+          "texto": "Registrar fallas por equipo",
+          "hecha": false,
+          "fase": "diagnostico",
+          "equivale": ""
+        },
+        {
+          "id": "s4",
+          "texto": "Solicitar a Fabrizio el contexto escrito de rampas y herrero",
+          "hecha": false,
+          "fase": "diagnostico",
+          "equivale": ""
+        },
+        {
+          "id": "s5",
+          "texto": "Definir próxima intervención",
+          "hecha": false,
+          "fase": "coordinacion",
+          "equivale": ""
+        }
+      ],
+      "notas": "Cristian: seguimiento operativo. Ingeniería Mecánica: revisión técnica y especificaciones. Hay referencias antiguas a fechas relativas (por ejemplo, «el miércoles siguiente a la reunión») que no se convirtieron en fechas absolutas.\n\nInformación vigente (reunión 11/11/2026): el cambio de válvulas del puente de cuatro torres se realizó el 06/11/2026; la llegada de válvulas ya no es un bloqueo vigente. La reparación de las rampas y otros componentes del elevador es un seguimiento separado.",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "blocked",
+          "nota": "Carga inicial desde el To-do list · bloqueo documentado: Válvulas pendientes de llegada."
+        },
+        {
+          "fecha": "2026-11-06T15:05:50.191Z",
+          "tipo": "edicion",
+          "de": "blocked",
+          "a": "blocked",
+          "nota": "Datos editados."
+        },
+        {
+          "fecha": "2026-11-06T15:25:22.835Z",
+          "tipo": "desbloqueo",
+          "de": "blocked",
+          "a": "doing",
+          "nota": "Desbloqueada. Motivo anterior: Válvulas pendientes de llegada. (dependía de Proveedor de válvulas). Acción indicada: Confirmar estado de compra, despacho y llegada de las válvulas."
+        },
+        {
+          "fecha": "2026-11-11T17:25:29.759Z",
+          "tipo": "actualizacion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Actualizada con «Compromisos de la reunión con Alberto · 11/11/2026 (Infraestructura)» (actualizacion-infraestructura-reunion-2026-11-11.json): notas agregadas."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Reorganización: asociada a «D · Recuperar la operatividad de puentes y elevadores» como actividad principal. Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 4,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "puentes",
+      "objetivoEsp": "",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "goteras",
+      "titulo": "Solucionar las dos entradas de agua (goteras)",
+      "objetivo": "Los dos puntos de entrada de agua identificados y con su solución coordinada.",
+      "descripcion": "Identificar los dos puntos de entrada de agua y coordinar su reparación con los involucrados.",
+      "criterio": "Ambos puntos atendidos y resultado de la verificación registrado.",
+      "estado": "todo",
+      "estadoPorConfirmar": false,
+      "prioridad": "alta",
+      "proyecto": "Oficinas",
+      "equipo": "Techo / goteras",
+      "responsable": "",
+      "supervisor": "",
+      "solicitante": "Giovanni, José, Carmen · centro comercial",
+      "dependenciaExterna": "Centro comercial",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "Confirmar el estado del diagnóstico.",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "s1",
+          "texto": "Diagnóstico de los dos puntos",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s2",
+          "texto": "Propuesta de reparación",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s3",
+          "texto": "Coordinación con Giovanni, José, Carmen y el centro comercial",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s4",
+          "texto": "Intervención",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s5",
+          "texto": "Comprobación del resultado",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "todo",
+          "nota": "Carga inicial desde el To-do list · estado por confirmar"
+        },
+        {
+          "fecha": "2026-10-30T19:32:49.093Z",
+          "tipo": "estado",
+          "de": "todo",
+          "a": "doing",
+          "nota": "Movida de To do a Doing."
+        },
+        {
+          "fecha": "2026-10-30T19:32:49.093Z",
+          "tipo": "confirmacion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Estado confirmado al moverla a Doing."
+        },
+        {
+          "fecha": "2026-10-30T20:37:31.356Z",
+          "tipo": "estado",
+          "de": "doing",
+          "a": "todo",
+          "nota": "Movida de Doing a To do."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: asociada a «C · Acondicionar y conservar las oficinas» › «Resolver las entradas de agua». Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 8,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "oficinas",
+      "objetivoEsp": "entradas-agua",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "presupuesto-tomacorrientes",
+      "titulo": "Obtener el presupuesto de instalación de tomacorrientes",
+      "objetivo": "Presupuesto del Sr. José recibido y registrado para definir el siguiente paso.",
+      "descripcion": "Obtener del Sr. José el presupuesto de instalación de tomacorrientes. La instalación es una fase posterior y no queda completada al recibir el presupuesto.",
+      "criterio": "Presupuesto recibido y registrado.",
+      "estado": "done",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Oficinas",
+      "equipo": "Tomacorrientes",
+      "responsable": "",
+      "supervisor": "",
+      "solicitante": "",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "Reunión entre Carla y el señor José",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [],
+      "notas": "Prioridad por confirmar.",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": {
+        "nota": "Se concreto el presupuesto con 100$ de mano de obra y mañana comienza el trabajo",
+        "fecha": "2026-10-30"
+      },
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "blocked",
+          "nota": "Carga inicial desde el To-do list · bloqueo documentado: En espera de respuesta con el presupuesto."
+        },
+        {
+          "fecha": "2026-10-26T20:07:36.247Z",
+          "tipo": "desbloqueo",
+          "de": "blocked",
+          "a": "doing",
+          "nota": "Desbloqueada. Motivo anterior: En espera de respuesta con el presupuesto. (dependía de Sr. José). Acción indicada: Dar seguimiento al Sr. José."
+        },
+        {
+          "fecha": "2026-10-30T17:24:54.947Z",
+          "tipo": "bloqueo",
+          "de": "doing",
+          "a": "blocked",
+          "nota": "Bloqueada: Se espera la negociación del costo de la mano de obra · depende de Administración · para desbloquear: Reunión entre Carla y el señor José"
+        },
+        {
+          "fecha": "2026-10-30T20:37:10.120Z",
+          "tipo": "desbloqueo",
+          "de": "blocked",
+          "a": "doing",
+          "nota": "Desbloqueada. Motivo anterior: Se espera la negociación del costo de la mano de obra (dependía de Administración). Acción indicada: Reunión entre Carla y el señor José"
+        },
+        {
+          "fecha": "2026-10-30T20:39:13.178Z",
+          "tipo": "cierre",
+          "de": "doing",
+          "a": "done",
+          "nota": "Completada. Cierre / evidencia: Se concreto el presupuesto con 100$ de mano de obra y mañana comienza el trabajo"
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "done",
+          "a": "done",
+          "nota": "Reorganización: asociada a «C · Acondicionar y conservar las oficinas» › «Habilitar los tomacorrientes requeridos». Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [
+        "instalacion-tomacorrientes"
+      ],
+      "orden": 5,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "oficinas",
+      "objetivoEsp": "tomacorrientes",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "dashboard-mantenimiento",
+      "titulo": "Ampliar el dashboard con el panel de mantenimiento",
+      "objetivo": "Seguimiento de maquinaria e infraestructura ampliado con fichas de activos y de reparaciones.",
+      "descripcion": "Ampliar el seguimiento de maquinaria e infraestructura mediante fichas de activos y reparaciones. El panel de Manufactura se mantiene separado y se conecta mediante las interfaces necesarias.\n\nReunión 11/11/2026 (I01): separar y ordenar el panel de Infraestructura y Mantenimiento, diferenciándolo del panel de Manufactura; definir los objetivos y el alcance del departamento; conservar las interfaces y los datos compartidos necesarios.",
+      "criterio": "Fichas de activos y reparaciones disponibles con el alcance acordado.",
+      "estado": "doing",
+      "estadoPorConfirmar": false,
+      "prioridad": "alta",
+      "proyecto": "Desarrollo de proyectos",
+      "equipo": "Dashboard de mantenimiento",
+      "responsable": "Cristian",
+      "supervisor": "",
+      "solicitante": "Alberto · reunión 11/11/2026",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [
+        "I01"
+      ],
+      "proximaAccion": "Confirmar el estado efectivo de la ampliación.",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "2026-11-13",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "s5",
+          "texto": "Evaluar reutilización o migración de datos de Odoo",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i01-a",
+          "texto": "I01 · Diferenciar el panel de Infraestructura y Mantenimiento del panel de Manufactura",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i01-b",
+          "texto": "I01 · Definir los objetivos y el alcance del departamento",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i01-c",
+          "texto": "I01 · Identificar y conservar las interfaces y datos compartidos con Manufactura",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Los avances del dashboard ya presentados (hito aparte) no equivalen a terminar esta ampliación. Conservar el panel de Manufactura separado.\n\nReunión con Alberto 11/11/2026 · I01: revisión acordada el viernes 13/11/2026, sin hora definida. Es una revisión de avance, no la fecha de finalización. Prioridad por confirmar.",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "todo",
+          "nota": "Carga inicial desde el To-do list · estado por confirmar"
+        },
+        {
+          "fecha": "2026-10-30T17:25:01.356Z",
+          "tipo": "estado",
+          "de": "todo",
+          "a": "doing",
+          "nota": "Movida de To do a Doing."
+        },
+        {
+          "fecha": "2026-10-30T17:25:01.356Z",
+          "tipo": "confirmacion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Estado confirmado al moverla a Doing."
+        },
+        {
+          "fecha": "2026-11-05T15:35:33.824Z",
+          "tipo": "edicion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Datos editados."
+        },
+        {
+          "fecha": "2026-11-11T17:25:29.759Z",
+          "tipo": "actualizacion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Actualizada con «Compromisos de la reunión con Alberto · 11/11/2026 (Infraestructura)» (actualizacion-infraestructura-reunion-2026-11-11.json): alcance ampliado, 3 subtareas nuevas, referencias I01, responsable: Cristian, solicitante registrado, revisión 13/11/2026, notas agregadas, vínculos."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Reorganización: asociada a «A · Gestionar los activos y su mantenimiento» › «Implementar su seguimiento digital». Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [
+        "demo-revision-tecnica-app",
+        "ficha-fallas-mantenimiento"
+      ],
+      "orden": 3,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "activos",
+      "objetivoEsp": "seguimiento-digital",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "hito-herrero",
+      "titulo": "Contactar y coordinar al herrero del mueble de volantes",
+      "objetivo": "Herrero contactado y trabajo coordinado.",
+      "descripcion": "Hito completado: contacto y coordinación del herrero. No incluye la construcción ni la instalación del mueble.",
+      "criterio": "Herrero contactado y trabajo coordinado.",
+      "estado": "done",
+      "estadoPorConfirmar": false,
+      "prioridad": "alta",
+      "proyecto": "Taller",
+      "equipo": "Mueble de volantes",
+      "responsable": "",
+      "supervisor": "",
+      "solicitante": "",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [],
+      "notas": "Las fases posteriores siguen en la tarjeta «Supervisar la construcción e instalación del mueble de volantes».",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": {
+        "nota": "Hito registrado como completado en el To-do list.",
+        "fecha": ""
+      },
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "done",
+          "nota": "Carga inicial desde el To-do list"
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "done",
+          "a": "done",
+          "nota": "Reorganización: asociada a «B · Organizar y equipar los espacios de trabajo» › «Construcción e instalación del mueble de volantes». Estado sin cambios."
+        }
+      ],
+      "hito": true,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [
+        "mueble-volantes"
+      ],
+      "orden": 1,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "espacios",
+      "objetivoEsp": "mueble-volantes",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "hito-ducto",
+      "titulo": "Reparar el ducto de aire acondicionado",
+      "objetivo": "Ducto de aire acondicionado reparado.",
+      "descripcion": "Hito completado. Es una actividad distinta de la tapa del drywall.",
+      "criterio": "Ducto reparado.",
+      "estado": "done",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Oficinas",
+      "equipo": "Aire acondicionado",
+      "responsable": "",
+      "supervisor": "",
+      "solicitante": "",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [],
+      "notas": "",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": {
+        "nota": "Reparación completada según el To-do list.",
+        "fecha": "2026-10-21"
+      },
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "done",
+          "nota": "Carga inicial desde el To-do list"
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "done",
+          "a": "done",
+          "nota": "Reorganización: asociada a «C · Acondicionar y conservar las oficinas» › «Completar la intervención del aire acondicionado y su cerramiento». Estado sin cambios."
+        }
+      ],
+      "hito": true,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 2,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "oficinas",
+      "objetivoEsp": "aire-acondicionado",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "hito-dashboard",
+      "titulo": "Publicar la versión inicial del dashboard y los accesos a módulos",
+      "objetivo": "Dashboard inicial publicado con accesos a los módulos.",
+      "descripcion": "Hito: avance reportado. No incluye la ampliación con el panel de mantenimiento.",
+      "criterio": "Versión inicial publicada y presentada.",
+      "estado": "done",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Desarrollo de proyectos",
+      "equipo": "Dashboard",
+      "responsable": "",
+      "supervisor": "",
+      "solicitante": "",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [],
+      "notas": "",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": {
+        "nota": "Avance reportado en el To-do list.",
+        "fecha": "2026-10-23"
+      },
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "done",
+          "nota": "Carga inicial desde el To-do list"
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "done",
+          "a": "done",
+          "nota": "Reorganización: asociada a «A · Gestionar los activos y su mantenimiento» › «Registrar entregas y avances del sistema». Estado sin cambios."
+        }
+      ],
+      "hito": true,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [
+        "dashboard-mantenimiento"
+      ],
+      "orden": 3,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "activos",
+      "objetivoEsp": "entregas-sistema",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "hito-maquinas-diagnostico",
+      "titulo": "Presentar el avance de la interfaz de máquinas de diagnóstico",
+      "objetivo": "Avance de la interfaz presentado.",
+      "descripcion": "Hito: presentación registrada. No implica que la interfaz esté terminada.",
+      "criterio": "Avance presentado.",
+      "estado": "done",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Desarrollo de proyectos",
+      "equipo": "Máquinas de diagnóstico",
+      "responsable": "",
+      "supervisor": "",
+      "solicitante": "",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [],
+      "notas": "",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": {
+        "nota": "Presentación registrada en el To-do list.",
+        "fecha": "2026-10-23"
+      },
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "done",
+          "nota": "Carga inicial desde el To-do list"
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "done",
+          "a": "done",
+          "nota": "Reorganización: asociada a «A · Gestionar los activos y su mantenimiento» › «Registrar entregas y avances del sistema». Estado sin cambios."
+        }
+      ],
+      "hito": true,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 4,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "activos",
+      "objetivoEsp": "entregas-sistema",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "estudio-sujecion",
+      "titulo": "Investigar la sujeción moto-nodo",
+      "objetivo": "Investigación de la sujeción entre la moto y el nodo (maleta) completada.",
+      "descripcion": "Actividad transversal de Neotropya registrada en el To-do list.",
+      "criterio": "Estudio entregado (criterio por acordar).",
+      "estado": "doing",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Neotropya / transversal",
+      "equipo": "Sujeción moto-nodo",
+      "responsable": "Erick",
+      "supervisor": "",
+      "solicitante": "",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [],
+      "notas": "Estado confirmado el 02/11/2026: en proceso. Antes figuraba como «Estudiar la sujeción moto-maleta».",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "doing",
+          "nota": "Carga inicial desde el To-do list"
+        },
+        {
+          "fecha": "2026-11-02T14:00:00.000Z",
+          "tipo": "edicion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Renombrada a «Investigar la sujeción moto-nodo» y asignada a Erick. Estado confirmado: en proceso."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.683Z",
+          "tipo": "consolidacion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Consolidada en «Investigar la sujeción nodo–moto» (Kanban de Neotropya). Se consulta desde aquí y se edita allí."
+        }
+      ],
+      "hito": false,
+      "transversal": true,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 1,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "",
+      "objetivoEsp": "",
+      "clasificada": false,
+      "alias": [],
+      "enlace": {
+        "tablero": "neotropya-kanban",
+        "id": "investigacion-sujecion-nodo-moto",
+        "fecha": "2026-11-12T11:49:39.683Z"
+      }
+    },
+    {
+      "id": "ia-2026-10-24",
+      "titulo": "Sesión de formación en IA · 24/10/2026",
+      "objetivo": "Sesión de formación realizada.",
+      "descripcion": "Instancia de la formación en IA del 24/10/2026, pendiente de confirmación.",
+      "criterio": "Asistencia o realización confirmada.",
+      "estado": "todo",
+      "estadoPorConfirmar": true,
+      "prioridad": "",
+      "proyecto": "Gestión departamental",
+      "equipo": "Formación en IA",
+      "responsable": "",
+      "supervisor": "",
+      "solicitante": "",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "Confirmar si la sesión se realizó.",
+      "fechas": {
+        "original": "2026-10-24",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [],
+      "notas": "",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "todo",
+          "nota": "Carga inicial desde el To-do list · estado por confirmar"
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: asociada a «E · Completar la formación y el reporte semanal» › «Semana del 19/10 al 25/10/2026». Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": true,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 2,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "formacion-reporte",
+      "objetivoEsp": "semana-2026-10-19",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "ia-2026-10-25",
+      "titulo": "Sesión de formación en IA · 25/10/2026",
+      "objetivo": "Sesión de formación realizada.",
+      "descripcion": "Instancia de la formación en IA del 25/10/2026, pendiente de confirmación.",
+      "criterio": "Asistencia o realización confirmada.",
+      "estado": "todo",
+      "estadoPorConfirmar": true,
+      "prioridad": "",
+      "proyecto": "Gestión departamental",
+      "equipo": "Formación en IA",
+      "responsable": "",
+      "supervisor": "",
+      "solicitante": "",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "Confirmar si la sesión se realizó.",
+      "fechas": {
+        "original": "2026-10-25",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [],
+      "notas": "",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "todo",
+          "nota": "Carga inicial desde el To-do list · estado por confirmar"
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: asociada a «E · Completar la formación y el reporte semanal» › «Semana del 19/10 al 25/10/2026». Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": true,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 3,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "formacion-reporte",
+      "objetivoEsp": "semana-2026-10-19",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "ia-2026-10-26",
+      "titulo": "Sesión de formación en IA · 26/10/2026",
+      "objetivo": "Sesión de formación realizada.",
+      "descripcion": "Instancia de la formación en IA del 26/10/2026, pendiente de confirmación.",
+      "criterio": "Asistencia o realización confirmada.",
+      "estado": "todo",
+      "estadoPorConfirmar": true,
+      "prioridad": "",
+      "proyecto": "Gestión departamental",
+      "equipo": "Formación en IA",
+      "responsable": "",
+      "supervisor": "",
+      "solicitante": "",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "Confirmar si la sesión se realizó.",
+      "fechas": {
+        "original": "2026-10-26",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [],
+      "notas": "",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "todo",
+          "nota": "Carga inicial desde el To-do list · estado por confirmar"
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: asociada a «E · Completar la formación y el reporte semanal» › «Semana del 26/10 al 01/11/2026». Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": true,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 4,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "formacion-reporte",
+      "objetivoEsp": "semana-2026-10-26",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "reporte-2026-10-24",
+      "titulo": "Enviar reporte a Alberto · 24/10/2026",
+      "objetivo": "Reporte del día entregado a Alberto.",
+      "descripcion": "Instancia del reporte del 24/10/2026, pendiente de confirmación.",
+      "criterio": "Reporte enviado.",
+      "estado": "todo",
+      "estadoPorConfirmar": true,
+      "prioridad": "",
+      "proyecto": "Gestión departamental",
+      "equipo": "Reportes",
+      "responsable": "",
+      "supervisor": "",
+      "solicitante": "Alberto",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "Confirmar si el reporte se envió.",
+      "fechas": {
+        "original": "2026-10-24",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [],
+      "notas": "",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "todo",
+          "nota": "Carga inicial desde el To-do list · estado por confirmar"
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: asociada a «E · Completar la formación y el reporte semanal» › «Semana del 19/10 al 25/10/2026». Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": true,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 5,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "formacion-reporte",
+      "objetivoEsp": "semana-2026-10-19",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "reporte-2026-10-25",
+      "titulo": "Enviar reporte a Alberto · 25/10/2026",
+      "objetivo": "Reporte del día entregado a Alberto.",
+      "descripcion": "Instancia del reporte del 25/10/2026, pendiente de confirmación.",
+      "criterio": "Reporte enviado.",
+      "estado": "todo",
+      "estadoPorConfirmar": true,
+      "prioridad": "",
+      "proyecto": "Gestión departamental",
+      "equipo": "Reportes",
+      "responsable": "",
+      "supervisor": "",
+      "solicitante": "Alberto",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "Confirmar si el reporte se envió.",
+      "fechas": {
+        "original": "2026-10-25",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [],
+      "notas": "",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "todo",
+          "nota": "Carga inicial desde el To-do list · estado por confirmar"
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: asociada a «E · Completar la formación y el reporte semanal» › «Semana del 19/10 al 25/10/2026». Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": true,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 6,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "formacion-reporte",
+      "objetivoEsp": "semana-2026-10-19",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "reporte-2026-10-26",
+      "titulo": "Enviar reporte a Alberto · 26/10/2026",
+      "objetivo": "Reporte del día entregado a Alberto.",
+      "descripcion": "Instancia del reporte del 26/10/2026, pendiente de confirmación.",
+      "criterio": "Reporte enviado.",
+      "estado": "todo",
+      "estadoPorConfirmar": true,
+      "prioridad": "",
+      "proyecto": "Gestión departamental",
+      "equipo": "Reportes",
+      "responsable": "",
+      "supervisor": "",
+      "solicitante": "Alberto",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "Confirmar si el reporte se envió.",
+      "fechas": {
+        "original": "2026-10-26",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [],
+      "notas": "",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-10-26T19:57:27.629Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "todo",
+          "nota": "Carga inicial desde el To-do list · estado por confirmar"
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: asociada a «E · Completar la formación y el reporte semanal» › «Semana del 26/10 al 01/11/2026». Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": true,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 7,
+      "creada": "2026-10-26T19:57:27.629Z",
+      "macro": "formacion-reporte",
+      "objetivoEsp": "semana-2026-10-26",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "instalacion-tomacorrientes",
+      "titulo": "Instalar los tomacorrientes",
+      "objetivo": "Tomacorrientes instalados y funcionando.",
+      "descripcion": "Instalación de los tomacorrientes de las oficinas. Fase posterior al presupuesto acordado con el Sr. José (100 $ de mano de obra).",
+      "criterio": "Tomacorrientes instalados y probados.",
+      "estado": "blocked",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Oficinas",
+      "equipo": "Tomacorrientes",
+      "responsable": "Cristian",
+      "supervisor": "",
+      "solicitante": "",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "Se realizara fuera del horario de oficina el día sábado.",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "s1",
+          "texto": "Esperar a que selle el yeso",
+          "hecha": true,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s2",
+          "texto": "Instalar los tomacorrientes",
+          "hecha": true,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s3",
+          "texto": "Probar el funcionamiento",
+          "hecha": true,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s-f5d4fc43",
+          "texto": "Lijar y pintar la pared",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Prioridad por confirmar.",
+      "enlaces": [],
+      "bloqueo": {
+        "quien": "Sr. Jesus",
+        "motivo": "Se realizara fuera del horario de oficina el día sábado.",
+        "accion": "Se realizara fuera del horario de oficina el día sábado."
+      },
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-11-02T14:00:00.000Z",
+          "tipo": "carga",
+          "de": "",
+          "a": "blocked",
+          "nota": "Agregada el 02/11/2026 · bloqueo documentado: En espera de que selle el yeso para instalar los tomacorrientes."
+        },
+        {
+          "fecha": "2026-11-05T15:34:05.308Z",
+          "tipo": "edicion",
+          "de": "blocked",
+          "a": "blocked",
+          "nota": "Datos editados."
+        },
+        {
+          "fecha": "2026-11-05T15:34:09.439Z",
+          "tipo": "desbloqueo",
+          "de": "blocked",
+          "a": "doing",
+          "nota": "Desbloqueada. Motivo anterior: En espera de que selle el yeso para instalar los tomacorrientes. (dependía de Secado del yeso). Acción indicada: Verificar que el yeso esté seco y sellado, y retomar la instalación."
+        },
+        {
+          "fecha": "2026-11-05T15:34:22.813Z",
+          "tipo": "edicion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Datos editados (fechas, responsable o prioridad)."
+        },
+        {
+          "fecha": "2026-11-05T15:35:07.541Z",
+          "tipo": "bloqueo",
+          "de": "doing",
+          "a": "blocked",
+          "nota": "Bloqueada: Se realizara fuera del horario de oficina el día sábado. · depende de Sr. Jesus · para desbloquear: Se realizara fuera del horario de oficina el día sábado."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "blocked",
+          "a": "blocked",
+          "nota": "Reorganización: asociada a «C · Acondicionar y conservar las oficinas» › «Habilitar los tomacorrientes requeridos». Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [
+        "presupuesto-tomacorrientes"
+      ],
+      "orden": 2,
+      "creada": "2026-11-02T14:00:00.000Z",
+      "macro": "oficinas",
+      "objetivoEsp": "tomacorrientes",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "reparacion-canales-taller",
+      "titulo": "Reparar las canales caídas del taller",
+      "objetivo": "Canales del taller reinstaladas y funcionando, con presupuesto de materiales y mano de obra aprobado.",
+      "descripcion": "Se contactó al herrero, que pasará a revisar el estado actual de las canales y entregará un presupuesto de los materiales requeridos y del costo de mano de obra.",
+      "criterio": "",
+      "estado": "blocked",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Taller",
+      "equipo": "",
+      "responsable": "Cristian",
+      "supervisor": "",
+      "solicitante": "",
+      "dependenciaExterna": "Herrero",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "Recibir al herrero para la revisión y obtener su presupuesto.",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "s1",
+          "texto": "Contactar al herrero",
+          "hecha": true,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s2",
+          "texto": "Visita del herrero para revisar el estado actual de las canales",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s3",
+          "texto": "Recibir el presupuesto de materiales y mano de obra",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s4",
+          "texto": "Aprobar el presupuesto",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s5",
+          "texto": "Ejecutar la reparación",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s6",
+          "texto": "Verificar la instalación de las canales",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s-9e327998",
+          "texto": "Compra de materiales",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Las subtareas posteriores a la visita son una propuesta; ajústalas si el proceso es distinto.",
+      "enlaces": [],
+      "bloqueo": {
+        "quien": "Herrero",
+        "motivo": "En espera de la visita del herrero para revisar el estado actual de las canales.",
+        "accion": "Que el herrero realice la revisión y entregue el presupuesto de materiales y mano de obra."
+      },
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-11-06T16:29:37.847Z",
+          "tipo": "creada",
+          "de": "",
+          "a": "blocked",
+          "nota": "Tarjeta creada desde el archivo «actividad-reparacion-canales-taller.json»."
+        },
+        {
+          "fecha": "2026-11-06T16:31:19.584Z",
+          "tipo": "edicion",
+          "de": "blocked",
+          "a": "blocked",
+          "nota": "Datos editados (fechas, responsable o prioridad)."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "blocked",
+          "a": "blocked",
+          "nota": "Reorganización: queda «Por clasificar» (sin relación clara con un macroobjetivo). Estado sin cambios."
+        },
+        {
+          "fecha": "2026-11-12T11:51:14.936Z",
+          "tipo": "clasificacion",
+          "de": "blocked",
+          "a": "blocked",
+          "nota": "Agrupada en «D · Recuperar la operatividad de puentes y elevadores» como actividad principal. Estado sin cambios."
+        },
+        {
+          "fecha": "2026-11-12T11:51:14.936Z",
+          "tipo": "edicion",
+          "de": "blocked",
+          "a": "blocked",
+          "nota": "Datos editados."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 3,
+      "creada": "2026-11-06T16:29:37.847Z",
+      "macro": "puentes",
+      "objetivoEsp": "",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "mueble-alfombras-almacen",
+      "titulo": "Desarrollar el mueble de alfombras para el almacén",
+      "objetivo": "Mueble de alfombras fabricado e instalado en el almacén según los planos, con presupuesto de materiales y mano de obra aprobado.",
+      "descripcion": "Ya se hizo el primer contacto con el herrero (Eduard). Se le enviarán los planos y, en base a ellos, entregará un presupuesto de materiales y mano de obra.",
+      "criterio": "",
+      "estado": "doing",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Desarrollo de proyectos",
+      "equipo": "",
+      "responsable": "Cristian",
+      "supervisor": "",
+      "solicitante": "",
+      "dependenciaExterna": "Eduard (herrero)",
+      "colaboradores": "",
+      "referencias": [],
+      "proximaAccion": "Enviar los planos del mueble a Eduard.",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "s1",
+          "texto": "Primer contacto con el herrero (Eduard)",
+          "hecha": true,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s2",
+          "texto": "Enviar los planos del mueble a Eduard",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s3",
+          "texto": "Recibir el presupuesto de materiales y mano de obra",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s4",
+          "texto": "Aprobar el presupuesto",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s5",
+          "texto": "Fabricación del mueble",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "s6",
+          "texto": "Instalar el mueble en el almacén",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Las subtareas posteriores al presupuesto son una propuesta; ajústalas si el proceso es distinto.",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-11-06T18:47:49.277Z",
+          "tipo": "creada",
+          "de": "",
+          "a": "doing",
+          "nota": "Tarjeta creada desde el archivo «actividad-mueble-alfombras-almacen.json»."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Reorganización: queda «Por clasificar» (sin relación clara con un macroobjetivo). Estado sin cambios."
+        },
+        {
+          "fecha": "2026-11-12T11:51:24.118Z",
+          "tipo": "clasificacion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Agrupada en «D · Recuperar la operatividad de puentes y elevadores» como actividad principal. Estado sin cambios."
+        },
+        {
+          "fecha": "2026-11-12T11:51:24.118Z",
+          "tipo": "edicion",
+          "de": "doing",
+          "a": "doing",
+          "nota": "Datos editados."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 5,
+      "creada": "2026-11-06T18:47:49.277Z",
+      "macro": "puentes",
+      "objetivoEsp": "",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "conciliar-kits-reportados-caso-g",
+      "titulo": "Conciliar los siete kits reportados y el caso G",
+      "objetivo": "Los siete kits reportados cotejados en cantidad, composición, piezas y fotografías, con el caso G y los datos faltantes documentados.",
+      "descripcion": "Cotejar la cantidad, la composición, las piezas y las fotografías de los siete kits reportados. Documentar el caso G (averiado) y los datos que falten.",
+      "criterio": "Conciliación registrada con sus diferencias y datos faltantes. La cantidad solo se da por verificada físicamente si se constató en sitio.",
+      "estado": "todo",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Kits y equipos",
+      "equipo": "Kits reportados",
+      "responsable": "Cristian",
+      "supervisor": "",
+      "solicitante": "Alberto · reunión 11/11/2026",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [
+        "I03"
+      ],
+      "proximaAccion": "Reunir el reporte de los siete kits y sus fotografías para el cotejo.",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "2026-11-13",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "i03-a",
+          "texto": "Cotejar la cantidad reportada de kits",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i03-b",
+          "texto": "Cotejar la composición y las piezas de cada kit",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i03-c",
+          "texto": "Cotejar las fotografías de cada kit",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i03-d",
+          "texto": "Documentar el caso G (averiado)",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i03-e",
+          "texto": "Listar los datos faltantes",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i03-f",
+          "texto": "Verificar físicamente la cantidad (el reporte no basta)",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Reunión con Alberto 11/11/2026 · I03: revisión acordada el viernes 13/11/2026, sin hora definida; no es fecha de finalización. Los siete kits son una cantidad reportada, todavía no verificada físicamente. Prioridad por confirmar.",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-11-11T17:25:29.759Z",
+          "tipo": "importacion",
+          "de": "",
+          "a": "todo",
+          "nota": "Creada desde «Compromisos de la reunión con Alberto · 11/11/2026 (Infraestructura)» (actualizacion-infraestructura-reunion-2026-11-11.json)."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: queda «Por clasificar» (sin relación clara con un macroobjetivo). Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [
+        "inventario-inspeccion-kits-operativos"
+      ],
+      "orden": 9,
+      "creada": "2026-11-11T17:25:29.759Z",
+      "macro": "",
+      "objetivoEsp": "",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "inventario-inspeccion-kits-operativos",
+      "titulo": "Inventariar e inspeccionar los kits en funcionamiento",
+      "objetivo": "Kits operativos registrados e inspeccionados, con su condición, hallazgos y siguiente acción.",
+      "descripcion": "Registrar los equipos operativos e inspeccionar vástagos, guardapolvos y soportes. Para cada equipo, registrar la condición, los hallazgos y la siguiente acción.",
+      "criterio": "Todos los kits operativos identificados tienen registro de inspección con condición, hallazgos y siguiente acción.",
+      "estado": "todo",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Kits y equipos",
+      "equipo": "Kits en funcionamiento",
+      "responsable": "Cristian",
+      "supervisor": "",
+      "solicitante": "Alberto · reunión 11/11/2026",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [
+        "I04"
+      ],
+      "proximaAccion": "",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "2026-11-13",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "i04-a",
+          "texto": "Registrar los equipos operativos",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i04-b",
+          "texto": "Inspeccionar los vástagos",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i04-c",
+          "texto": "Inspeccionar los guardapolvos",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i04-d",
+          "texto": "Inspeccionar los soportes",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i04-e",
+          "texto": "Registrar condición, hallazgos y siguiente acción de cada equipo",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Reunión con Alberto 11/11/2026 · I04: revisión acordada el viernes 13/11/2026, sin hora definida; no es fecha de finalización. Prioridad por confirmar.",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-11-11T17:25:29.759Z",
+          "tipo": "importacion",
+          "de": "",
+          "a": "todo",
+          "nota": "Creada desde «Compromisos de la reunión con Alberto · 11/11/2026 (Infraestructura)» (actualizacion-infraestructura-reunion-2026-11-11.json)."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: queda «Por clasificar» (sin relación clara con un macroobjetivo). Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [
+        "ficha-fallas-mantenimiento",
+        "conciliar-kits-reportados-caso-g"
+      ],
+      "orden": 10,
+      "creada": "2026-11-11T17:25:29.759Z",
+      "macro": "",
+      "objetivoEsp": "",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "historico-equipos-vendidos",
+      "titulo": "Cargar el histórico inicial de equipos vendidos",
+      "objetivo": "Primera versión del histórico de equipos vendidos con equipos, clientes y talleres, y sus datos faltantes y procedencia identificados.",
+      "descripcion": "Preparar una primera versión del histórico de equipos vendidos (equipos, clientes y talleres). Identificar los datos que faltan y de dónde procede cada dato.",
+      "criterio": "Primera versión cargada con la procedencia de los datos y la lista de faltantes.",
+      "estado": "todo",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Kits y equipos",
+      "equipo": "Equipos vendidos",
+      "responsable": "Cristian",
+      "supervisor": "",
+      "solicitante": "Alberto · reunión 11/11/2026",
+      "dependenciaExterna": "",
+      "colaboradores": "",
+      "referencias": [
+        "I05"
+      ],
+      "proximaAccion": "",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "2026-11-13",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "i05-a",
+          "texto": "Cargar la primera versión: equipos, clientes y talleres",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i05-b",
+          "texto": "Identificar los datos faltantes",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i05-c",
+          "texto": "Registrar la procedencia de cada dato",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Reunión con Alberto 11/11/2026 · I05: revisión acordada el viernes 13/11/2026, sin hora definida; no es fecha de finalización. Prioridad por confirmar. Dónde se registra el histórico (por ejemplo, el módulo «Máquinas de simulación») está por confirmar.",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-11-11T17:25:29.759Z",
+          "tipo": "importacion",
+          "de": "",
+          "a": "todo",
+          "nota": "Creada desde «Compromisos de la reunión con Alberto · 11/11/2026 (Infraestructura)» (actualizacion-infraestructura-reunion-2026-11-11.json)."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: queda «Por clasificar» (sin relación clara con un macroobjetivo). Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 11,
+      "creada": "2026-11-11T17:25:29.759Z",
+      "macro": "",
+      "objetivoEsp": "",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "conciliar-repuestos-soportes-odoo",
+      "titulo": "Conciliar los repuestos y soportes con almacén y Odoo",
+      "objetivo": "Registros y existencias de repuestos y soportes comparados entre almacén y Odoo, con las diferencias y validaciones pendientes documentadas.",
+      "descripcion": "Comparar los registros y las existencias de repuestos y soportes entre almacén y Odoo. Documentar las diferencias y las validaciones pendientes.",
+      "criterio": "Comparación registrada con sus diferencias y validaciones pendientes.",
+      "estado": "todo",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Kits y equipos",
+      "equipo": "Repuestos y soportes",
+      "responsable": "Cristian",
+      "supervisor": "",
+      "solicitante": "Alberto · reunión 11/11/2026",
+      "dependenciaExterna": "Acceso corporativo a Supabase/Odoo (I13 · responsable por definir)",
+      "colaboradores": "",
+      "referencias": [
+        "I06",
+        "I13"
+      ],
+      "proximaAccion": "",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "2026-11-13",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "i06-a",
+          "texto": "Comparar los registros de almacén y de Odoo",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i06-b",
+          "texto": "Comparar las existencias",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i06-c",
+          "texto": "Documentar las diferencias",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i06-d",
+          "texto": "Listar las validaciones pendientes",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Reunión con Alberto 11/11/2026 · I06: revisión acordada el viernes 13/11/2026, sin hora definida; no es fecha de finalización. Prioridad por confirmar. I13: el acceso corporativo a Supabase/Odoo sigue sin responsable definido; se registra como dependencia, no como bloqueo.",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-11-11T17:25:29.759Z",
+          "tipo": "importacion",
+          "de": "",
+          "a": "todo",
+          "nota": "Creada desde «Compromisos de la reunión con Alberto · 11/11/2026 (Infraestructura)» (actualizacion-infraestructura-reunion-2026-11-11.json)."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: queda «Por clasificar» (sin relación clara con un macroobjetivo). Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [
+        "validar-modelos-kits-odoo"
+      ],
+      "orden": 12,
+      "creada": "2026-11-11T17:25:29.759Z",
+      "macro": "",
+      "objetivoEsp": "",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "levantamiento-prueba-termica-local",
+      "titulo": "Preparar el levantamiento y la prueba térmica del local",
+      "objetivo": "Medidas de techo y rampa levantadas y prueba térmica preparada antes de aplicar recubrimientos.",
+      "descripcion": "Reunión 11/11/2026 (I11): coordinar con Giovanni el levantamiento de medidas de techo y rampa y preparar la prueba térmica del local antes de aplicar recubrimientos.",
+      "criterio": "Medidas registradas y prueba térmica definida antes de aplicar recubrimientos.",
+      "estado": "todo",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Oficinas",
+      "equipo": "Local (techo y rampa)",
+      "responsable": "Cristian",
+      "supervisor": "",
+      "solicitante": "Alberto · reunión 11/11/2026",
+      "dependenciaExterna": "",
+      "colaboradores": "Giovanni",
+      "referencias": [
+        "I11"
+      ],
+      "proximaAccion": "",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "2026-11-13",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "i11-a",
+          "texto": "I11 · Coordinar el levantamiento con Giovanni",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i11-b",
+          "texto": "I11 · Levantar las medidas del techo",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i11-c",
+          "texto": "I11 · Levantar las medidas de la rampa",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i11-d",
+          "texto": "I11 · Preparar la prueba térmica antes de aplicar recubrimientos",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Reunión con Alberto 11/11/2026 · I11: revisión acordada el viernes 13/11/2026, sin hora definida; no es fecha de finalización. Prioridad por confirmar. Forma parte del encargo de termodinámica del local; es distinto de la optimización térmica de los nodos (Kanban de Neotropya, M06).",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-11-11T17:25:29.759Z",
+          "tipo": "importacion",
+          "de": "",
+          "a": "todo",
+          "nota": "Creada desde «Compromisos de la reunión con Alberto · 11/11/2026 (Infraestructura)» (actualizacion-infraestructura-reunion-2026-11-11.json)."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: queda «Por clasificar» (sin relación clara con un macroobjetivo). Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 13,
+      "creada": "2026-11-11T17:25:29.759Z",
+      "macro": "",
+      "objetivoEsp": "",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "demo-revision-tecnica-app",
+      "titulo": "Preparar la demostración y la revisión técnica de la aplicación",
+      "objetivo": "Demostración de la versión local y de Vercel preparada, con las imágenes corregidas y el apoyo técnico de 30 minutos acordado.",
+      "descripcion": "Demostrar la versión local y la publicada en Vercel, corregir las imágenes y acordar un apoyo técnico de 30 minutos.",
+      "criterio": "Demostración presentada, imágenes corregidas y apoyo técnico acordado con fecha.",
+      "estado": "todo",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Desarrollo de proyectos",
+      "equipo": "Dashboard (aplicación web)",
+      "responsable": "Cristian",
+      "supervisor": "",
+      "solicitante": "Alberto · reunión 11/11/2026",
+      "dependenciaExterna": "Responsable técnico del despliegue y acceso a Supabase/Odoo (I13 · por definir)",
+      "colaboradores": "",
+      "referencias": [
+        "I12",
+        "I13"
+      ],
+      "proximaAccion": "",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "2026-11-13",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "i12-a",
+          "texto": "Preparar la demostración de la versión local y de Vercel",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i12-b",
+          "texto": "Corregir las imágenes",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i12-c",
+          "texto": "Acordar el apoyo técnico de 30 minutos",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Reunión con Alberto 11/11/2026 · I12: revisión acordada el viernes 13/11/2026, sin hora definida; no es fecha de finalización. Prioridad por confirmar. El apoyo técnico de 30 minutos está por acordar; todavía no se ha realizado. I13: el responsable técnico del despliegue y el acceso corporativo a Supabase/Odoo siguen sin definir; se registra como dependencia, no como bloqueo.",
+      "enlaces": [
+        "https://departamento-ensamblaje.vercel.app/"
+      ],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-11-11T17:25:29.759Z",
+          "tipo": "importacion",
+          "de": "",
+          "a": "todo",
+          "nota": "Creada desde «Compromisos de la reunión con Alberto · 11/11/2026 (Infraestructura)» (actualizacion-infraestructura-reunion-2026-11-11.json)."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: queda «Por clasificar» (sin relación clara con un macroobjetivo). Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [
+        "dashboard-mantenimiento"
+      ],
+      "orden": 14,
+      "creada": "2026-11-11T17:25:29.759Z",
+      "macro": "",
+      "objetivoEsp": "",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "validar-modelos-kits-odoo",
+      "titulo": "Validar los modelos de kits y los códigos de Odoo",
+      "objetivo": "Modelo de cada kit y su correspondencia de códigos en Odoo confirmados antes de consolidar el catálogo.",
+      "descripcion": "Trabajar con Gerardo para confirmar el modelo de cada kit y la correspondencia de sus códigos en Odoo antes de consolidar el catálogo.",
+      "criterio": "Modelos y códigos confirmados y discrepancias registradas antes de consolidar el catálogo.",
+      "estado": "todo",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Kits y equipos",
+      "equipo": "Catálogo de kits",
+      "responsable": "Cristian",
+      "supervisor": "",
+      "solicitante": "Alberto · reunión 11/11/2026",
+      "dependenciaExterna": "Acceso corporativo a Supabase/Odoo (I13 · responsable por definir)",
+      "colaboradores": "Gerardo",
+      "referencias": [
+        "I02",
+        "I13"
+      ],
+      "proximaAccion": "",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "Esta semana (9–15/11/2026), sin día fijado",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "i02-a",
+          "texto": "Confirmar con Gerardo el modelo de cada kit",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i02-b",
+          "texto": "Confirmar la correspondencia de códigos en Odoo",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i02-c",
+          "texto": "Registrar las discrepancias antes de consolidar el catálogo",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Reunión con Alberto 11/11/2026 · I02: encargo para esta semana (9–15/11/2026), sin día de entrega fijado. Prioridad por confirmar. I13: el acceso corporativo a Supabase/Odoo sigue sin responsable definido; se registra como dependencia, no como bloqueo.",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-11-11T17:25:29.759Z",
+          "tipo": "importacion",
+          "de": "",
+          "a": "todo",
+          "nota": "Creada desde «Compromisos de la reunión con Alberto · 11/11/2026 (Infraestructura)» (actualizacion-infraestructura-reunion-2026-11-11.json)."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: queda «Por clasificar» (sin relación clara con un macroobjetivo). Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [
+        "identificacion-fisica-equipos-soportes",
+        "conciliar-repuestos-soportes-odoo"
+      ],
+      "orden": 15,
+      "creada": "2026-11-11T17:25:29.759Z",
+      "macro": "",
+      "objetivoEsp": "",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "ficha-fallas-mantenimiento",
+      "titulo": "Definir la ficha de fallas y mantenimiento",
+      "objetivo": "Ficha definida para registrar las fallas y el historial de intervenciones de cada equipo.",
+      "descripcion": "Trabajar con Fabricio para establecer el registro de fallas y el historial de intervenciones.",
+      "criterio": "Ficha de fallas e historial de intervenciones definida y revisada con Fabricio.",
+      "estado": "todo",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Mantenimiento",
+      "equipo": "Ficha de fallas",
+      "responsable": "Cristian",
+      "supervisor": "",
+      "solicitante": "Alberto · reunión 11/11/2026",
+      "dependenciaExterna": "",
+      "colaboradores": "Fabricio",
+      "referencias": [
+        "I08"
+      ],
+      "proximaAccion": "",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "Esta semana (9–15/11/2026), sin día fijado",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "i08-a",
+          "texto": "Definir los campos del registro de fallas",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i08-b",
+          "texto": "Definir el historial de intervenciones",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i08-c",
+          "texto": "Revisar la ficha con Fabricio",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Reunión con Alberto 11/11/2026 · I08: encargo para esta semana (9–15/11/2026), sin día de entrega fijado. Prioridad por confirmar.",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-11-11T17:25:29.759Z",
+          "tipo": "importacion",
+          "de": "",
+          "a": "todo",
+          "nota": "Creada desde «Compromisos de la reunión con Alberto · 11/11/2026 (Infraestructura)» (actualizacion-infraestructura-reunion-2026-11-11.json)."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: asociada a «A · Gestionar los activos y su mantenimiento» › «Implementar su seguimiento digital». Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [
+        "dashboard-mantenimiento",
+        "inventario-inspeccion-kits-operativos"
+      ],
+      "orden": 16,
+      "creada": "2026-11-11T17:25:29.759Z",
+      "macro": "activos",
+      "objetivoEsp": "seguimiento-digital",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "identificacion-fisica-equipos-soportes",
+      "titulo": "Identificar y etiquetar físicamente los equipos y soportes",
+      "objetivo": "Equipos y soportes identificados y etiquetados, con la identificación física validada antes de aprobar una nomenclatura.",
+      "descripcion": "Coordinar con Gerardo y Fabricio la identificación física de equipos y soportes. La nomenclatura se aprueba solo después de validar esa identificación.",
+      "criterio": "Identificación física validada y etiquetas colocadas según la nomenclatura aprobada.",
+      "estado": "todo",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Kits y equipos",
+      "equipo": "Equipos y soportes",
+      "responsable": "Cristian",
+      "supervisor": "",
+      "solicitante": "Alberto · reunión 11/11/2026",
+      "dependenciaExterna": "",
+      "colaboradores": "Gerardo, Fabricio",
+      "referencias": [
+        "I07"
+      ],
+      "proximaAccion": "",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "i07-a",
+          "texto": "Coordinar con Gerardo y Fabricio",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i07-b",
+          "texto": "Validar la identificación física de equipos y soportes",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i07-c",
+          "texto": "Proponer la nomenclatura después de la validación",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i07-d",
+          "texto": "Etiquetar equipos y soportes",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Reunión con Alberto 11/11/2026 · I07: sin fecha acordada. Prioridad por confirmar.",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-11-11T17:25:29.759Z",
+          "tipo": "importacion",
+          "de": "",
+          "a": "todo",
+          "nota": "Creada desde «Compromisos de la reunión con Alberto · 11/11/2026 (Infraestructura)» (actualizacion-infraestructura-reunion-2026-11-11.json)."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: queda «Por clasificar» (sin relación clara con un macroobjetivo). Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [
+        "validar-modelos-kits-odoo"
+      ],
+      "orden": 17,
+      "creada": "2026-11-11T17:25:29.759Z",
+      "macro": "",
+      "objetivoEsp": "",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    },
+    {
+      "id": "barras-verdes-plan-pruebas",
+      "titulo": "Revisar las barras verdes y el plan de pruebas",
+      "objetivo": "Resultados de la revisión de las barras verdes registrados y propuesta de pruebas preparada.",
+      "descripcion": "Coordinar con Pablo la revisión de las barras verdes, registrar sus resultados y preparar la propuesta de pruebas.",
+      "criterio": "Resultados registrados y propuesta de pruebas presentada.",
+      "estado": "todo",
+      "estadoPorConfirmar": false,
+      "prioridad": "",
+      "proyecto": "Kits y equipos",
+      "equipo": "Barras verdes",
+      "responsable": "Cristian",
+      "supervisor": "",
+      "solicitante": "Alberto · reunión 11/11/2026",
+      "dependenciaExterna": "",
+      "colaboradores": "Pablo",
+      "referencias": [
+        "I10"
+      ],
+      "proximaAccion": "",
+      "fechas": {
+        "original": "",
+        "reprogramada": "",
+        "revision": "",
+        "plazo": "",
+        "condicionadas": []
+      },
+      "subtareas": [
+        {
+          "id": "i10-a",
+          "texto": "Coordinar la revisión con Pablo",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i10-b",
+          "texto": "Registrar los resultados de la revisión",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        },
+        {
+          "id": "i10-c",
+          "texto": "Preparar la propuesta de pruebas",
+          "hecha": false,
+          "fase": "",
+          "equivale": ""
+        }
+      ],
+      "notas": "Reunión con Alberto 11/11/2026 · I10: sin fecha acordada. Prioridad por confirmar.",
+      "enlaces": [],
+      "bloqueo": null,
+      "testing": null,
+      "cierre": null,
+      "historial": [
+        {
+          "fecha": "2026-11-11T17:25:29.759Z",
+          "tipo": "importacion",
+          "de": "",
+          "a": "todo",
+          "nota": "Creada desde «Compromisos de la reunión con Alberto · 11/11/2026 (Infraestructura)» (actualizacion-infraestructura-reunion-2026-11-11.json)."
+        },
+        {
+          "fecha": "2026-11-12T11:49:39.696Z",
+          "tipo": "clasificacion",
+          "de": "todo",
+          "a": "todo",
+          "nota": "Reorganización: queda «Por clasificar» (sin relación clara con un macroobjetivo). Estado sin cambios."
+        }
+      ],
+      "hito": false,
+      "transversal": false,
+      "archivada": false,
+      "vinculadas": [],
+      "orden": 18,
+      "creada": "2026-11-11T17:25:29.759Z",
+      "macro": "",
+      "objetivoEsp": "",
+      "clasificada": true,
+      "alias": [],
+      "enlace": null
+    }
+  ]
+}

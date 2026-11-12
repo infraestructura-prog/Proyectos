@@ -1,0 +1,47 @@
+/* ░░ CONFIGURACIÓN PÚBLICA ░░
+   Aquí NO van credenciales. Las claves de Google y de sesión viven en variables de entorno de Vercel. */
+
+export const NODOS = {
+  // ID de la hoja de órdenes de fabricación (la parte larga de la URL entre /d/ y /edit).
+  SHEET_ID: '1gUmMYnHK7pCtPe_8Bpgwe_0gExBIFV9LLYFzjJq5KTA',
+  // Nombre de la pestaña ('' = la primera).
+  SHEET_TAB: '',
+  // Opcional: enlace «Publicar en la web → CSV»; si se rellena, tiene prioridad.
+  CSV_URL_OVERRIDE: '',
+  // Refresco automático en segundos (0 = desactivado).
+  AUTO_REFRESH_SECONDS: 120,
+  // Permite activar manualmente los datos de demostración cuando falla la conexión.
+  ALLOW_DEMO: true
+};
+
+/* Neotropya › Nodos › Inventarios › Consumibles (solo lectura: Google Sheets → página). */
+export const CONSUMIBLES = {
+  SHEET_ID: '1Qq5_DlFSfhkTyhiV1x8vezPV1ZYFuQlK1ewiB_5zI9A',
+  TAB: 'Inventario Ensamblaje',
+  // gid de la pestaña: permite la exportación CSV que conserva el texto de cada celda (errores incluidos).
+  // Si la pestaña se recrea y cambia su gid, la página usa la lectura por nombre de pestaña como respaldo.
+  GID: '37652809',
+  REFRESH_SECONDS: 120,
+  SHEET_URL: 'https://docs.google.com/spreadsheets/d/1Qq5_DlFSfhkTyhiV1x8vezPV1ZYFuQlK1ewiB_5zI9A/edit#gid=37652809'
+};
+
+export const MAQUINAS = {
+  // Hoja «Máquinas de Simulación · Ensamblaje CCS» (Drive de infraestructura@suspensionesccs.com).
+  // Compartida como «Cualquier persona con el enlace · Lector», la página la lee directamente (como Nodos).
+  SPREADSHEET_ID: '1oxlXnTYC5uGsPfzo2-rDTG-YrFskh9KE1Z2KxZQ8Elo',
+  SHEET_URL: 'https://docs.google.com/spreadsheets/d/1oxlXnTYC5uGsPfzo2-rDTG-YrFskh9KE1Z2KxZQ8Elo/edit',
+  // Pestañas donde buscar las máquinas ('' = la primera pestaña). Se usa la primera que tenga
+  // las columnas Codificación y Condición.
+  MACHINES_TABS: [''],
+  // URL de la «Aplicación web» del Apps Script de edición (apps-script/Code.gs), termina en /exec.
+  // Vacía = la página solo muestra; las máquinas se editan en Google Sheets.
+  // No es secreta: sin la clave de edición el script no modifica nada.
+  // Implementada con acceso «Cualquier usuario con una cuenta de Google»: para guardar hay que tener
+  // una sesión de Google abierta en el navegador.
+  // Prototipo de Infraestructura: SOLO LECTURA. Sin URL de edición, el módulo no ofrece editar ni agregar.
+  EDIT_URL: '',
+  // Tabla original de codificación (solo consulta, pestaña «Referencia del archivo»).
+  REFERENCE_SPREADSHEET_ID: '1PuXWlmC_ZQOBHYAk-OT1Z73gAqF8FtGctp-CYoqPsDk',
+  REFERENCE_URL: 'https://docs.google.com/spreadsheets/d/1PuXWlmC_ZQOBHYAk-OT1Z73gAqF8FtGctp-CYoqPsDk/edit',
+  SOURCE_TAB: 'Hoja 1'
+};

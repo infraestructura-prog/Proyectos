@@ -82,7 +82,7 @@ export function sidebarHtml(S, macros, ctx) {
       </button>
       <ul id="sb-areas" class="sb-areas" ${abierto ? '' : 'hidden'}>
         <li><span class="sb-area is-actual" aria-current="true">${ICON.target}<span><b>${esc(DIVISION.nombre)}</b><small>Área actual</small></span><span class="sb-check" aria-hidden="true">✓</span></span></li>
-        <li><a class="sb-area" href="/#/infraestructura">${ICON.llave}<span><b>Infraestructura</b><small>Taller, maquinaria y oficinas</small></span></a></li>
+        <li><a class="sb-area" href="/infraestructura/">${ICON.llave}<span><b>Infraestructura</b><small>Taller, maquinaria y oficinas</small></span></a></li>
         <li class="sb-area-sep" aria-hidden="true"></li>
         <li><a class="sb-area sb-area-ini" href="/">${ICON.casa}<span>Inicio del departamento</span></a></li>
       </ul>

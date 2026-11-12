@@ -100,7 +100,7 @@ function renderAreaSwitch(chain) {
   const active = chain[1] && chain[1].id;
   document.getElementById('area-switch').innerHTML =
     `<a href="#/" ${!active ? 'aria-current="true"' : ''}>Inicio</a>` +
-    TREE.children.map(a => `<a href="${a.id === 'neotropya' ? '/manufactura/' : '#/' + a.id}" ${a.id === active ? 'aria-current="true"' : ''}>${esc(a.title)}</a>`).join('');
+    TREE.children.map(a => `<a href="${PAGINA_AREA[a.id] || '#/' + a.id}" ${a.id === active ? 'aria-current="true"' : ''}>${esc(a.title)}</a>`).join('');
 }
 
 const card = (n, href, cls = '') => {
@@ -132,7 +132,7 @@ function renderHome() {
       ${TREE.children.map(a => {
         const c = HOME_CARDS[a.id];
         if (!c) return card(a, '#/' + a.id);
-        return `<a class="area-card home-card ${c.cls}" href="${a.id === 'neotropya' ? '/manufactura/' : '#/' + a.id}">
+        return `<a class="area-card home-card ${c.cls}" href="${PAGINA_AREA[a.id] || '#/' + a.id}">
           <span class="home-art" aria-hidden="true">${c.art()}</span>
           <span class="home-tag ${c.tagCls}">${esc(c.tag)}</span>
           <h2>${esc(a.title)}</h2>
@@ -177,8 +177,21 @@ function rutaNeotropya(seg) {
   return '/manufactura/' + (m ? '#/' + m[1] : '');
 }
 
+/* Infraestructura ahora es su propio dashboard (/infraestructura/): toda ruta antigua de Infraestructura lleva a su
+   equivalente allí, también los enlaces guardados. El Kanban anterior ya no se muestra desde este sitio
+   (sus datos guardados en el navegador no se borran; la migración usa la exportación del 12/11/2026). */
+function rutaInfraestructura(seg) {
+  const r = seg.slice(1);
+  if (r[0] === 'maquinas') return '/infraestructura/#/maquinas' + (r[1] ? '/' + encodeURIComponent(r[1]) : '');
+  if (r[0] === 'kanban') return '/infraestructura/#/kanban';
+  return '/infraestructura/';
+}
+/* Áreas que son páginas aparte: el selector de área y las tarjetas del inicio van directo a ellas. */
+const PAGINA_AREA = { neotropya: '/manufactura/', infraestructura: '/infraestructura/' };
+
 async function route() {
-  { const seg = segmentsOf(); if (seg[0] === 'neotropya') { location.replace(rutaNeotropya(seg)); return; } }
+  { const seg = segmentsOf(); if (seg[0] === 'neotropya') { location.replace(rutaNeotropya(seg)); return; }
+    if (seg[0] === 'infraestructura') { location.replace(rutaInfraestructura(seg)); return; } }
   const token = ++routeToken;
   closeAllModals();
   if (cleanup) { try { cleanup(); } catch (e) { console.error(e); } cleanup = null; }

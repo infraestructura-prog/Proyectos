@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Módulo · Infraestructura</title>
+<!-- Anfitrión de los módulos traídos del dashboard publicado (Máquinas de simulación).
+     Se muestra dentro de la página principal en un marco, con los estilos originales del sitio (app.css + infra-sitio.css),
+     para que no se mezclen con los del prototipo. Copia en SOLO LECTURA: sin URL de edición (assets/js/config.js). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
+<link rel="stylesheet" href="assets/css/infra-sitio.css">
+<style>
+  .page { max-width: none; padding: 16px clamp(12px, 3vw, 28px) 32px; margin: 0; }
+  /* La sidebar del prototipo ya permite volver: sin botones «Volver a Infraestructura» del sitio. */
+  a.btn[href="#/infraestructura"] { display: none !important; }
+  /* Solo lectura: sin «Agregar» ni «Editar» (la consulta y «Abrir en Google Sheets» se mantienen). */
+  [data-add], [data-act="enable"], [data-act="add"], [data-act="edit"], [data-act="add-half"], [data-act="sell-pair"] { display: none !important; }
+</style>
+</head>
+<body data-area="infraestructura">
+<div class="grid-bg" aria-hidden="true"></div>
+<main id="main" class="page" tabindex="-1"></main>
+<div id="modal-root"></div>
+<div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
+<script type="module" src="assets/js/embebido.js"></script>
+</body>
+</html>

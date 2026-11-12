@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Objetivos · Infraestructura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/infra.css">
+</head>
+<body>
+<a class="skip" href="#contenido">Saltar al contenido</a>
+<div class="app">
+  <aside id="sidebar" class="sb" aria-label="Navegación de Infraestructura"></aside>
+  <div id="sb-overlay" class="sb-overlay" hidden></div>
+  <div class="main-col" id="main-col">
+    <header class="topbar">
+      <button type="button" id="menu-btn" class="icon-btn menu-btn" aria-controls="sidebar" aria-expanded="false" aria-label="Abrir menú">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+      <div class="search" role="search">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <label class="sr-only" for="q">Buscar macroobjetivos, proyectos o actividades</label>
+        <input id="q" type="search" autocomplete="off" placeholder="Buscar macroobjetivos, proyectos o actividades…"
+          role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="sr-list">
+        <ul id="sr-list" class="sr-list" role="listbox" aria-label="Resultados de búsqueda" hidden></ul>
+      </div>
+      <span class="proto-badge" title="Nueva versión del dashboard de Infraestructura">Beta</span>
+    </header>
+    <main id="contenido" class="contenido" tabindex="-1"></main>
+  </div>
+</div>
+<dialog id="dlg" class="dlg" aria-labelledby="dlg-titulo"></dialog>
+<dialog id="dlg2" class="dlg dlg-sm" aria-labelledby="dlg2-titulo"></dialog>
+<dialog id="panel" class="dlg dlg-panel" aria-labelledby="pn-titulo"></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
