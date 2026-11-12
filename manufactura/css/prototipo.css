@@ -17,6 +17,8 @@ html { scroll-padding-top: 84px; }
 body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 16px; line-height: 1.5; }
 h1, h2, h3, h4, p { margin: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
+/* El atributo «hidden» siempre oculta (algunos componentes definen su propio display, p. ej. las listas de la sidebar). */
+[hidden] { display: none !important; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 :focus-visible { outline: 3px solid var(--forest); outline-offset: 2px; }
 .skip { position: absolute; left: 12px; top: -60px; z-index: 100; background: var(--forest); color: #fff; padding: 8px 14px; border-radius: var(--r-xs); }

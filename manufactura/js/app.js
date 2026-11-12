@@ -72,12 +72,12 @@ function render({ foco } = {}) {
     p = proyectoPorSlug(r.slug);
     // Un proyecto se abre por /proyectos y una investigación por /investigaciones; las investigaciones no tienen Kanban.
     if (p && (p.tipo === 'investigacion') !== (r.seccion === 'investigaciones')) { location.replace(rutaProyecto(p, r.pagina, r.desde)); return; }
-    if (p) { S.sbSec[r.seccion] = true; if (p.tipo === 'investigacion' && r.pagina === 'kanban') r.pagina = 'inicio'; if (r.desde && !p.objetivos.includes(r.desde)) r.desde = ''; }
+    if (p) { if (p.tipo === 'investigacion' && r.pagina === 'kanban') r.pagina = 'inicio'; if (r.desde && !p.objetivos.includes(r.desde)) r.desde = ''; }
   }
   // Segunda etapa: portada de sección o módulo integrado (Nodos Venezuela, Inventarios, Presupuestos).
   const sec = (r.vista === 'seccion' || r.vista === 'modulo') ? SECCIONES.find(s => s.id === r.seccion) : null;
   const hijo = sec && r.vista === 'modulo' ? sec.hijos.find(h => h.id === r.hijo) : null;
-  if (sec) S.sbSec[sec.id] = true;
+  // (la sección actual se despliega al llegar a la página, en alCambiarRuta; después se puede plegar)
   $('#sidebar').innerHTML = C.sidebarHtml(S, MACROOBJETIVOS, ctx);
   const cont = $('#contenido');
   cont.classList.toggle('es-modulo', !!hijo);
@@ -112,6 +112,8 @@ function alCambiarRuta() {
   if (dlg.open) { dlgRetorno = null; dlg.close(); }
   if (panel.open) panel.close();
   const r = leerRuta();
+  // Al llegar a un proyecto, investigación o módulo, su sección de la sidebar se despliega (luego se puede plegar).
+  if (r.seccion) S.sbSec[r.seccion] = true;
   render({ foco: null });
   if (r.vista === 'objetivos' && (r.macro || r.objetivo)) {
     history.replaceState(null, '', '#/objetivos');
