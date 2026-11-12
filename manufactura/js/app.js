@@ -91,7 +91,7 @@ function render({ foco } = {}) {
   if (sec && r.vista === 'seccion') html = C.seccionHtml(sec);
   else if (r.vista === 'modulo') html = `${C.migasHtml([{ t: DIVISION.nombre }, { t: sec ? sec.titulo : 'Sección' }, { t: 'No encontrado' }])}<header class="pg-head"><h1 id="pg-titulo" tabindex="-1">Módulo no encontrado</h1></header>`;
   else if (r.vista === 'objetivos') html = C.encabezadoHtml(S, MACROOBJETIVOS, OBJETIVOS) + `<ol class="mo-list vista-${S.vista}" aria-label="Macroobjetivos">${MACROOBJETIVOS.map(m => C.macroHtml(m, S, ctx)).join('')}</ol>`;
-  else if (r.vista === 'kanban') html = KM.tableroHtml(ctx, tablero());
+  else if (r.vista === 'kanban') html = KM.tableroHtml(ctx, tablero(), !!leerLegado());
   else if (r.vista === 'proyectos') html = P.listaHtml(ctx, 'proyecto');
   else if (r.vista === 'investigaciones') html = P.listaHtml(ctx, 'investigacion');
   else if (!p) html = `${C.migasHtml([{ t: DIVISION.nombre }, { t: 'Proyectos', href: '#/proyectos' }, { t: 'No encontrado' }])}<header class="pg-head"><h1 id="pg-titulo" tabindex="-1">Proyecto no encontrado</h1><p class="pg-intro"><a href="#/proyectos">Volver a Proyectos</a></p></header>`;
@@ -317,6 +317,7 @@ document.addEventListener('click', e => {
     case 'contraer': S.abiertos.clear(); render(); toast('Macroobjetivos contraídos.'); break;
     case 'vista': S.vista = b.dataset.vista; render(); break;
     case 'toggle-indice': S.indice = !S.indice; render(); break;
+    case 'respaldo-legado': descargarLegado(); break;
     case 'abrir-mk': abrirPanel(b.dataset.mk); break;
     case 'editar-mk': formMacro(b.dataset.mk); break;
     case 'toggle-seccion': S.sbSec[b.dataset.sec] = S.sbSec[b.dataset.sec] === false; render(); break;
@@ -406,6 +407,17 @@ menuBtn.addEventListener('click', () => (document.body.classList.contains('menu-
 overlay.addEventListener('click', () => cerrarMenu());
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('menu-open') && !dlg.open && !dlg2.open) cerrarMenu(); });
 window.matchMedia('(max-width: 900px)').addEventListener('change', () => { if (!esMovil()) cerrarMenu(false); });
+
+/* Datos del Kanban anterior de Neotropya (clave del dashboard previo, mismo sitio). Solo se leen para descargarlos. */
+const CLAVE_LEGADO = 'ccs-neotropya-kanban-v1';
+function leerLegado() { try { return localStorage.getItem(CLAVE_LEGADO); } catch { return null; } }
+function descargarLegado() {
+  const raw = leerLegado(); if (!raw) { toast('No hay datos del Kanban anterior en este navegador.'); return; }
+  const url = URL.createObjectURL(new Blob([raw], { type: 'application/json' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: `kanban-neotropya-anterior-${new Date().toISOString().slice(0, 10)}.json` });
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+  toast('Respaldo del Kanban anterior descargado.');
+}
 
 /* ── Kanban general: una tarjeta por macroobjetivo ── */
 let tableroMem = null;

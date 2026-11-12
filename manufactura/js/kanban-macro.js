@@ -57,10 +57,13 @@ function tarjetaHtml(m, k, ctx) {
     <select id="mk-st-${m.id}" class="tk-state" data-act="estado-mk" data-mk="${m.id}">${COLUMNAS.map(c => `<option value="${c.id}" ${c.id === k.estado ? 'selected' : ''}>${esc(c.titulo)}</option>`).join('')}</select>
   </li>`;
 }
-export function tableroHtml(ctx, tablero) {
+/* legado: el navegador conserva datos del Kanban anterior de Neotropya (pendientes de migrar): se ofrece descargarlos. */
+export function tableroHtml(ctx, tablero, legado = false) {
   return `${migasHtml([{ t: DIVISION.nombre }, { t: 'Kanban' }])}
     <header class="pg-head"><p class="pg-kicker">${esc(DIVISION.nombre)}</p><h1 id="pg-titulo" tabindex="-1">Kanban</h1>
       <p class="pg-intro">Un macroobjetivo por tarjeta. Haz clic en una tarjeta para ver sus objetivos asociados e ir a su desarrollo; edítala con ${ICON.edit}.</p></header>
+    ${legado ? `<div class="aviso cond kb-legado"><div><b>Este navegador tiene datos del Kanban anterior de Neotropya.</b> Aún no se han migrado al nuevo: descarga un respaldo antes de limpiar el navegador.</div>
+      <button type="button" class="btn btn-sm" data-act="respaldo-legado">Descargar respaldo</button></div>` : ''}
     <div class="kb">${COLUMNAS.map(c => {
       const ms = ctx.macros.filter(m => tablero[m.id].estado === c.id).sort((a, b) => tablero[a.id].orden - tablero[b.id].orden);
       return `<section class="kb-col c-${c.id}" aria-labelledby="kb-h-${c.id}">

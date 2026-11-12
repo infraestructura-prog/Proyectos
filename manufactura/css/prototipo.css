@@ -451,3 +451,4 @@ a.tag { display: inline-flex; align-items: center; text-decoration: none; }
 .link-sec { color: var(--forest); font-weight: 800; display: inline-flex; align-items: center; gap: 4px; text-underline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { .dlg-panel[open] { animation: none; } }
 .sb-foot .sb-volver { color: var(--forest); text-decoration: none; justify-self: start; }
+.kb-legado { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }

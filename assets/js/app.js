@@ -100,7 +100,7 @@ function renderAreaSwitch(chain) {
   const active = chain[1] && chain[1].id;
   document.getElementById('area-switch').innerHTML =
     `<a href="#/" ${!active ? 'aria-current="true"' : ''}>Inicio</a>` +
-    TREE.children.map(a => `<a href="#/${a.id}" ${a.id === active ? 'aria-current="true"' : ''}>${esc(a.title)}</a>`).join('');
+    TREE.children.map(a => `<a href="${a.id === 'neotropya' ? '/manufactura/' : '#/' + a.id}" ${a.id === active ? 'aria-current="true"' : ''}>${esc(a.title)}</a>`).join('');
 }
 
 const card = (n, href, cls = '') => {
@@ -132,7 +132,7 @@ function renderHome() {
       ${TREE.children.map(a => {
         const c = HOME_CARDS[a.id];
         if (!c) return card(a, '#/' + a.id);
-        return `<a class="area-card home-card ${c.cls}" href="#/${a.id}">
+        return `<a class="area-card home-card ${c.cls}" href="${a.id === 'neotropya' ? '/manufactura/' : '#/' + a.id}">
           <span class="home-art" aria-hidden="true">${c.art()}</span>
           <span class="home-tag ${c.tagCls}">${esc(c.tag)}</span>
           <h2>${esc(a.title)}</h2>
@@ -166,7 +166,19 @@ function renderNotFound() {
     <div class="alert-actions"><a class="btn btn-primary" href="#/">Ir al inicio</a></div></div>`;
 }
 
+/* Neotropya ahora es el dashboard de Manufactura (/manufactura/): toda ruta antigua de Neotropya lleva a su
+   equivalente allí, también los enlaces guardados. Los módulos anteriores ya no se muestran desde este sitio. */
+function rutaNeotropya(seg) {
+  const r = seg.slice(1).join('/');
+  const mapa = [['nodos/ordenes', 'nodos-venezuela/control'], ['nodos/actividades', 'nodos-venezuela/actividades'],
+    ['nodos/inventarios', 'inventarios/consumibles'], ['nodos/investigaciones', 'investigaciones'], ['nodos', 'nodos-venezuela'],
+    ['kanban', 'kanban'], ['presupuestos', 'presupuestos/compra-equipos']];
+  const m = mapa.find(([pre]) => r === pre || r.startsWith(pre + '/'));
+  return '/manufactura/' + (m ? '#/' + m[1] : '');
+}
+
 async function route() {
+  { const seg = segmentsOf(); if (seg[0] === 'neotropya') { location.replace(rutaNeotropya(seg)); return; } }
   const token = ++routeToken;
   closeAllModals();
   if (cleanup) { try { cleanup(); } catch (e) { console.error(e); } cleanup = null; }
