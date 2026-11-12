@@ -319,6 +319,7 @@ document.addEventListener('click', e => {
     case 'contraer': S.abiertos.clear(); render(); toast('Macroobjetivos contraídos.'); break;
     case 'vista': S.vista = b.dataset.vista; render(); break;
     case 'toggle-indice': S.indice = !S.indice; render(); break;
+    case 'menu-area': S.menuArea = !S.menuArea; render(); break;
     case 'respaldo-legado': descargarLegado(); break;
     case 'abrir-mk': abrirPanel(b.dataset.mk); break;
     case 'editar-mk': formMacro(b.dataset.mk); break;
@@ -409,6 +410,15 @@ menuBtn.addEventListener('click', () => (document.body.classList.contains('menu-
 overlay.addEventListener('click', () => cerrarMenu());
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('menu-open') && !dlg.open && !dlg2.open) cerrarMenu(); });
 window.matchMedia('(max-width: 900px)').addEventListener('change', () => { if (!esMovil()) cerrarMenu(false); });
+
+/* Selector de área (encabezado de la sidebar): se cierra con Esc o al hacer clic fuera. */
+function cerrarMenuArea(devolverFoco) {
+  if (!S.menuArea) return;
+  S.menuArea = false; render({ foco: null });
+  if (devolverFoco) { const b = document.querySelector('[data-act="menu-area"]'); b && b.focus(); }
+}
+document.addEventListener('click', e => { if (S.menuArea && !e.target.closest('.sb-brand-wrap')) cerrarMenuArea(false); }, true);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.menuArea) { e.stopPropagation(); cerrarMenuArea(true); } }, true);
 
 /* Datos del Kanban anterior de Neotropya (clave del dashboard previo, mismo sitio). Solo se leen para descargarlos. */
 const CLAVE_LEGADO = 'ccs-neotropya-kanban-v1';

@@ -454,3 +454,24 @@ a.tag { display: inline-flex; align-items: center; text-decoration: none; }
 @media (prefers-reduced-motion: reduce) { .dlg-panel[open] { animation: none; } }
 .sb-foot .sb-volver { color: var(--forest); text-decoration: none; justify-self: start; }
 .kb-legado { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+
+/* Selector de área en el encabezado de la sidebar */
+.sb-brand-wrap { position: relative; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.sb-brand { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: var(--r-sm); cursor: pointer; border: 0; }
+.sb-brand:hover { background: var(--soft); }
+.sb-brand:focus-visible { outline: 3px solid var(--forest); outline-offset: 2px; }
+.sb-brand-txt { display: grid; min-width: 0; flex: 1; }
+.sb-brand-chev { color: var(--forest); display: grid; place-items: center; transform: rotate(90deg); transition: transform .15s; }
+.sb-brand[aria-expanded="true"] .sb-brand-chev { transform: rotate(-90deg); }
+.sb-areas { list-style: none; margin: 6px 0 0; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-hi); display: grid; gap: 2px; }
+.sb-area { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--r-xs); color: var(--text); text-decoration: none; }
+.sb-area > span:not(.sb-check) { display: grid; min-width: 0; flex: 1; }
+.sb-area small { color: var(--text-3); font-size: 12px; }
+a.sb-area:hover { background: var(--cream); }
+a.sb-area:focus-visible { outline: 3px solid var(--forest); outline-offset: 0; }
+.sb-area svg { color: var(--forest); flex-shrink: 0; }
+.sb-area.is-actual { background: var(--soft); }
+.sb-check { color: var(--forest); font-weight: 900; }
+.sb-area-sep { height: 0; border-top: 1px solid var(--line); margin: 4px 6px; }
+.sb-area-ini { font-size: 14px; color: var(--text-2); }
+@media (prefers-reduced-motion: reduce) { .sb-brand-chev { transition: none; } }

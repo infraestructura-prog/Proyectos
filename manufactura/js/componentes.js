@@ -14,6 +14,8 @@ export const ICON = {
   caja: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 8l8-4 8 4v8l-8 4-8-4z M4 8l8 4 8-4 M12 12v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
   cartera: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 12h3M3 9h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   tablero: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 4v16M15 4v16" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+  llave: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.6-.4-.4-2.6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+  casa: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
   folder: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
   rows: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   cards: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13" y="4" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="4" y="13" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13" y="13" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
@@ -69,16 +71,26 @@ export function sidebarHtml(S, macros, ctx) {
         : s.hijos ? secHijos(s)
           : s.id === 'kanban' ? `<li class="sb-item ${r.vista === 'kanban' ? 'is-active' : ''}"><div class="sb-row"><a class="sb-link" href="#/kanban" ${r.vista === 'kanban' ? 'aria-current="page"' : ''}>${ICON.tablero}<span>Kanban</span></a></div></li>`
         : `<li class="sb-item"><span class="sb-link is-disabled" aria-disabled="true"><span class="sb-dot" aria-hidden="true"></span><span>${esc(s.titulo)}</span><span class="sb-soon">Próximamente</span></span></li>`)).join('');
-  return `<div class="sb-brand">
-      <span class="sb-logo" aria-hidden="true"><svg viewBox="0 0 32 32" width="30" height="30"><circle cx="16" cy="16" r="13" fill="#EAF1E8"/><path d="M16 6c-5 4-7 9-5 14 3 1 7 0 9-3 2-4 0-8-4-11z" fill="#315C49"/><path d="M11 22c3-4 5-7 6-11" stroke="#A8C3A0" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></span>
-      <div><p class="sb-name">${esc(DIVISION.nombre)}</p><p class="sb-sub-t">${esc(DIVISION.relacion)}</p></div>
+  // Encabezado = selector de área: pasa directo a Infraestructura (o al inicio del departamento) sin ir a la portada.
+  const abierto = !!S.menuArea;
+  return `<div class="sb-brand-wrap">
+      <button type="button" class="sb-brand" data-act="menu-area" aria-expanded="${abierto}" aria-controls="sb-areas" aria-haspopup="true">
+        <span class="sb-logo" aria-hidden="true"><svg viewBox="0 0 32 32" width="30" height="30"><circle cx="16" cy="16" r="13" fill="#EAF1E8"/><path d="M16 6c-5 4-7 9-5 14 3 1 7 0 9-3 2-4 0-8-4-11z" fill="#315C49"/><path d="M11 22c3-4 5-7 6-11" stroke="#A8C3A0" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></span>
+        <span class="sb-brand-txt"><span class="sb-name">${esc(DIVISION.nombre)}</span><span class="sb-sub-t">${esc(DIVISION.relacion)}</span></span>
+        <span class="sb-brand-chev" aria-hidden="true">${ICON.chev}</span><span class="sr-only">Cambiar de área</span>
+      </button>
+      <ul id="sb-areas" class="sb-areas" ${abierto ? '' : 'hidden'}>
+        <li><span class="sb-area is-actual" aria-current="true">${ICON.target}<span><b>${esc(DIVISION.nombre)}</b><small>Área actual</small></span><span class="sb-check" aria-hidden="true">✓</span></span></li>
+        <li><a class="sb-area" href="/#/infraestructura">${ICON.llave}<span><b>Infraestructura</b><small>Taller, maquinaria y oficinas</small></span></a></li>
+        <li class="sb-area-sep" aria-hidden="true"></li>
+        <li><a class="sb-area sb-area-ini" href="/">${ICON.casa}<span>Inicio del departamento</span></a></li>
+      </ul>
     </div>
     <nav class="sb-nav" aria-label="Secciones de ${esc(DIVISION.nombre)}"><ul>
       ${secciones}
     </ul></nav>
     <div class="sb-foot">
       <p class="sb-note">Los proyectos, tareas y tarjetas del Kanban se guardan en este navegador.</p>
-      <a class="btn btn-ghost btn-sm sb-volver" href="/">← Dashboard del departamento</a>
       <button type="button" class="btn btn-ghost btn-sm" data-act="restablecer">Restablecer datos</button>
     </div>`;
 }
