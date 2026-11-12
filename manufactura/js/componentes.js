@@ -2,6 +2,7 @@
    Objetivos llega hasta el objetivo asociado; desde ahí se abre el proyecto relacionado (proyecto.js). */
 import { DIVISION, SECCIONES } from './datos.js';
 import { rutaProyecto } from './rutas.js';
+import { NEO_ART, LINES } from './neo-arte.js';
 
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 export const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
@@ -104,10 +105,15 @@ export function migasHtml(items) {
 /* ── Página Objetivos ── */
 export function encabezadoHtml(S, macros, objetivos) {
   const nObj = Object.keys(objetivos).length;
-  return `<header class="pg-head">
-      <p class="pg-kicker">${esc(DIVISION.nombre)} <span class="pg-kicker-rel">· ${esc(DIVISION.relacion)}</span></p>
-      <h1 id="pg-titulo" tabindex="-1">Objetivos</h1>
-      <p class="pg-intro">Visión general: ${plural(macros.length, 'macroobjetivo', 'macroobjetivos')} y los ${plural(nObj, 'objetivo asociado', 'objetivos asociados')} que contribuyen a cada uno. Desde un objetivo se abren sus proyectos e investigaciones.</p>
+  return `<header class="neo-hero">
+      <div class="neo-hero-txt">
+        <p class="neo-kicker"><span class="dot" aria-hidden="true"></span>${esc(DIVISION.nombre)} · Laboratorio creativo</p>
+        <h1 id="pg-titulo" tabindex="-1">Objetivos</h1>
+        <p class="neo-sub">Ideas que conectan, soluciones que ayudan</p>
+        <p class="neo-desc">Visión general: ${plural(macros.length, 'macroobjetivo', 'macroobjetivos')} y los ${plural(nObj, 'objetivo asociado', 'objetivos asociados')} que contribuyen a cada uno. Desde un objetivo se abren sus proyectos e investigaciones.</p>
+        <ul class="neo-lines" aria-label="Líneas de trabajo de Neotropya">${LINES.map(l => `<li class="${l.future ? 'future' : ''}"><span class="sw" style="background:${l.c}" aria-hidden="true"></span>${esc(l.t)}</li>`).join('')}</ul>
+      </div>
+      <div class="neo-hero-art" aria-hidden="true">${NEO_ART}</div>
     </header>
     <div class="pg-tools">
       <div class="pg-tools-l">

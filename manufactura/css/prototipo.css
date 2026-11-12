@@ -1,4 +1,4 @@
-/* Prototipo «Objetivos» de Manufactura (Neotropya) · identidad clara, cálida y creativa.
+﻿/* Prototipo «Objetivos» de Manufactura (Neotropya) · identidad clara, cálida y creativa.
    Jerarquía por tamaño, sangría y superficies (no por cajas anidadas). */
 :root {
   --bg: #F7F8F2; --surface: #FFFFFF; --forest: #315C49; --forest-hi: #3D6F59; --forest-dk: #254838;
@@ -475,3 +475,81 @@ a.sb-area:focus-visible { outline: 3px solid var(--forest); outline-offset: 0; }
 .sb-area-sep { height: 0; border-top: 1px solid var(--line); margin: 4px 6px; }
 .sb-area-ini { font-size: 14px; color: var(--text-2); }
 @media (prefers-reduced-motion: reduce) { .sb-brand-chev { transition: none; } }
+
+/* ═════════ Identidad de Neotropya (paleta y fondos del dashboard anterior) ═════════
+   Durazno pastel con manchas de coral, sol y menta; puntos y curvas de «conexión»; superficies cálidas. */
+:root {
+  --bg: #FFF8F1; --line: #EED8C8; --line-hi: #E2BFA6; --cream: #FFF4EA; --peach-soft: #FFE6D4;
+  --text-2: #4C5F54; --text-3: #5D6E65;
+  --shadow: 0 1px 2px rgba(150,70,30,.06), 0 8px 22px -14px rgba(150,70,30,.30);
+  --shadow-hi: 0 2px 4px rgba(150,70,30,.07), 0 18px 34px -18px rgba(150,70,30,.38);
+}
+body {
+  background:
+    radial-gradient(560px 420px at 102% 0%, rgba(255,159,115,.75), transparent 70%),
+    radial-gradient(480px 380px at -8% 30%, rgba(255,228,138,.8), transparent 70%),
+    radial-gradient(520px 400px at 100% 100%, rgba(191,232,212,.85), transparent 70%),
+    radial-gradient(380px 300px at 10% 105%, rgba(255,159,115,.45), transparent 70%),
+    linear-gradient(160deg, #FFE3CE 0%, #FFD9BF 45%, #FFC9A6 100%);
+  background-attachment: fixed;
+}
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image:
+    radial-gradient(circle, rgba(150,70,30,.16) 1.2px, transparent 1.7px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600' fill='none' stroke='%23FFFFFF' stroke-opacity='.75' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M-20 420 C 120 340, 220 520, 380 430 S 560 300, 640 360' stroke-dasharray='1 10'/%3E%3Cpath d='M-20 120 C 90 60, 180 200, 300 140' /%3E%3Ccircle cx='300' cy='140' r='6' fill='%23315C49' fill-opacity='.35' stroke='none'/%3E%3Ccircle cx='380' cy='430' r='5' fill='%23FFFFFF' stroke='none'/%3E%3C/svg%3E");
+  background-size: 26px 26px, 900px 900px;
+  background-position: 0 0, 100% 100%;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 55% 45%, transparent 35%, #000 85%);
+          mask-image: radial-gradient(ellipse 70% 60% at 55% 45%, transparent 35%, #000 85%);
+}
+.topbar { background: rgba(255,244,234,.82); border-bottom-color: rgba(226,191,166,.6); }
+.sb { background: rgba(255,252,248,.94); border-right-color: var(--line); }
+.sb-item.is-active .sb-link { background: var(--peach-soft); }
+.proto-badge { background: #fff; }
+.search input { border-color: var(--line-hi); }
+
+/* Cabecera de Objetivos con la ilustración y las líneas de trabajo del laboratorio */
+.neo-hero {
+  position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: center; gap: 12px;
+  padding: 24px 30px; margin-bottom: 8px; border-radius: 24px; border: 1px solid #F2C7A8;
+  background: radial-gradient(420px 260px at 92% 10%, rgba(255,228,138,.6), transparent 70%),
+              radial-gradient(360px 240px at 70% 110%, rgba(255,159,115,.35), transparent 70%),
+              radial-gradient(300px 200px at 40% 120%, rgba(191,232,212,.6), transparent 70%),
+              linear-gradient(120deg, #FFFFFF 0%, #FFF8F1 55%, #FFEEE2 100%);
+  box-shadow: 0 2px 4px rgba(150,70,30,.06), 0 18px 36px -18px rgba(150,70,30,.35);
+}
+.neo-kicker { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--forest);
+  background: var(--peach-soft); border-radius: 999px; padding: 4px 12px 4px 6px; }
+.neo-kicker .dot { width: 18px; height: 18px; border-radius: 50%; background: var(--forest); box-shadow: inset 0 0 0 4px var(--sage); }
+.neo-hero h1 { font-size: clamp(32px, 4.6vw, 46px); font-weight: 900; letter-spacing: -.02em; margin-top: 8px; line-height: 1.05; outline: none; }
+.neo-sub { font-size: clamp(17px, 2vw, 21px); font-weight: 800; color: var(--forest); margin-top: 4px; }
+.neo-desc { color: var(--text-2); font-size: 15px; margin-top: 8px; max-width: 620px; line-height: 1.55; }
+.neo-lines { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.neo-lines li { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; }
+.neo-lines li .sw { width: 10px; height: 10px; border-radius: 50%; }
+.neo-lines li.future { color: var(--text-2); border-style: dashed; background: transparent; }
+.neo-hero-art { min-width: 0; }
+.neo-hero-art svg { width: 100%; height: auto; display: block; max-height: 220px; }
+@media (max-width: 900px) { .neo-hero { grid-template-columns: minmax(0, 1fr); padding: 20px; } .neo-hero-art { display: none; } }
+
+/* Superficies cálidas */
+.mo, .pj-sec, .pj-card { border: 1px solid rgba(238,216,200,.7); }
+.ob { background: var(--cream); }
+.kb-col { background: rgba(255,255,255,.72); }
+.ficha, .pj-res { background: linear-gradient(180deg, #FFF4EA, #FFFFFF 160px); }
+
+/* Ancho: el contenido usa todo el espacio disponible a la derecha de la sidebar */
+.contenido { max-width: none; }
+
+/* Un color pastel de Neotropya por macroobjetivo (número y acento), en Objetivos y en el Kanban */
+[data-macro="mo-gestion-manufactura"], [data-mk="mo-gestion-manufactura"] { --mc: #F3C5A5; --mc-ink: #9A4A1C; }
+[data-macro="mo-materiales-fabricacion"], [data-mk="mo-materiales-fabricacion"] { --mc: #C9DFEA; --mc-ink: #2B5D78; }
+[data-macro="mo-sujecion-moto-maleta"], [data-mk="mo-sujecion-moto-maleta"] { --mc: #A8C3A0; --mc-ink: #315C49; }
+[data-macro="mo-termico-maletas"], [data-mk="mo-termico-maletas"] { --mc: #FFE48A; --mc-ink: #7A5A00; }
+[data-macro="mo-capacidades-manufactura"], [data-mk="mo-capacidades-manufactura"] { --mc: #BFE8D4; --mc-ink: #22704A; }
+.mo { box-shadow: var(--shadow), inset 6px 0 0 var(--mc, transparent); }
+.mo.is-open { box-shadow: var(--shadow-hi), inset 6px 0 0 var(--mc, transparent); }
+.mo-num, .mo.is-open .mo-num { color: var(--mc-ink, var(--forest)); }
+.vista-tarjetas .mo { box-shadow: var(--shadow), inset 0 6px 0 var(--mc, transparent); }
+.mk-num { display: inline-grid; place-items: center; min-width: 36px; padding: 2px 8px; border-radius: 999px; font-size: 15px; background: var(--mc, var(--soft)); color: var(--mc-ink, var(--forest)); }
