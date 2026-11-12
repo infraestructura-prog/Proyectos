@@ -1,0 +1,97 @@
+{
+  "schema": "ccs-investigacion-acople-v1",
+  "id": "acople-nodo-moto",
+  "titulo": "Acople universal nodo–moto",
+  "descripcion": "Investigación de modelos de motocicletas y soluciones comerciales de montaje para desarrollar un sistema de sujeción adaptable",
+  "contexto": [
+    "La investigación busca desarrollar el acople entre el nodo y la motocicleta, considerando motos con parrilleras tradicionales y modelos que necesitan soportes específicos.",
+    "Los nodos actuales utilizan maletas plásticas de aproximadamente 50 litros y 45 × 40 × 35 cm. Actualmente cuentan con cerradura superior; adaptar un sistema comercial de anclaje inferior requeriría estudiar e incorporar ese mecanismo.",
+    "Esta información es contexto de investigación, no una confirmación de compatibilidad."
+  ],
+  "fuente": {
+    "titulo": "Investigación moto–nodo | 01. Mercado venezolano y categorías de sujeción (versión 0.1, 05/11/2026)",
+    "url": "https://docs.google.com/document/d/1yPIRw9nEoYiVw-Ni_VS4wL0uEAI76vTRga7hTeC9Kis/edit",
+    "nota": "Documento de trabajo; las fotos se usan solo para reconocer el modelo."
+  },
+  "notas": {
+    "motos": "Selección de modelos considerados en la investigación. No representa un ranking nacional de ventas verificado. La compatibilidad del acople requiere comprobación física.",
+    "productos": "Una base comercial anunciada como universal no garantiza compatibilidad con todas las motocicletas ni con la maleta del nodo. Se requiere verificar montaje, retención y comportamiento con la carga prevista."
+  },
+  "motos": [
+    { "id": "empire-horse-rl", "marca": "Empire", "modelo": "Horse RL",
+      "foto": { "src": "/assets/img/motos/empire-horse-rl.jpg", "fuente": "Empire Keeway (fabricante), ficha del modelo", "pagina": "https://www.empirekeeway.com/productos/horse-rl/", "original": "https://www.empirekeeway.com/wp-content/uploads/2025/02/horse-rl-negro-1.jpg", "consultado": "2026-11-06" } },
+    { "id": "empire-new-horse", "marca": "Empire", "modelo": "New Horse",
+      "foto": { "src": "/assets/img/motos/empire-new-horse.jpg", "fuente": "Empire Keeway (fabricante), ficha del modelo", "pagina": "https://www.empirekeeway.com/productos/new-horse/", "original": "https://www.empirekeeway.com/wp-content/uploads/2025/02/horse-rojo3.jpg", "consultado": "2026-11-06" } },
+    { "id": "empire-horse-ii", "marca": "Empire", "modelo": "Horse II",
+      "foto": { "src": "/assets/img/motos/empire-horse-ii.jpg", "fuente": "Empire Keeway (fabricante), nota de lanzamiento de la Horse II renovada (21/05/2025); la rotulación «Horse II» es visible en la foto", "pagina": "https://www.empirekeeway.com/2025/05/21/ek-suelta-las-riendas-al-caballo-favorito-de-los-venezolanos-con-la-horse-ii-renovada/", "original": "https://www.empirekeeway.com/wp-content/uploads/2025/06/2105.jpg", "consultado": "2026-11-06" } },
+    { "id": "empire-ek-xpress-150", "marca": "Empire", "modelo": "EK Xpress 150",
+      "foto": { "src": "/assets/img/motos/empire-ek-xpress-150.jpg", "fuente": "Empire Keeway (fabricante), ficha «EK Xpress»", "pagina": "https://www.empirekeeway.com/productos/ek-xpress/", "original": "https://www.empirekeeway.com/wp-content/uploads/2024/08/EK-Express-azul1.jpg", "consultado": "2026-11-06" } },
+    { "id": "empire-ek-xpress-lite", "marca": "Empire", "modelo": "EK Xpress Lite",
+      "foto": { "src": "/assets/img/motos/empire-ek-xpress-lite.jpg", "fuente": "Empire Keeway (fabricante), ficha del modelo; la rotulación «Xpress Lite» es visible en la foto", "pagina": "https://www.empirekeeway.com/productos/ek-xpress-lite/", "original": "https://www.empirekeeway.com/wp-content/uploads/2026/02/sin-fondo-1.jpg", "consultado": "2026-11-06" } },
+    { "id": "bera-sbr-150", "marca": "Bera", "modelo": "SBR 150",
+      "foto": { "src": "/assets/img/motos/bera-sbr-150.jpg", "fuente": "Bera Motorcycles (fabricante), ficha «SBR 150cc»", "pagina": "https://beravirtual.com/producto/sbr-150cc-roja/", "original": "https://beravirtual.com/wp-content/uploads/2021/09/SBR-azul-web-980x1470.png", "consultado": "2026-11-06" } },
+    { "id": "bera-brf-150", "marca": "Bera", "modelo": "BRF 150",
+      "foto": { "src": "/assets/img/motos/bera-brf-150.jpg", "fuente": "Bera Motorcycles (fabricante), ficha «BRF 150cc»", "pagina": "https://beravirtual.com/producto/brf/", "original": "https://beravirtual.com/wp-content/uploads/2024/09/brf-blanca.png", "consultado": "2026-11-06" } },
+    { "id": "kawasaki-klr-650", "marca": "Kawasaki", "modelo": "KLR 650",
+      "foto": { "src": "/assets/img/motos/kawasaki-klr-650.jpg", "fuente": "Kawasaki Motors Corp., U.S.A. (fabricante), página del KLR650; no representa necesariamente la KLR del caso interno", "pagina": "https://www.kawasaki.com/en-us/motorcycle/klr/dual-sport/klr650", "original": "https://kawasaki-global-admin.com/ContentStorage/KMC/ProductTrimGroup/51/defbea70-a6e5-49a5-bae8-41663042bd2c.png", "consultado": "2026-11-06" } },
+    { "id": "empire-rk-200", "marca": "Empire", "modelo": "RK 200",
+      "foto": { "src": "/assets/img/motos/empire-rk-200.jpg", "fuente": "Empire Keeway (fabricante), ficha del modelo", "pagina": "https://www.empirekeeway.com/productos/rk-200/", "original": "https://www.empirekeeway.com/wp-content/uploads/2025/02/rk-200-azul1.jpg", "consultado": "2026-11-06" } },
+    { "id": "empire-rk-250", "marca": "Empire", "modelo": "RK 250",
+      "foto": { "src": "/assets/img/motos/empire-rk-250.jpg", "fuente": "Empire Keeway (fabricante), ficha del modelo", "pagina": "https://www.empirekeeway.com/productos/rk-250/", "original": "https://www.empirekeeway.com/wp-content/uploads/2025/02/rk-250-negro-1.jpg", "consultado": "2026-11-06" } },
+    { "id": "bera-kavak-150", "marca": "Bera", "modelo": "Kavak 150",
+      "foto": { "src": "/assets/img/motos/bera-kavak-150.jpg", "fuente": "Bera Motorcycles (fabricante), ficha «Kavak 150cc»", "pagina": "https://beravirtual.com/producto/kavak/", "original": "https://beravirtual.com/wp-content/uploads/2023/12/kavak-blanca.png", "consultado": "2026-11-06" } },
+    { "id": "bera-gr-250", "marca": "Bera", "modelo": "GR 250",
+      "foto": { "src": "/assets/img/motos/bera-gr-250.jpg", "fuente": "Bera Motorcycles (fabricante), ficha «GR 250cc»", "pagina": "https://beravirtual.com/producto/gr/", "original": "https://beravirtual.com/wp-content/uploads/2024/09/gr-azul.png", "consultado": "2026-11-06" } },
+    { "id": "empire-tx-ii-150", "marca": "Empire", "modelo": "TX II 150",
+      "foto": { "src": "/assets/img/motos/empire-tx-ii-150.jpg", "fuente": "Empire Keeway (fabricante), ficha «tx-ii-150» (la página muestra por error el título de la Xpress Lite; la imagen y su nombre de archivo corresponden a la TX II 150)", "pagina": "https://www.empirekeeway.com/productos/tx-ii-150/", "original": "https://www.empirekeeway.com/wp-content/uploads/2026/04/TX-II-150-fondoblanco.jpg.jpeg", "consultado": "2026-11-06" } },
+    { "id": "empire-tx-200", "marca": "Empire", "modelo": "TX 200",
+      "foto": { "src": "/assets/img/motos/empire-tx-200.jpg", "fuente": "Empire Keeway (fabricante), imagen principal de la nota «EK trae de vuelta la famosa TX 200» (27/03/2025)", "pagina": "https://www.empirekeeway.com/2025/03/27/ek-trae-de-vuelta-la-famosa-tx-200/", "original": "https://www.empirekeeway.com/wp-content/uploads/2025/06/2703.jpg", "consultado": "2026-11-06" } },
+    { "id": "empire-tx-250gs", "marca": "Empire", "modelo": "TX 250GS",
+      "foto": { "src": "/assets/img/motos/empire-tx-250gs.jpg", "fuente": "Empire Keeway (fabricante), ficha del modelo", "pagina": "https://www.empirekeeway.com/productos/tx-250gs/", "original": "https://www.empirekeeway.com/wp-content/uploads/2025/02/tx-250-lateral1.jpg", "consultado": "2026-11-06" } },
+    { "id": "socialista", "marca": "", "modelo": "«Socialista»", "pendiente": true,
+      "nota": "Mencionada por comerciantes (Diario Avance, octubre de 2026) sin identificación técnica. No se le asigna marca ni fotografía hasta identificar el modelo exacto.",
+      "foto": null }
+  ],
+  "productos": [
+    {
+      "id": "temsone-45l", "plataforma": "Amazon", "asin": "B0B4MYLG27", "url": "https://www.amazon.com/dp/B0B4MYLG27",
+      "nombre": "TEMSONE 45 L", "marca": "TEMSONE", "modelo": "45 L", "tipo": "maleta",
+      "capacidadL": 45, "imagen": null, "precio": null,
+      "resumenAcople": "Encastre deslizante y bloqueo inferior (según la investigación; pendiente de verificar).",
+      "detalle": {
+        "tipo": { "valor": "Maleta. Falta confirmar si incluye base o placa.", "nivel": "investigacion" },
+        "capacidad": { "valor": "45 litros", "nivel": "investigacion" },
+        "mecanismo": { "valor": "Encastre deslizante y bloqueo inferior.", "nivel": "investigacion" },
+        "herrajes": { "valor": "No confirmado.", "nivel": "pendiente" },
+        "instalacion": { "valor": "Sin documentar: falta revisar las instrucciones del fabricante.", "nivel": "pendiente" }
+      },
+      "adaptaciones": [
+        "Montar la base comercial sobre una placa intermedia fijada a la parrillera o a los puntos de la moto.",
+        "Incorporar el mecanismo de anclaje inferior a la maleta plástica actual, que hoy usa cerradura superior; requiere estudiar su fondo y refuerzos.",
+        "No sustituye directamente a la maleta actual de 50 L: evaluar espacio útil, distribución del equipo, peso y anclaje."
+      ],
+      "pendientes": ["Capacidad y dimensiones exteriores e interiores", "Funcionamiento del encastre y del bloqueo", "Contenido de la caja (base, placa, tornillería, llaves)", "Carga máxima indicada por el fabricante", "Imagen del producto", "Precio con moneda y fecha"],
+      "fuente": { "texto": "Investigación previa del equipo. La ficha de Amazon no se pudo consultar para corroborar los datos.", "consultado": "" }
+    },
+    {
+      "id": "vevor-45l-b", "plataforma": "Amazon", "asin": "B0DSDFYZXM", "url": "https://www.amazon.com/dp/B0DSDFYZXM",
+      "nombre": "VEVOR 45L-B", "marca": "VEVOR", "modelo": "45L-B", "tipo": "conjunto",
+      "capacidadL": 45, "imagen": null, "precio": null,
+      "resumenAcople": "Placa incluida y base de liberación rápida multiperforada (según la investigación; pendiente de verificar).",
+      "detalle": {
+        "tipo": { "valor": "Conjunto maleta/base (la investigación indica placa incluida).", "nivel": "investigacion" },
+        "capacidad": { "valor": "45 litros", "nivel": "investigacion" },
+        "mecanismo": { "valor": "Base de liberación rápida multiperforada.", "nivel": "investigacion" },
+        "herrajes": { "valor": "Placa incluida según la investigación; herrajes no confirmados.", "nivel": "investigacion" },
+        "instalacion": { "valor": "Sin documentar: falta revisar las instrucciones del fabricante.", "nivel": "pendiente" }
+      },
+      "adaptaciones": [
+        "Aprovechar la placa multiperforada para buscar coincidencias con los puntos de distintas parrilleras o con una placa intermedia del nodo.",
+        "Evaluar si la base de liberación rápida puede recibir la maleta plástica actual mediante un adaptador inferior.",
+        "No sustituye directamente a la maleta actual de 50 L: evaluar espacio útil, distribución del equipo, peso y anclaje."
+      ],
+      "pendientes": ["Capacidad y dimensiones exteriores e interiores", "Patrón de perforaciones de la placa", "Mecanismo de liberación y cierre", "Contenido de la caja (placa, tornillería, llaves)", "Carga máxima indicada por el fabricante", "Imagen del producto", "Precio con moneda y fecha"],
+      "fuente": { "texto": "Investigación previa del equipo. La ficha de Amazon no se pudo consultar para corroborar los datos.", "consultado": "" }
+    }
+  ]
+}

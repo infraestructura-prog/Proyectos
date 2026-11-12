@@ -157,7 +157,7 @@ function renderBranch(chain) {
         : `<div class="section-head fade-in"><div><h1>${esc(node.title)}</h1><p>${esc(node.desc || '')}</p></div>${back}</div>`;
   main.innerHTML = `${head}
     <section class="child-cards fade-in" aria-label="Secciones de ${esc(node.title)}">
-      ${(node.children || []).map(c => card(c, pathOf(chain) + '/' + c.id, chain[1].tone === 'mint' ? 'mint' : '')).join('')}
+      ${(node.children || []).map(c => card(c, c.href || pathOf(chain) + '/' + c.id, chain[1].tone === 'mint' ? 'mint' : '')).join('')}
     </section>`;
 }
 
@@ -179,6 +179,7 @@ async function route() {
 
   if (notFound) { renderCrumbs(chain, [{ title: 'No encontrado' }]); renderNotFound(); return; }
   if (chain.length === 1) { renderCrumbs(chain); renderHome(); return focusMain(); }
+  if (node.href) { location.replace(node.href); return; }   // secciones que son páginas aparte (p. ej. /manufactura/)
   if (!node.load) { renderCrumbs(chain); renderBranch(chain); return focusMain(); }
 
   renderCrumbs(chain);

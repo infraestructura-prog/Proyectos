@@ -11,6 +11,11 @@ export const TREE = {
       desc: 'Ideas que conectan, soluciones que ayudan: fabricación digital, conectividad y energía solar para las personas.',
       children: [
         {
+          // Nuevo dashboard de Manufactura (carpeta /manufactura/): se abre como página aparte, no como módulo.
+          id: 'manufactura', title: 'Manufactura · nuevo dashboard', icon: 'kanban', href: '/manufactura/',
+          desc: 'Objetivos, proyectos, investigaciones y Kanban general, con Nodos Venezuela, Inventarios y Presupuestos.'
+        },
+        {
           id: 'nodos', title: 'Nodos', icon: 'case',
           desc: 'Nodos de conectividad: maletas y bolsos, su estado, sus pendientes y sus actividades.',
           children: [

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Módulo · Manufactura</title>
+<!-- Anfitrión de los módulos traídos del dashboard publicado (Nodos Venezuela, Inventarios, Presupuestos).
+     Se muestra dentro de la página principal en un marco, con los estilos originales (app.css + neotropya.css),
+     para que no se mezclen con los del dashboard de Manufactura. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
+<link rel="stylesheet" href="assets/css/neotropya.css">
+<style>
+  /* Ajustes del modo integrado: fondo claro del dashboard y sin las decoraciones de la cabecera del sitio. */
+  body[data-area="neotropya"] { background: #F7F8F2; }
+  body[data-area="neotropya"] .grid-bg, .neo-hero-art, .neo-lines { display: none !important; }
+  .page { max-width: none; padding: 16px clamp(12px, 3vw, 28px) 32px; margin: 0; }
+  .neo-hero { min-height: 0 !important; padding: 18px 22px !important; margin-bottom: 16px !important; }
+  /* La sidebar del dashboard ya permite volver: se ocultan los botones «Volver a Neotropya» del sitio. */
+  a.btn[href="#/neotropya"] { display: none !important; }
+</style>
+</head>
+<body data-area="neotropya">
+<main id="main" class="page" tabindex="-1"></main>
+<div id="modal-root"></div>
+<div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
+<script type="module" src="assets/js/embebido.js"></script>
+</body>
+</html>
