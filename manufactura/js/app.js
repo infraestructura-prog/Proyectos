@@ -232,6 +232,8 @@ function formTarea(t0, pid) {
     if (b.dataset.sub === 'del') { t.subtareas.splice(Number(b.dataset.i), 1); pintarSubs(); form.querySelector('#nueva-sub').focus(); }
   });
   form.querySelector('#nueva-sub').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); form.querySelector('[data-sub="add"]').click(); } });
+  const borrar = form.querySelector('[data-tk-borrar]');
+  if (borrar) borrar.addEventListener('click', () => eliminarTarea(t.id));
   form.addEventListener('change', async e => {
     const el = e.target;
     if (el.dataset.sub === 'toggle') t.subtareas[Number(el.dataset.i)].hecha = el.checked;
@@ -271,6 +273,19 @@ function formTarea(t0, pid) {
     else if (destino.estado === 'blocked') destino.bloqueo = { motivo: g('bloqueoMotivo'), necesita: g('bloqueoNecesita') };
     guardarTareas(); dlgRetorno = null; dlg.close(); render({ foco: `[data-act="abrir-tarea"][data-tk="${destino.id}"]` });
     toast(nueva ? 'Tarea creada.' : 'Tarea guardada.');
+  });
+}
+
+/* ── Eliminar una tarea (con confirmación). Se aparta en «tareas-eliminadas» de este navegador, recuperable;
+   las demás tareas no cambian y los datos iniciales no la vuelven a cargar. ── */
+function eliminarTarea(id) {
+  const t = tareaPorId(id); if (!t) return;
+  dlgRetorno = null; if (dlg.open) dlg.close();
+  confirmar('Eliminar tarea', `<p>Se eliminará «${C.esc(t.titulo)}» del tablero.</p>
+    <p>Queda guardada aparte en este navegador por si hay que recuperarla. Las demás tareas no cambian.</p>`, 'Eliminar', () => {
+    tareas = tareas.filter(x => x.id !== id);
+    const quitadas = almacen.eliminadas(); quitadas.push({ fecha: ahora(), tarea: t }); almacen.guardarEliminadas(quitadas.slice(-500));
+    guardarTareas(); render({ foco: `[data-act="nueva-tarea"][data-pr="${t.proyecto}"]` }); toast(`Tarea eliminada: «${t.titulo}».`);
   });
 }
 

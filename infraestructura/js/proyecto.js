@@ -264,7 +264,7 @@ export function formTareaHtml(t, nueva) {
         </div>
       </details>
     </div>
-    <div class="dlg-foot"><button type="button" class="btn" data-dlg-close>Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div>
+    <div class="dlg-foot">${nueva ? '' : '<button type="button" class="btn btn-ghost tk-borrar" data-tk-borrar>Eliminar tarea</button><span class="sp"></span>'}<button type="button" class="btn" data-dlg-close>Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div>
   </form>`;
 }
 

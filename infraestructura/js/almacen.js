@@ -13,7 +13,7 @@ import { REGISTROS, HABILITADOS, COLUMNAS, PRIORIDADES, DEPARTAMENTOS, RELACION_
 
 const PREFIJO = 'ccs-infraestructura-v2:';
 const K = { prefs: PREFIJO + 'preferencias', proyectos: PREFIJO + 'proyectos', tareas: PREFIJO + 'tareas', kanban: PREFIJO + 'kanban-macroobjetivos', resultados: PREFIJO + 'resultados',
-  origen: PREFIJO + 'migracion-origen', migracion: PREFIJO + 'migracion-estado', respaldo: PREFIJO + 'migracion-respaldo-previo' };
+  origen: PREFIJO + 'migracion-origen', migracion: PREFIJO + 'migracion-estado', respaldo: PREFIJO + 'migracion-respaldo-previo', eliminadas: PREFIJO + 'tareas-eliminadas' };
 
 const leer = k => { try { const v = localStorage.getItem(k); return v === null ? undefined : JSON.parse(v); } catch { return null; } };
 const escribir = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
@@ -107,10 +107,15 @@ export const almacen = {
   guardarProyectos(o) { return escribir(K.proyectos, o); },
   tareas() {
     const v = leer(K.tareas), lista = Array.isArray(v) ? v.map(normTarea).filter(x => x.id) : [];
-    const faltan = tareasIniciales().filter(x => !lista.some(y => y.id === x.id));
+    // Las tareas que el usuario eliminó no vuelven a cargarse desde la lista definitiva.
+    const borradas = new Set(this.eliminadas().map(x => x.tarea.id));
+    const faltan = tareasIniciales().filter(x => !lista.some(y => y.id === x.id) && !borradas.has(x.id));
     if (faltan.length || !Array.isArray(v)) { lista.push(...faltan); escribir(K.tareas, lista); }
     return lista;
   },
+  // Tareas eliminadas: se apartan con su fecha (recuperables); la migración tampoco las recrea (solo actúa sobre tareas existentes).
+  eliminadas() { const v = leer(K.eliminadas); return Array.isArray(v) ? v.filter(x => x && x.tarea && typeof x.tarea.id === 'string') : []; },
+  guardarEliminadas(l) { return escribir(K.eliminadas, l); },
   guardarTareas(l) { return escribir(K.tareas, l); },
   resultados() {
     const v = leer(K.resultados), obj = v && typeof v === 'object' && !Array.isArray(v) ? v : {};

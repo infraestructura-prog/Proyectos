@@ -4,7 +4,7 @@
 import { PROYECTOS_INICIALES, TAREAS_INICIALES, COLUMNAS, PRIORIDADES, DEPARTAMENTOS, RELACION_DEPTOS } from './datos-proyectos.js';
 
 const PREFIJO = 'ccs-manufactura-v1:';   // datos del dashboard de Manufactura (proyectos, tareas, Kanban y preferencias)
-const K = { prefs: PREFIJO + 'preferencias', proyectos: PREFIJO + 'proyectos', tareas: PREFIJO + 'tareas', kanban: PREFIJO + 'kanban-macroobjetivos' };
+const K = { prefs: PREFIJO + 'preferencias', proyectos: PREFIJO + 'proyectos', tareas: PREFIJO + 'tareas', kanban: PREFIJO + 'kanban-macroobjetivos', eliminadas: PREFIJO + 'tareas-eliminadas' };
 
 const leer = k => { try { const v = localStorage.getItem(k); return v === null ? undefined : JSON.parse(v); } catch { return null; } };
 const escribir = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
@@ -46,13 +46,14 @@ export function normTarea(x, i = 0) {
   };
 }
 
-function cargarLista(clave, iniciales, norm, alSembrar) {
+function cargarLista(clave, iniciales, norm, alSembrar, excluir = new Set()) {
   const v = leer(clave);
   const nuevos = lista => alSembrar(lista.map((x, i) => norm(JSON.parse(JSON.stringify(x)), i)));
   if (Array.isArray(v)) {
-    // Ya hay datos guardados: se conservan tal cual y solo se agregan los registros iniciales que falten (por id).
+    // Ya hay datos guardados: se conservan tal cual y solo se agregan los registros iniciales que falten (por id),
+    // salvo los que el usuario eliminó (`excluir`), que no vuelven a aparecer.
     const lista = v.map(norm).filter(x => x.id);
-    const faltan = iniciales.filter(x => !lista.some(y => y.id === x.id));
+    const faltan = iniciales.filter(x => !lista.some(y => y.id === x.id) && !excluir.has(x.id));
     if (faltan.length) { lista.push(...nuevos(faltan)); escribir(clave, lista); }
     return lista;
   }
@@ -72,9 +73,12 @@ export const almacen = {
       const at = new Date().toISOString();
       l.forEach((x, i) => { x.orden = i + 1; x.historial = [{ fecha: at, tipo: 'carga', nota: `Tarea inicial en To do (sin estado de ejecución confirmado). ${x.criterio ? 'El criterio de cierre es una propuesta.' : 'Sin criterio de cierre definido.'}` }]; });
       return l;
-    });
+    }, new Set(this.eliminadas().map(x => x.tarea.id)));
   },
   guardarTareas(l) { return escribir(K.tareas, l); },
+  // Tareas eliminadas: se apartan con su fecha (recuperables) y no se vuelven a cargar desde los datos iniciales.
+  eliminadas() { const v = leer(K.eliminadas); return Array.isArray(v) ? v.filter(x => x && x.tarea && typeof x.tarea.id === 'string') : []; },
+  guardarEliminadas(l) { return escribir(K.eliminadas, l); },
   // Kanban general: una tarjeta por macroobjetivo ({ [idMacro]: tarjeta }). Sin datos = se crea al abrir el tablero.
   kanban() { const v = leer(K.kanban); return v && typeof v === 'object' && !Array.isArray(v) ? v : null; },
   guardarKanban(v) { return escribir(K.kanban, v); },

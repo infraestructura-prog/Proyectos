@@ -338,3 +338,4 @@ input[type=date] { color-scheme: dark; }
 .pend-sug { font-size: 13.5px; color: var(--in-olive-text); font-weight: 700; }
 .conf-list li.ok::marker, .ok-list li::marker { color: var(--c-completed); }
 .conf-list li.ok b { color: var(--c-completed); }
+.tk-borrar { color: var(--in-err); }
