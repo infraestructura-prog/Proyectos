@@ -38,8 +38,7 @@ export const MAQUINAS = {
   // No es secreta: sin la clave de edición el script no modifica nada.
   // Implementada con acceso «Cualquier usuario con una cuenta de Google»: para guardar hay que tener
   // una sesión de Google abierta en el navegador.
-  // Prototipo de Infraestructura: SOLO LECTURA. Sin URL de edición, el módulo no ofrece editar ni agregar.
-  EDIT_URL: '',
+  EDIT_URL: 'https://script.google.com/macros/s/AKfycbzyiqDUCq8U30UOA_TuRDmOOnAlL1SrfPE3jiW-KadZ9BdCmKb7SsiWRDAoI6g3OTy5/exec',
   // Tabla original de codificación (solo consulta, pestaña «Referencia del archivo»).
   REFERENCE_SPREADSHEET_ID: '1PuXWlmC_ZQOBHYAk-OT1Z73gAqF8FtGctp-CYoqPsDk',
   REFERENCE_URL: 'https://docs.google.com/spreadsheets/d/1PuXWlmC_ZQOBHYAk-OT1Z73gAqF8FtGctp-CYoqPsDk/edit',

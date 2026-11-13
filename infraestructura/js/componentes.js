@@ -77,7 +77,7 @@ export function sidebarHtml(S, ctx) {
     let sep = '';
     if ((s.bloque || 1) !== bloqueAnt) { sep = '<li class="sb-sep" aria-hidden="true"></li>'; bloqueAnt = s.bloque || 1; }
     if (s.admin && !adminVisto) { sep = '<li class="sb-sep" aria-hidden="true"></li><li class="sb-grupo" aria-hidden="true">Administración</li>'; adminVisto = true; }
-    const activa = s => { const sel = r.vista === s.id || (r.vista === 'modulo' && r.seccion === s.id); return `<li class="sb-item ${sel ? 'is-active' : ''}"><div class="sb-row"><a class="sb-link" href="#/${s.id}" ${sel ? 'aria-current="page"' : ''}>${ICONO_SEC[s.id] || ICON.folder}<span>${esc(s.titulo)}</span>${s.modulo ? '<span class="sb-ro" title="Solo lectura">Lectura</span>' : ''}</a></div></li>`; };
+    const activa = s => { const sel = r.vista === s.id || (r.vista === 'modulo' && r.seccion === s.id); return `<li class="sb-item ${sel ? 'is-active' : ''}"><div class="sb-row"><a class="sb-link" href="#/${s.id}" ${sel ? 'aria-current="page"' : ''}>${ICONO_SEC[s.id] || ICON.folder}<span>${esc(s.titulo)}</span></a></div></li>`; };
     return sep + (s.id === 'objetivos' ? secObj : s.id === 'proyectos' ? secProy : s.id === 'investigaciones' ? secInv : s.activa ? activa(s) : pendiente(s));
   }).join('');
   const L = enlacesArea(), abiertoArea = !!S.menuArea;
@@ -271,6 +271,6 @@ export function resultadosHtml(items, activo) {
 export function moduloHtml(s, sub) {
   return `${migasHtml([{ t: AREA.nombre, href: '#/objetivos' }, { t: s.titulo }])}
     <h1 id="pg-titulo" class="sr-only" tabindex="-1">${esc(s.titulo)}</h1>
-    <p class="aviso etapa mod-aviso">${esc(s.descripcion)} Para cambiar datos, usa Google Sheets o el dashboard publicado.</p>
+    <p class="aviso etapa mod-aviso">${esc(s.descripcion)}</p>
     <div class="mod-wrap"><iframe class="mod-frame" data-mod="${esc(s.modulo)}" data-sub="${esc(sub)}" src="modulo.html?m=${encodeURIComponent(s.modulo)}&sub=${encodeURIComponent(sub)}" title="${esc(s.titulo)}"></iframe></div>`;
 }
