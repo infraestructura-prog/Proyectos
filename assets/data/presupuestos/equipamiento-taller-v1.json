@@ -215,6 +215,45 @@
       "pendientes": [
         "Envío e impuestos hasta el destino por cotizar: la entrega gratis que muestra Amazon es para una dirección en EE. UU."
       ]
+    },
+    {
+      "id": "drydiet-tapete-24x48-gris",
+      "agregado": "2026-11-13",
+      "origen": "Ficha de Amazon (amazon.com, ASIN B0GR8MYVT1) proporcionada por Cristian el 2026-11-13 (captura de la página e imagen)",
+      "nombre": "Tapete para mesa de trabajo 24 × 48\" (1 unidad, gris)",
+      "marca": "Drydiet",
+      "modelo": "Work Bench Mat PU 24 × 48\", 1,6 mm",
+      "categoria": "Mobiliario",
+      "plataforma": "Amazon",
+      "proveedor": "Amazon (amazon.com) · enviado por Amazon",
+      "enlace": "https://www.amazon.com/dp/B0GR8MYVT1?th=1",
+      "imagen": { "tipo": "semilla", "valor": "/assets/data/presupuestos/img/drydiet-tapete-24x48-gris.jpg" },
+      "descripcion": "Tapete de cuero PU para cubrir la mesa de trabajo: protege la superficie y evita que las piezas pequeñas rueden. Se puede recortar a la medida.",
+      "especificaciones": [
+        "Medida: 24 × 48 pulgadas (aprox. 61 × 122 cm).",
+        "Espesor: 1,6 mm.",
+        "Material: poliuretano (cuero PU).",
+        "Color: gris.",
+        "Cantidad: 1 pieza.",
+        "Recortable, suave, flexible y resistente.",
+        "Fácil de limpiar, resistente a rayones y antideslizante.",
+        "Marca y fabricante: Drydiet."
+      ],
+      "precioCents": 2799,
+      "precioOriginal": "US$27.99",
+      "moneda": "USD",
+      "cantidad": 1,
+      "videos": [],
+      "observaciones": [
+        "Precio publicado en amazon.com el 2026-11-13: US$27,99 (color gris). El color negro de la misma medida figuraba a US$29,99.",
+        "Valoración en Amazon: 4,3 de 5 (91 opiniones).",
+        "Hay otras medidas: 15×36\", 20×52\", 24×36\", 24×60\", 24×72\", 24×96\" y 30×60\".",
+        "Amazon ofrecía 5 % de descuento al comprar 2 y 7 % al comprar 3 (según condiciones)."
+      ],
+      "pendientes": [
+        "Envío e impuestos hasta el destino por cotizar: la entrega gratis que muestra Amazon es para una dirección en EE. UU.",
+        "Confirmar que la medida 24 × 48\" corresponde a la mesa de trabajo donde se usará."
+      ]
     }
   ]
 }
