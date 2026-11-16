@@ -473,3 +473,5 @@ input[type=date] { color-scheme: dark; }
 .vt-noimp { margin: 6px 0; }
 .rs-insuf { margin-top: 8px; }
 .vt-ficha code, .vt-card code { overflow-wrap: anywhere; }
+.mq-sync { margin-top: 6px; }
+.sync-pre { max-height: 220px; overflow: auto; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }

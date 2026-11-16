@@ -5,6 +5,7 @@ import { esc, plural, migasHtml } from './componentes.js';
 import { AREA } from './datos.js';
 import * as D from './maq-datos.js';
 import * as RP from './maq-repuestos.js';
+import * as SY from './maq-sync.js';
 
 export const VENTANAS = [
   { id: 'resumen', titulo: 'Resumen', ruta: '#/maquinas' },
@@ -41,8 +42,39 @@ export function estadoLectura() {
     : M.estado === 'error' ? 'No se pudo actualizar y no hay datos guardados.'
       : M.desdeCache ? `No se pudo actualizar · se muestran los datos del ${fdt(M.leido)}`
         : M.leido ? `Actualizado · ${fdt(M.leido)}` : '';
-  return `<div class="mq-estado ${M.desdeCache || M.estado === 'error' ? 'aviso-lectura' : ''}"><span>${esc(txt)}</span>
+  const base = `<div class="mq-estado ${M.desdeCache || M.estado === 'error' ? 'aviso-lectura' : ''}"><span>${esc(txt)}</span>
     <button type="button" class="btn btn-sm" data-act="maq-actualizar" ${M.estado === 'cargando' ? 'disabled' : ''}>Actualizar</button></div>`;
+  return base + syncHtml();
+}
+
+/* Barra de información compartida: última sincronización, cambios pendientes de enviar y acceso al diálogo. */
+export function syncHtml() {
+  if (!SY.disponible()) return '';
+  const m = SY.meta(), n = SY.pendientes().length, na = SY.noAplicados().length;
+  const txt = !m ? 'Información compartida: todavía no sincronizaste este navegador. Los datos de clientes solo se ven con la clave.'
+    : `Información compartida · última sincronización ${fdt(m.fecha)}`;
+  return `<div class="mq-estado mq-sync ${!m || n ? 'aviso-lectura' : ''}"><span>${esc(txt)}${n ? ` · <b>${plural(n, 'cambio sin enviar', 'cambios sin enviar')}</b>` : m ? ' · todo enviado' : ''}${na ? ` · <b>${plural(na, 'cambio no aplicado', 'cambios no aplicados')}</b>` : ''}</span>
+    <button type="button" class="btn btn-sm ${!m || n ? 'btn-primary' : ''}" data-act="sync-abrir">Sincronizar</button></div>`;
+}
+
+/* Diálogo de sincronización: clave (solo en memoria), nombre para el registro y cambios no aplicados. */
+export function formSyncHtml(autor) {
+  const n = SY.pendientes().length, na = SY.noAplicados(), m = SY.meta();
+  return `<form class="dlg-form" novalidate>
+    <div class="dlg-head"><div><p class="dlg-kicker">Máquinas de simulación</p><h2 id="dlg-titulo">Sincronizar información compartida</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cancelar">×</button></div>
+    <div class="dlg-body">
+      <p>${n ? `Se enviarán <b>${plural(n, 'cambio', 'cambios')}</b> de este navegador y` : 'No hay cambios por enviar;'} se traerá lo que registraron los demás.</p>
+      <p class="nota">Se abrirá una ventana de Google para confirmar tu sesión. Si otra persona cambió lo mismo antes, se conserva su versión y la tuya queda guardada aquí para revisarla.</p>
+      ${SY.tieneClave() ? '<p class="nota">La clave ya está escrita en esta sesión.</p>' : `<label class="fld"><span>Clave <b class="req">*</b></span><input type="password" name="clave" autocomplete="off" required><small class="err" hidden>Escribe la clave.</small></label>`}
+      <label class="fld"><span>Tu nombre (queda registrado junto a tus cambios)</span><input name="autor" maxlength="80" value="${esc(autor || '')}" autocomplete="name"></label>
+      ${m ? `<p class="nota">Última sincronización: ${esc(fdt(m.fecha))}${m.autor ? ` · ${esc(m.autor)}` : ''}.</p>` : ''}
+      ${na.length ? `<details class="mas"><summary>Cambios no aplicados (${na.length})</summary><p class="nota">Tus versiones que no se guardaron porque otra persona cambió lo mismo antes. Revisa y vuelve a hacer el cambio si sigue siendo necesario.</p>
+        <ul class="vt-evid">${na.map(x => `<li><b>${esc(x.coleccion)}</b> · ${esc(x.id)} <small class="nota">${esc(fdt(x.fecha))}</small><details><summary>Ver tu versión</summary><pre class="pre sync-pre">${esc(x.datos ? JSON.stringify(JSON.parse(x.datos), null, 1).slice(0, 4000) : 'Lo habías eliminado.')}</pre></details></li>`).join('')}</ul>
+        <button type="button" class="btn btn-sm btn-ghost" data-sync-descartar>Ya los revisé: quitar de la lista</button></details>` : ''}
+      <p class="mq-form-msg" data-msg></p>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn" data-dlg-close>Cancelar</button><button type="submit" class="btn btn-primary">Sincronizar</button></div>
+  </form>`;
 }
 
 /* ── Ventanas aún no construidas: estado honesto, sin cifras ── */

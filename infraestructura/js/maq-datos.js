@@ -235,7 +235,7 @@ export function estimacionArmables() {
 let claveEdicion = '';   // solo en memoria mientras la página está abierta
 export const puedeEditarHoja = () => !!CFG.EDIT_URL;
 export const tieneClave = () => !!claveEdicion;
-export function llamarScript(payload) {
+export function llamarScript(payload, url = CFG.EDIT_URL) {
   return new Promise((resolve, reject) => {
     if (navigator.onLine === false) return reject(Object.assign(new Error('No hay conexión a internet.'), { code: 'NETWORK' }));
     const id = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -243,7 +243,7 @@ export function llamarScript(payload) {
     const popup = window.open('', name, 'popup,width=480,height=560');
     if (!popup) return reject(Object.assign(new Error('El navegador bloqueó la ventana de Google. Permite las ventanas emergentes para esta página y vuelve a intentarlo.'), { code: 'POPUP_BLOCKED' }));
     try { popup.document.title = 'Guardando…'; popup.document.body.innerHTML = '<p style="font:16px system-ui,sans-serif;padding:24px">Conectando con Google Sheets…</p>'; } catch { /* sin acceso */ }
-    const form = Object.assign(document.createElement('form'), { method: 'POST', action: CFG.EDIT_URL, target: name, acceptCharset: 'UTF-8' });
+    const form = Object.assign(document.createElement('form'), { method: 'POST', action: url, target: name, acceptCharset: 'UTF-8' });
     form.style.display = 'none';
     form.appendChild(Object.assign(document.createElement('input'), { type: 'hidden', name: 'payload', value: JSON.stringify({ ...payload, id, origin: location.origin }) }));
     let hecho = false;

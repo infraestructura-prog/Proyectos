@@ -20,6 +20,7 @@ import * as OPV from './maq-op-vistas.js';
 import * as RSV from './maq-res-vistas.js';
 import * as VT from './maq-ventas.js';
 import * as VTV from './maq-ventas-vistas.js';
+import * as SY from './maq-sync.js';
 import { leerRuta, rutaRegistro, rutaMacro, habilitado } from './rutas.js';
 
 const $ = s => document.querySelector(s);
@@ -49,11 +50,12 @@ function cargarEstado() {
   S.maqModo = p.maqModo === 'kits' ? 'kits' : 'individual'; S.maqVista = p.maqVista === 'tabla' ? 'tabla' : 'tarjetas'; S.maqFiltro = typeof p.maqFiltro === 'string' ? p.maqFiltro : '';
   S.repVista = p.repVista === 'tabla' ? 'tabla' : 'tarjetas'; S.repBusca = ''; S.repFiltro = '';
   S.pvVista = ['tabla', 'mapa'].includes(p.pvVista) ? p.pvVista : 'tarjetas'; S.pvEstado = ''; S.pvOper = '';
+  S.syncAutor = typeof p.syncAutor === 'string' ? p.syncAutor.slice(0, 80) : '';
   S.vtVista = ['tabla', 'mapa'].includes(p.vtVista) ? p.vtVista : 'tarjetas'; S.vtBusca = ''; S.vtCiudad = ''; S.vtDoc = ''; S.vtAlerta = '';
   S.opVista = p.opVista === 'tabla' ? 'tabla' : 'tarjetas';
   S.menuArea = false;
 }
-const guardarPrefs = () => almacen.guardarPrefs({ vista: S.vista, abiertos: [...S.abiertos], indice: S.indice, activo: S.activo, sbSec: S.sbSec, soloDestacadas: S.soloDestacadas, maqModo: S.maqModo, maqVista: S.maqVista, maqFiltro: S.maqFiltro, repVista: S.repVista, pvVista: S.pvVista, opVista: S.opVista, vtVista: S.vtVista });
+const guardarPrefs = () => almacen.guardarPrefs({ vista: S.vista, abiertos: [...S.abiertos], indice: S.indice, activo: S.activo, sbSec: S.sbSec, soloDestacadas: S.soloDestacadas, maqModo: S.maqModo, maqVista: S.maqVista, maqFiltro: S.maqFiltro, repVista: S.repVista, pvVista: S.pvVista, opVista: S.opVista, vtVista: S.vtVista, syncAutor: S.syncAutor });
 const guardarTareas = () => { if (!almacen.guardarTareas(tareas)) toast('No se pudo guardar en este navegador.'); };
 const guardarInicios = () => { if (!almacen.guardarProyectos(inicios)) toast('No se pudo guardar en este navegador.'); };
 const tareasDe = pid => tareas.filter(t => t.proyecto === pid);
@@ -779,6 +781,30 @@ dlg.addEventListener('click', e => {
   if (b.dataset.act === 'maq-ficha') maqFicha(b.dataset.uid); else if (b.dataset.act === 'vt-ficha') vtFicha(b.dataset.vid); else pvTaller(b.dataset.tid);
 });
 
+/* ── Sincronización con la hoja privada compartida ── */
+function syncForm() {
+  abrirDialogo(dlg, MQ.formSyncHtml(S.syncAutor), '[data-act="sync-abrir"]');
+  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]'), enviar = form.querySelector('[type="submit"]');
+  const desc = form.querySelector('[data-sync-descartar]');
+  if (desc) desc.addEventListener('click', () => { SY.descartarNoAplicados(); dlgRetorno = null; dlg.close(); render(); toast('Lista de cambios no aplicados vaciada.'); });
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const cl = form.elements.clave, err = cl && cl.closest('.fld').querySelector('.err');
+    if (cl && !cl.value) { err.hidden = false; cl.focus(); return; }
+    S.syncAutor = form.elements.autor.value.trim(); guardarPrefs();
+    enviar.disabled = true; msg.innerHTML = '<span class="nota">Conectando con Google… confirma en la ventana que se abrió.</span>';
+    try {
+      const m = await SY.sincronizar(cl ? cl.value : '', S.syncAutor);
+      dlgRetorno = null; dlg.close(); render();
+      toast(`Sincronizado: ${m.enviados === 1 ? '1 cambio enviado' : `${m.enviados} cambios enviados`}${m.conflictos ? ` · ${m.conflictos} no aplicados (revísalos en Sincronizar)` : ''}.`);
+    } catch (er) {
+      enviar.disabled = false;
+      msg.innerHTML = `<span class="aviso err">${C.esc(er.message)}</span>`;
+      if (er.code === 'UNAUTHORIZED' && cl) { cl.value = ''; cl.focus(); }
+    }
+  });
+}
+
 /* ── Registros de venta: ficha, corrección con historial, servicios ligados a la venta ── */
 function vtFicha(id) {
   const v = VT.ventaPorId(id); if (!v) { toast('El registro ya no existe.'); return; }
@@ -920,6 +946,7 @@ document.addEventListener('click', e => {
     case 'pv-vista': S.pvVista = b.dataset.vista; render(); break;
     case 'vt-vista': S.vtVista = b.dataset.vista; render({ foco: `[data-act="vt-vista"][data-vista="${b.dataset.vista}"]` }); break;
     case 'vt-ficha': vtFicha(b.dataset.vid); break;
+    case 'sync-abrir': syncForm(); break;
     case 'vt-limpiar': S.vtBusca = ''; S.vtCiudad = ''; S.vtDoc = ''; S.vtAlerta = ''; render({ foco: '[data-act="vt-busca"]' }); break;
     case 'vt-importar':
       VT.importar().then(x => { render(); toast(x.nuevas + x.evidNuevas + x.pendNuevos ? `Importado: ${x.nuevas} ventas y ${x.evidNuevas} evidencias nuevas.` : 'Nada nuevo: no se duplicó ningún registro y tus correcciones se conservan.'); }).catch(err => toast(err.message));
