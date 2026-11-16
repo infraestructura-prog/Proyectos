@@ -69,7 +69,6 @@ export function maquinasHtml(S) {
     ${!lista.length ? '<p class="vacio">Ninguna máquina coincide con la búsqueda o los filtros.</p>' : vista === 'tabla' ? tablaMaq(lista) : tarjetasMaq(lista)}
     ${generalesHtml()}`;
 }
-const abiertaTxt = e => { const s = MT.abiertaPrincipal(e); return s ? `${chipPrio(s)} ${esc(s.asunto)}${s.avisos.length ? ' <span class="mt-aviso-ico" title="Revisar: hay una inconsistencia en Odoo">⚠</span>' : ''}` : '<span class="nota">Ninguno real abierto</span>'; };
 function tarjetasMaq(l) {
   return `<ul class="mq-grid mt-grid">${l.map(e => `<li class="mq-card mt-card">${fotoHtml(e, 'mt-foto')}<div class="mq-card-body">
       <p class="mq-tipo">${esc(e.codigo || 'Sin código')} · ${esc(e.categoria)}</p>
@@ -114,8 +113,6 @@ function solicitudItem(s) {
     </dl><p><button type="button" class="btn btn-sm" data-act="mt-trabajo" data-sid="${esc(s.id)}">Ver ficha del trabajo</button></p></details></li>`;
 }
 export function fichaMaquinaHtml(e) {
-  const reales = MT.solicitudesDe(e, 'real'), abiertas = reales.filter(s => s.abierta), hist = reales.filter(s => !s.abierta)
-    .sort((a, b) => String(b.fechaProgramada || b.fechaSolicitud).localeCompare(String(a.fechaProgramada || a.fechaSolicitud)));
   const otras = MT.solicitudesDe(e).filter(s => s.clase !== 'real');
   return `<div class="dlg-head"><div><p class="dlg-kicker">${esc(e.codigo || 'Sin código')} · ${esc(e.categoria)}</p><h2 id="dlg-titulo">${esc(e.nombreCorto)}</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cerrar">×</button></div>
     <div class="dlg-body mq-ficha mt-ficha">
@@ -140,10 +137,7 @@ export function fichaMaquinaHtml(e) {
       <h3 class="rp-h">Condición actual</h3>
       ${condicionHtml(e)}
       <h3 class="rp-h">Mantenimientos</h3>
-      <h4 class="pv-h4">Trabajos abiertos (${abiertas.length})</h4>
-      ${abiertas.length ? `<ul class="mt-sols">${abiertas.map(solicitudItem).join('')}</ul>` : '<p class="vacio">Ningún trabajo real abierto en la captura. Esto no confirma que la máquina esté operativa.</p>'}
-      <h4 class="pv-h4">Historial (${hist.length})</h4>
-      ${hist.length ? `<ul class="mt-sols">${hist.map(solicitudItem).join('')}</ul><p class="nota">«Reparado» en Odoo es historial: no confirma por sí solo que el equipo esté completamente operativo.</p>` : '<p class="vacio">Sin intervenciones reales registradas en Odoo.</p>'}
+      ${mantMaquinaHtml(e)}
       ${PREVENTIVOS_ACTIVOS ? `<h4 class="pv-h4">Preventivos (rutinas documentadas y aprobadas)</h4>${preventivosMaquinaHtml(e)}` : ''}
       ${otras.length ? `<details class="mas"><summary>Registros de prueba o plantilla en Odoo (${otras.length}) · fuera de los indicadores</summary>
         <ul class="mt-sols">${otras.map(s => `<li><b>${esc(s.asunto)}</b> <span class="nota">· ${esc(s.etapa)} · ${s.clase === 'prueba' ? 'prueba' : 'plantilla'}: ${esc(s.motivoClase)}</span></li>`).join('')}</ul></details>` : ''}
@@ -197,134 +191,187 @@ export function formVerificacionHtml(e, autor) {
   </form>`;
 }
 
-/* ── Mantenimientos (Etapa 4): trabajos abiertos, historial y registros de prueba aparte ── */
-const nomEq = s => { const e = MT.equipoDeSolicitud(s); return e ? `${e.codigo ? e.codigo + ' · ' : ''}${e.nombreCorto}` : 'Sin equipo'; };
-const atiendeTxt = s => { const a = MT.atiende(s); return a ? esc(a) : `${pend('Sin asignar')} <small class="nota">(en Odoo: «${esc(s.tecnico || '—')}»)</small>`; };
-const proxTxt = s => { const g = MT.seguimientoDe(s); return g.proximaAccion ? esc(g.proximaAccion) : pend('Pendiente de definir'); };
-export function trabajosFiltrados(S) {
+/* ── Mantenimientos: trabajos del dashboard (editables) + historial de Odoo (consulta) ── */
+const chipPrioT = t => `<span class="mq-chip ${t.prioridadN >= 3 ? 'c-falta' : 'c-otra'}">${t.prioridad === 'Crítica' ? '⚑ ' : ''}Prioridad ${esc(String(t.prioridad).toLowerCase())}</span>`;
+const chipOrigen = t => (t.fuente === 'odoo' ? '<span class="mq-chip c-otra">Odoo</span>' : '<span class="mq-chip c-vendida">Dashboard</span>');
+const nomEqId = id => { const e = MT.equipoPorId(id); return e ? `${e.codigo ? e.codigo + ' · ' : ''}${e.nombreCorto}` : 'Sin equipo'; };
+const atiendeT = t => (t.atiende ? esc(t.atiende) : pend('Sin asignar'));
+const proxT = t => (t.proximaAccion ? esc(t.proximaAccion) : pend('Pendiente de definir'));
+const abiertaTxt = e => { const t = MT.abiertaPrincipal(e); return t ? `${chipPrioT(t)} ${esc(t.titulo)}${t.avisos.length ? ' <span class="mt-aviso-ico" title="Revisar: hay una inconsistencia en Odoo">⚠</span>' : ''}` : '<span class="nota">Ninguno abierto</span>'; };
+const proxMaq = e => { const t = MT.abiertaPrincipal(e); return t ? proxT(t) : '<span class="nota">Sin trabajo abierto</span>'; };
+
+function filtrar(S, l) {
   const tt = fold(S.mtTBusca).trim().split(/\s+/).filter(Boolean);
-  return MT.T.solicitudes.filter(s => s.clase === 'real').filter(s => {
-    const e = MT.equipoDeSolicitud(s) || {};
-    return (!S.mtTEquipo || e.id === S.mtTEquipo) && (!S.mtTCat || e.categoria === S.mtTCat) && (!S.mtTPrio || s.prioridad === S.mtTPrio)
-      && (!S.mtTEtapa || s.etapa === S.mtTEtapa) && (!S.mtTResp || (MT.atiende(s) || 'sin-asignar') === S.mtTResp)
-      && (!tt.length || tt.every(w => fold([s.asunto, s.falla, s.modoFalla, s.accion, s.descripcion, s.sistema, s.componente, nomEq(s)].join(' ')).includes(w)));
-  });
+  return l.filter(t => { const e = MT.equipoPorId(t.equipoId) || {};
+    return (!S.mtTEquipo || t.equipoId === S.mtTEquipo) && (!S.mtTCat || e.categoria === S.mtTCat) && (!S.mtTPrio || t.prioridad === S.mtTPrio)
+      && (!S.mtTEtapa || t.estado === S.mtTEtapa) && (!S.mtTResp || (t.atiende || 'sin-asignar') === S.mtTResp)
+      && (!tt.length || tt.every(w => fold([t.titulo, t.resumen, t.bloqueo, t.proximaAccion, nomEqId(t.equipoId)].join(' ')).includes(w))); });
 }
 export function trabajosHtml(S) {
   if (MT.T.estado !== 'listo') return `${cabeceraMant('trabajos')}<p class="vacio">${MT.T.estado === 'error' ? 'Sin datos.' : 'Cargando…'}</p>`;
-  const reales = MT.T.solicitudes.filter(s => s.clase === 'real'), otras = MT.T.solicitudes.filter(s => s.clase !== 'real');
-  const l = trabajosFiltrados(S), filtrado = !!(S.mtTEquipo || S.mtTCat || S.mtTPrio || S.mtTEtapa || S.mtTResp || String(S.mtTBusca || '').trim());
-  const abiertos = l.filter(s => s.abierta).sort((a, b) => Number(b.prioridad) - Number(a.prioridad));
-  const hist = l.filter(s => !s.abierta).sort((a, b) => String(b.fechaProgramada || b.fechaSolicitud).localeCompare(String(a.fechaProgramada || a.fechaSolicitud)));
-  const responsables = [...new Set(reales.map(s => MT.atiende(s) || 'sin-asignar'))];
+  const todosAb = MT.trabajosAbiertos(), todosHi = MT.historialTrabajos(), otras = MT.T.solicitudes.filter(s => s.clase !== 'real');
+  const ab = filtrar(S, todosAb), hi = filtrar(S, todosHi);
+  const filtrado = !!(S.mtTEquipo || S.mtTCat || S.mtTPrio || S.mtTEtapa || S.mtTResp || String(S.mtTBusca || '').trim());
+  const responsables = [...new Set([...todosAb, ...todosHi].map(t => t.atiende || 'sin-asignar'))];
+  const estados = [...new Set([...MT.ESTADOS_ABIERTOS, ...MT.ESTADOS_CERRADOS, ...MT.T.etapas.map(x => x.nombre)])];
   const opt = (v, t, sel) => `<option value="${esc(v)}" ${v === sel ? 'selected' : ''}>${esc(t)}</option>`;
+  const pendOdoo = ab.filter(t => t.fuente === 'odoo'), abDash = ab.filter(t => t.fuente === 'dashboard');
   return `${cabeceraMant('trabajos')}
-    <p class="nota mt-alcance" aria-live="polite">${filtrado ? `<b>Mostrando ${l.length} de ${reales.length} solicitudes reales.</b>` : `<b>${reales.length} solicitudes reales en Odoo</b>: ${plural(reales.filter(s => s.abierta).length, 'abierta', 'abiertas')} y ${reales.filter(s => !s.abierta).length} en el historial.`}
-      ${otras.length ? `${otras.length} registros de prueba o plantilla quedan aparte, fuera de las cifras.` : ''}</p>
+    <div class="mq-barra"><p class="nota mt-alcance" aria-live="polite">${filtrado ? `<b>Mostrando ${ab.length} de ${todosAb.length} abiertos y ${hi.length} de ${todosHi.length} en el historial.</b>` : `<b>${plural(todosAb.length, 'trabajo abierto', 'trabajos abiertos')} · ${todosHi.length} en el historial.</b>`}
+      Los trabajos se gestionan en el dashboard; el historial de Odoo se conserva como consulta.${otras.length ? ` ${otras.length} registros de prueba o plantilla de Odoo quedan aparte.` : ''}</p>
+      <span class="sp"></span><button type="button" class="btn btn-primary" data-act="mt-orden-nuevo">+ Nuevo trabajo</button></div>
     <div class="mq-barra mt-filtros">
-      <label class="mq-filtro"><span class="sr-only">Buscar trabajo</span><input type="search" data-act="mt-t-busca" value="${esc(S.mtTBusca || '')}" placeholder="Falla, causa, sistema…" autocomplete="off"></label>
+      <label class="mq-filtro"><span class="sr-only">Buscar trabajo</span><input type="search" data-act="mt-t-busca" value="${esc(S.mtTBusca || '')}" placeholder="Trabajo, falla, bloqueo…" autocomplete="off"></label>
       <label class="mq-filtro"><span class="sr-only">Equipo</span><select data-act="mt-t-equipo">${opt('', 'Todos los equipos', S.mtTEquipo)}${MT.maquinas().slice().sort((a, b) => (a.codigo || 'ZZ').localeCompare(b.codigo || 'ZZ')).map(e => opt(e.id, `${e.codigo} · ${e.nombreCorto}`, S.mtTEquipo)).join('')}</select></label>
       <label class="mq-filtro"><span class="sr-only">Categoría</span><select data-act="mt-t-cat">${opt('', 'Todas las categorías', S.mtTCat)}${MT.categorias().map(c => opt(c, c, S.mtTCat)).join('')}</select></label>
-      <label class="mq-filtro"><span class="sr-only">Prioridad</span><select data-act="mt-t-prio">${opt('', 'Cualquier prioridad', S.mtTPrio)}${['3', '2', '1', '0'].map(p => opt(p, MT.PRIORIDAD[p], S.mtTPrio)).join('')}</select></label>
+      <label class="mq-filtro"><span class="sr-only">Prioridad</span><select data-act="mt-t-prio">${opt('', 'Cualquier prioridad', S.mtTPrio)}${['Crítica', 'Alta', 'Normal', 'Baja', 'Muy baja'].map(p => opt(p, p, S.mtTPrio)).join('')}</select></label>
       <label class="mq-filtro"><span class="sr-only">Responsable</span><select data-act="mt-t-resp">${opt('', 'Cualquier responsable', S.mtTResp)}${responsables.map(r => opt(r, r === 'sin-asignar' ? 'Sin asignar' : r, S.mtTResp)).join('')}</select></label>
-      <label class="mq-filtro"><span class="sr-only">Etapa en Odoo</span><select data-act="mt-t-etapa">${opt('', 'Cualquier etapa', S.mtTEtapa)}${MT.T.etapas.map(x => opt(x.nombre, x.nombre, S.mtTEtapa)).join('')}</select></label>
+      <label class="mq-filtro"><span class="sr-only">Estado o etapa</span><select data-act="mt-t-etapa">${opt('', 'Cualquier estado', S.mtTEtapa)}${estados.map(x => opt(x, x, S.mtTEtapa)).join('')}</select></label>
       ${filtrado ? '<button type="button" class="btn btn-sm btn-ghost" data-act="mt-t-limpiar">Quitar filtros</button>' : ''}
     </div>
-    <section class="pj-sec" aria-labelledby="mt-ab"><h2 id="mt-ab">Trabajos abiertos (${abiertos.length})</h2>
-      ${abiertos.length ? `<ul class="mt-trab">${abiertos.map(trabajoTarjeta).join('')}</ul>` : `<p class="vacio">${filtrado ? 'Ningún trabajo abierto coincide con los filtros.' : 'No hay trabajos reales abiertos en la captura.'}</p>`}
+    <section class="pj-sec" aria-labelledby="mt-ab"><h2 id="mt-ab">Trabajos abiertos (${ab.length})</h2>
+      ${abDash.length ? `<ul class="mt-trab">${abDash.map(trabajoCard).join('')}</ul>` : `<p class="vacio">${filtrado ? 'Ningún trabajo abierto coincide con los filtros.' : 'No hay trabajos abiertos en el dashboard. Usa «+ Nuevo trabajo» para registrar uno.'}</p>`}
+      ${pendOdoo.length ? `<h3 class="rp-h">Abiertos en Odoo, sin pasar al dashboard (${pendOdoo.length})</h3>
+        <p class="nota">Para editarlos aquí, pásalos al dashboard: se copian con referencia a Odoo y Odoo no se modifica.</p>
+        <ul class="mt-trab">${pendOdoo.map(trabajoCard).join('')}</ul>` : ''}
     </section>
-    <section class="pj-sec" aria-labelledby="mt-hi"><h2 id="mt-hi">Historial (${hist.length})</h2>
-      ${hist.length ? `<div class="tabla-wrap"><table class="map-tabla mq-tabla"><thead><tr><th>Equipo</th><th>Trabajo</th><th>Tipo</th><th>Prioridad</th><th>Etapa</th><th>Ejecución según Odoo</th><th>Cierre en Odoo</th></tr></thead><tbody>
-        ${hist.map(s => `<tr><td>${esc(nomEq(s))}</td><td><button type="button" class="mq-link" data-act="mt-trabajo" data-sid="${esc(s.id)}"><b>${esc(s.asunto)}</b></button></td><td>${esc(s.tipoTxt)}</td><td>${esc(s.prioridadTxt)}</td>
-          <td>${esc(s.etapa)}</td><td>${fd(s.fechaProgramada) || '—'}</td><td>${fd(s.fechaCierre) || '—'}</td></tr>`).join('')}</tbody></table></div>
-        <p class="nota">La «ejecución según Odoo» es la fecha programada; la fecha de registro es cuando se cargó en Odoo. «Reparado» es historial y no confirma por sí solo que el equipo esté operativo.</p>`
+    <section class="pj-sec" aria-labelledby="mt-hi"><h2 id="mt-hi">Historial (${hi.length})</h2>
+      ${hi.length ? `<div class="tabla-wrap"><table class="map-tabla mq-tabla"><thead><tr><th>Equipo</th><th>Trabajo</th><th>Origen</th><th>Tipo</th><th>Prioridad</th><th>Estado</th><th>Cierre</th></tr></thead><tbody>
+        ${hi.map(t => `<tr><td>${esc(nomEqId(t.equipoId))}</td><td><button type="button" class="mq-link" data-act="${t.act}" ${t.fuente === 'odoo' ? 'data-sid' : 'data-oid'}="${esc(t.id)}"><b>${esc(t.titulo)}</b></button></td>
+          <td>${chipOrigen(t)}</td><td>${esc(t.tipo)}</td><td>${esc(t.prioridad)}</td><td>${esc(t.estado)}</td><td>${fd(t.fechaCierre) || '—'}${t.fuente === 'odoo' && t.fechaEjecucion ? `<br><small class="nota">ejecución según Odoo ${fd(t.fechaEjecucion)}</small>` : ''}</td></tr>`).join('')}</tbody></table></div>
+        <p class="nota">Un trabajo «Completado» o «Reparado» es historial: no confirma por sí solo que la máquina esté operativa.</p>`
         : `<p class="vacio">${filtrado ? 'Ningún registro del historial coincide con los filtros.' : 'Sin historial.'}</p>`}
     </section>
     ${PREVENTIVOS_ACTIVOS ? preventivosHtml(S) : ''}
     ${otras.length ? `<details class="mas"><summary>Registros de prueba o plantilla en Odoo (${otras.length}) · fuera de las cifras</summary>
-      <ul class="vt-evid">${otras.map(s => `<li><b>${esc(s.asunto)}</b> <small class="nota">· ${esc(nomEq(s))} · ${esc(s.etapa)} · ${s.clase}: ${esc(s.motivoClase)}</small></li>`).join('')}</ul>
-      <p class="nota">Se conservan en Odoo sin cambios; aquí solo se separan para no inflar los indicadores.</p></details>` : ''}`;
+      <ul class="vt-evid">${otras.map(s => `<li><b>${esc(s.asunto)}</b> <small class="nota">· ${esc(nomEqId((MT.equipoDeSolicitud(s) || {}).id))} · ${esc(s.etapa)} · ${s.clase}: ${esc(s.motivoClase)}</small></li>`).join('')}</ul></details>` : ''}`;
 }
-function trabajoTarjeta(s) {
-  const g = MT.seguimientoDe(s);
-  return `<li class="mq-card mt-card mt-trab-card ${g.bloqueo || s.bloqueada ? 'bloq' : ''}"><div class="mq-card-body">
-    <p class="mq-tipo">${esc(nomEq(s))} · ${esc(s.tipoTxt)}</p>
-    <h3><button type="button" class="mq-link" data-act="mt-trabajo" data-sid="${esc(s.id)}">${esc(s.asunto)}</button></h3>
-    <p>${chipPrio(s)} <span class="mq-chip c-otra">Odoo: ${esc(s.etapa)}</span>${g.estado ? ` <span class="mq-chip c-vendida">${esc(g.estado)}</span>` : ''}${s.avisos.length ? ' <span class="mt-aviso-ico" title="Revisar">⚠</span>' : ''}</p>
+function trabajoCard(t) {
+  const dash = t.fuente === 'dashboard';
+  return `<li class="mq-card mt-card mt-trab-card ${t.bloqueo ? 'bloq' : ''}"><div class="mq-card-body">
+    <p class="mq-tipo">${esc(nomEqId(t.equipoId))} · ${esc(t.tipo)}</p>
+    <h3><button type="button" class="mq-link" data-act="${t.act}" ${dash ? 'data-oid' : 'data-sid'}="${esc(t.id)}">${esc(t.titulo)}</button></h3>
+    <p>${chipPrioT(t)} ${chipOrigen(t)} <span class="mq-chip c-otra">${esc(t.estado)}</span>${t.avisos.length ? ' <span class="mt-aviso-ico" title="Revisar">⚠</span>' : ''}</p>
     <dl class="vt-dl">
-      <div><dt>Qué le ocurre</dt><dd>${esc(s.falla || s.descripcion.split('\n')[0] || s.asunto)}</dd></div>
-      <div><dt>Quién lo atiende</dt><dd>${atiendeTxt(s)}</dd></div>
-      <div><dt>Qué impide continuar</dt><dd>${g.bloqueo ? `<span class="mt-aviso-txt">${esc(g.bloqueo)}</span>` : s.bloqueada ? '<span class="mt-aviso-txt">Bloqueado en Odoo (sin motivo)</span>' : '<span class="nota">Sin bloqueo documentado</span>'}</dd></div>
-      <div><dt>Próxima acción</dt><dd>${proxTxt(s)}</dd></div>
-      <div><dt>Registrada</dt><dd>${fd(s.fechaSolicitud)}${s.fechaProgramada ? ` <small class="nota">· programada en Odoo ${fd(s.fechaProgramada)}</small>` : ''}</dd></div>
-    </dl></div></li>`;
+      <div><dt>Qué le ocurre</dt><dd>${esc(t.resumen)}</dd></div>
+      <div><dt>Quién lo atiende</dt><dd>${atiendeT(t)}</dd></div>
+      <div><dt>Qué impide continuar</dt><dd>${t.bloqueo ? `<span class="mt-aviso-txt">${esc(t.bloqueo)}</span>` : '<span class="nota">Sin bloqueo documentado</span>'}</dd></div>
+      <div><dt>Próxima acción</dt><dd>${proxT(t)}</dd></div>
+      <div><dt>Reportado</dt><dd>${fd(t.fechaReporte) || '—'}${t.fechaPrevista ? ` <small class="nota">· previsto ${fd(t.fechaPrevista)}</small>` : ''}</dd></div>
+    </dl>
+    ${dash ? '' : `<p class="mt-card-acc"><button type="button" class="btn btn-sm" data-act="mt-gestionar" data-sid="${esc(t.id)}">Gestionar en el dashboard</button></p>`}
+  </div></li>`;
 }
 
-/* Ficha del trabajo: resumen arriba; detalle técnico en desplegables. */
-export function fichaTrabajoHtml(s) {
-  const e = MT.equipoDeSolicitud(s), g = MT.seguimientoDe(s);
-  const det = (t, x) => (x ? `<details class="mas" open><summary>${t}</summary><p class="pre">${esc(x)}</p></details>` : '');
-  return `<div class="dlg-head"><div><p class="dlg-kicker">${esc(nomEq(s))} · Solicitud #${s.odooId} en Odoo</p><h2 id="dlg-titulo">${esc(s.asunto)}</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cerrar">×</button></div>
+/* Ficha de un trabajo del dashboard. */
+export function fichaOrdenHtml(o) {
+  const t = MT.trabajosAbiertos().concat(MT.historialTrabajos()).find(x => x.id === o.id) || {};
+  const det = (titulo, x) => (x ? `<details class="mas" open><summary>${titulo}</summary><p class="pre">${esc(x)}</p></details>` : '');
+  const e = MT.equipoPorId(o.equipoId);
+  return `<div class="dlg-head"><div><p class="dlg-kicker">${esc(nomEqId(o.equipoId))} · Trabajo ${esc(o.id)}</p><h2 id="dlg-titulo">${esc(o.titulo)}</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cerrar">×</button></div>
     <div class="dlg-body mq-ficha mt-ficha">
-      <p class="mt-fuente-mini">Datos de Odoo al ${esc(fdt(MT.T.fuente.capturado))} (captura, no en vivo).</p>
+      ${o.origenOdoo ? `<p class="mt-fuente-mini">Pasado al dashboard desde la solicitud #${o.origenOdoo} de Odoo, que no se modificó.</p>` : ''}
+      <dl class="org-dl">
+        ${fila('Equipo', e ? `<button type="button" class="mq-link" data-act="mt-ficha" data-eid="${esc(e.id)}">${esc(nomEqId(e.id))}</button>` : 'Sin equipo')}
+        ${fila('Estado', `${esc(o.estado)}${MT.ordenAbierta(o) ? '' : ` · cerrado el ${fd(o.fechaCierre)}`}`)}
+        ${fila('Tipo · prioridad', `${esc(o.tipo)} · ${esc(o.prioridad)}`)}
+        ${fila('Quién lo atiende', atiendeT(t.id ? t : o))}
+        ${fila('Próxima acción', o.proximaAccion ? esc(o.proximaAccion) : pend('Pendiente de definir'))}
+        ${fila('Bloqueo o dependencia', o.bloqueo ? `<span class="mt-aviso-txt">${esc(o.bloqueo)}</span>` : '<span class="nota">Sin bloqueo documentado</span>')}
+        ${fila('Fecha de reporte', fd(o.fechaReporte) || '—')}
+        ${fila('Fecha prevista', fd(o.fechaPrevista) || '<span class="nota">Sin fecha</span>')}
+      </dl>
+      <h3 class="rp-h">Detalle</h3>
+      ${det('Descripción', o.descripcion)}${det('Diagnóstico', o.diagnostico)}${det('Intervenciones realizadas', o.intervenciones)}
+      <dl class="org-dl">
+        ${fila('Repuestos utilizados', o.repuestos ? `<span class="pre">${esc(o.repuestos)}</span>` : pend('Sin registrar'))}
+        ${fila('Costo', o.costo !== null && o.costo !== undefined ? `${esc(String(o.costo))} ${esc(o.moneda || '')}` : pend('Sin registrar'))}
+        ${fila('Evidencias', o.evidencias ? `<span class="pre">${esc(o.evidencias)}</span>` : pend('Sin evidencias'))}
+        ${fila('Resultado de pruebas', o.resultadoPruebas ? `<span class="pre">${esc(o.resultadoPruebas)}</span>` : pend('Sin registrar'))}
+      </dl>
+      <details class="mas"><summary>Historial de cambios (${(o.historial || []).length})</summary><ol class="hist">${(o.historial || []).slice().reverse().map(h => `<li><span class="nota">${esc(fdt(h.fecha))}</span>${h.autor ? ` · ${esc(h.autor)}` : ''}: ${h.nota ? esc(h.nota) : h.cambios.map(c => `${esc(MT.etiquetaCampoOrden(c.campo))} → ${esc(String(c.despues || 'vacío'))}`).join('; ')}</li>`).join('')}</ol></details>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn btn-ghost tk-borrar" data-mt="eliminar-orden">Eliminar trabajo</button><span class="sp"></span><button type="button" class="btn btn-primary" data-mt="editar-orden">Editar</button></div>`;
+}
+export function formOrdenHtml(o, equipoId, autor) {
+  const v = o || { equipoId: equipoId || '', titulo: '', tipo: 'Correctivo', prioridad: 'Normal', estado: 'Nuevo', atiende: '', fechaReporte: hoy(), fechaPrevista: '', bloqueo: '', proximaAccion: '',
+    descripcion: '', diagnostico: '', intervenciones: '', repuestos: '', costo: null, moneda: '', evidencias: '', resultadoPruebas: '', fechaCierre: '' };
+  const sel = (n, l, x) => `<select name="${n}">${l.map(o2 => `<option ${o2 === x ? 'selected' : ''}>${esc(o2)}</option>`).join('')}</select>`;
+  const area = (n, t, rows = 2, ph = '') => `<label class="fld"><span>${t}</span><textarea name="${n}" rows="${rows}" maxlength="3000" placeholder="${esc(ph)}">${esc(v[n] || '')}</textarea></label>`;
+  return `<form class="dlg-form" novalidate>
+    <div class="dlg-head"><div><p class="dlg-kicker">Mantenimiento</p><h2 id="dlg-titulo">${o ? 'Editar trabajo' : 'Nuevo trabajo'}</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cancelar">×</button></div>
+    <div class="dlg-body">
+      <label class="fld"><span>Máquina <b class="req">*</b></span><select name="equipoId"><option value="">Elige…</option>${MT.maquinas().slice().sort((a, b) => (a.codigo || 'ZZ').localeCompare(b.codigo || 'ZZ')).map(e => `<option value="${esc(e.id)}" ${e.id === v.equipoId ? 'selected' : ''}>${esc(e.codigo)} · ${esc(e.nombreCorto)}</option>`).join('')}</select></label>
+      <label class="fld"><span>Trabajo o problema <b class="req">*</b></span><input name="titulo" maxlength="200" value="${esc(v.titulo)}" autocomplete="off" placeholder="Ej.: fuga de aceite en el ramal de mangueras"></label>
+      <div class="fld-row">
+        <label class="fld"><span>Tipo</span>${sel('tipo', MT.TIPOS, v.tipo)}</label>
+        <label class="fld"><span>Prioridad</span>${sel('prioridad', MT.PRIORIDADES, v.prioridad)}</label>
+        <label class="fld"><span>Estado</span><select name="estado"><optgroup label="Abierto">${MT.ESTADOS_ABIERTOS.map(x => `<option ${x === v.estado ? 'selected' : ''}>${esc(x)}</option>`).join('')}</optgroup><optgroup label="Cerrado">${MT.ESTADOS_CERRADOS.map(x => `<option ${x === v.estado ? 'selected' : ''}>${esc(x)}</option>`).join('')}</optgroup></select></label>
+      </div>
+      <div class="fld-row">
+        <label class="fld"><span>Quién lo atiende</span><input name="atiende" maxlength="120" value="${esc(v.atiende)}" autocomplete="off" placeholder="Persona o proveedor"></label>
+        <label class="fld"><span>Fecha de reporte <b class="req">*</b></span><input type="date" name="fechaReporte" value="${esc(v.fechaReporte)}" max="${hoy()}"></label>
+        <label class="fld"><span>Fecha prevista</span><input type="date" name="fechaPrevista" value="${esc(v.fechaPrevista)}"></label>
+      </div>
+      ${area('proximaAccion', 'Próxima acción')}${area('bloqueo', 'Bloqueo o dependencia', 2, 'Qué impide continuar. Vacío = sin bloqueo.')}
+      ${area('descripcion', 'Descripción', 3)}
+      <details class="mas" ${o && (o.diagnostico || o.intervenciones || o.repuestos || o.costo !== null || o.evidencias || o.resultadoPruebas) ? 'open' : ''}><summary>Diagnóstico, intervención, repuestos, costo y cierre</summary>
+        ${area('diagnostico', 'Diagnóstico')}${area('intervenciones', 'Intervenciones realizadas', 3, 'Obligatorio para marcarlo «Completado».')}${area('repuestos', 'Repuestos utilizados')}
+        <div class="fld-row"><label class="fld"><span>Costo</span><input name="costo" inputmode="decimal" value="${v.costo ?? ''}" autocomplete="off"></label><label class="fld"><span>Moneda</span><input name="moneda" maxlength="10" value="${esc(v.moneda || '')}" placeholder="USD, Bs…"></label>
+          <label class="fld"><span>Fecha de cierre</span><input type="date" name="fechaCierre" value="${esc(v.fechaCierre || '')}" max="${hoy()}"></label></div>
+        ${area('evidencias', 'Evidencias (enlaces o descripción)')}${area('resultadoPruebas', 'Resultado de pruebas')}
+      </details>
+      <label class="fld"><span>Registrado por</span><input name="autor" maxlength="80" value="${esc(autor || '')}" autocomplete="name"></label>
+      <p class="nota">Se guarda para todo el equipo (pide el PIN y tu nombre). No se escribe en Odoo.</p>
+      <p class="mq-form-msg" data-msg></p>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn" data-dlg-close>Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div>
+  </form>`;
+}
+
+/* Ficha de una solicitud de Odoo (consulta). Si está abierta, se puede pasar al dashboard. */
+export function fichaTrabajoHtml(s) {
+  const e = MT.equipoDeSolicitud(s), gestionada = MT.ordenDeOdoo(s.odooId);
+  const det = (t, x) => (x ? `<details class="mas" open><summary>${t}</summary><p class="pre">${esc(x)}</p></details>` : '');
+  return `<div class="dlg-head"><div><p class="dlg-kicker">${esc(nomEqId(e ? e.id : ''))} · Solicitud #${s.odooId} en Odoo</p><h2 id="dlg-titulo">${esc(s.asunto)}</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cerrar">×</button></div>
+    <div class="dlg-body mq-ficha mt-ficha">
+      <p class="mt-fuente-mini">Datos de Odoo al ${esc(fdt(MT.T.fuente.capturado))} (captura, no en vivo). Solo consulta.</p>
+      ${gestionada ? `<p class="mt-aviso">Este trabajo se gestiona en el dashboard: <button type="button" class="mq-link" data-act="mt-orden" data-oid="${esc(gestionada.id)}">ver el trabajo ${esc(gestionada.id)}</button>.</p>` : ''}
       ${s.clase !== 'real' ? `<p class="mt-aviso">Registro de ${s.clase} en Odoo: ${esc(s.motivoClase)} Queda fuera de los indicadores.</p>` : ''}
       ${s.avisos.map(a => `<p class="mt-aviso">⚠ ${esc(a)}</p>`).join('')}
       <dl class="org-dl">
-        ${fila('Equipo', e ? `<button type="button" class="mq-link" data-act="mt-ficha" data-eid="${esc(e.id)}">${esc(nomEq(s))}</button>` : 'Sin equipo')}
-        ${fila('Etapa en Odoo', `${esc(s.etapa)}${s.bloqueada ? ' · <span class="mt-aviso-txt">Bloqueado</span>' : ''}`)}
+        ${fila('Equipo', e ? `<button type="button" class="mq-link" data-act="mt-ficha" data-eid="${esc(e.id)}">${esc(nomEqId(e.id))}</button>` : 'Sin equipo')}
+        ${fila('Etapa en Odoo', esc(s.etapa))}
         ${fila('Tipo · prioridad', `${esc(s.tipoTxt)} · ${esc(s.prioridadTxt)}`)}
         ${fila('Fecha de registro en Odoo', fd(s.fechaSolicitud) || '—')}
         ${fila('Ejecución programada', s.fechaProgramada ? `${fd(s.fechaProgramada)}${s.finProgramado ? ` → ${fd(s.finProgramado)}` : ''}` : pend('Sin fecha'))}
         ${fila('Cierre en Odoo', fd(s.fechaCierre) || (s.abierta ? '<span class="nota">Abierta</span>' : '—'))}
         ${fila('Sistema · componente', esc([s.sistema, s.componente].filter(Boolean).join(' · ')) || pend('Sin dato'))}
       </dl>
-      ${s.clase === 'real' && s.abierta ? `<h3 class="rp-h">Seguimiento</h3>
-        <dl class="org-dl">
-          ${fila('Quién lo atiende', atiendeTxt(s))}
-          ${fila('Próxima acción', proxTxt(s))}
-          ${fila('Bloqueo o dependencia', g.bloqueo ? `<span class="mt-aviso-txt">${esc(g.bloqueo)}</span>` : '<span class="nota">Sin bloqueo documentado</span>')}
-          ${fila('Estado de seguimiento', g.estado ? `${esc(g.estado)}${g.fechaPrevista ? ` · previsto ${fd(g.fechaPrevista)}` : ''} <small class="nota">(no cambia la etapa de Odoo)</small>` : '<span class="nota">Sin estado complementario</span>')}
-        </dl>
-        <p><button type="button" class="btn btn-sm btn-primary" data-mt="seguimiento">Actualizar seguimiento</button></p>
-        ${g.historial.length ? `<details class="mas"><summary>Cambios de seguimiento (${g.historial.length})</summary><ol class="hist">${g.historial.slice().reverse().map(h => `<li><span class="nota">${esc(fdt(h.fecha))}</span>${h.autor ? ` · ${esc(h.autor)}` : ''}: ${h.cambios.map(c => `${esc(CAMPO_SEG[c.campo] || c.campo)} → ${esc(c.despues || 'vacío')}`).join('; ')}</li>`).join('')}</ol></details>` : ''}` : ''}
       <h3 class="rp-h">Detalle</h3>
-      ${det('Descripción original', s.descripcion)}
-      ${det('Falla reportada', s.falla)}
-      ${det('Diagnóstico (modo de falla)', s.modoFalla)}
-      ${det('Intervención realizada', s.accion)}
-      ${!s.descripcion && !s.falla && !s.modoFalla && !s.accion ? '<p class="vacio">Sin descripción, diagnóstico ni intervención documentados.</p>' : ''}
+      ${det('Descripción original', s.descripcion)}${det('Falla reportada', s.falla)}${det('Diagnóstico (modo de falla)', s.modoFalla)}${det('Intervención realizada', s.accion)}
       <dl class="org-dl">
-        ${fila('Repuestos utilizados', pend('No registrados en la captura'))}
         ${fila('Costos registrados', s.presupuesto.length ? `<ul class="mt-pres">${s.presupuesto.map(p => `<li>${esc(p.concepto)}: ${p.precio ? esc(String(p.precio)) : '—'}${p.referencia ? ` <small class="nota">(referencia ${esc(String(p.referencia))})</small>` : ''}</li>`).join('')}</ul><small class="nota">Presupuesto en Odoo; moneda no indicada.</small>` : pend('Sin costos registrados'))}
         ${s.ticket ? fila('Documento vinculado', `${esc(s.ticket)} <small class="nota">(Incidencias de Odoo)</small>`) : ''}
         ${fila('Evidencias', s.adjuntos.length ? s.adjuntos.map(a => `${esc(a.nombre)} <small class="nota">${a.kb} KB · en Odoo</small>`).join(', ') : pend('Sin evidencias adjuntas'))}
-        ${fila('Resultado de pruebas', pend('No documentado'))}
         ${fila('Registro original', `<a href="${esc(MT.urlOdooSolicitud(s))}" target="_blank" rel="noopener noreferrer">Abrir en Odoo</a> <small class="nota">(requiere sesión)</small>`)}
       </dl>
-    </div>`;
-}
-const CAMPO_SEG = { atiende: 'Atiende', proximaAccion: 'Próxima acción', bloqueo: 'Bloqueo', estado: 'Estado', fechaPrevista: 'Fecha prevista' };
-export function formSeguimientoHtml(s, autor) {
-  const g = MT.seguimientoDe(s);
-  return `<form class="dlg-form" novalidate>
-    <div class="dlg-head"><div><p class="dlg-kicker">${esc(nomEq(s))} · #${s.odooId}</p><h2 id="dlg-titulo">Seguimiento: ${esc(s.asunto)}</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cancelar">×</button></div>
-    <div class="dlg-body">
-      <p class="nota">Estos datos complementan a Odoo y no lo modifican: la etapa sigue siendo «${esc(s.etapa)}».</p>
-      <label class="fld"><span>Quién lo atiende</span><input name="atiende" maxlength="120" value="${esc(g.atiende)}" autocomplete="off" placeholder="Persona o proveedor responsable"></label>
-      <label class="fld"><span>Próxima acción</span><textarea name="proximaAccion" rows="2" maxlength="600">${esc(g.proximaAccion)}</textarea></label>
-      <label class="fld"><span>Bloqueo o dependencia</span><textarea name="bloqueo" rows="2" maxlength="600" placeholder="Qué impide continuar (repuesto, presupuesto, proveedor…). Vacío = sin bloqueo.">${esc(g.bloqueo)}</textarea></label>
-      <div class="fld-row">
-        <label class="fld"><span>Estado de seguimiento</span><select name="estado"><option value="">Sin estado complementario</option>${MT.ESTADOS_SEGUIMIENTO.map(x => `<option ${x === g.estado ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></label>
-        <label class="fld"><span>Fecha prevista</span><input type="date" name="fechaPrevista" value="${esc(g.fechaPrevista)}"></label>
-      </div>
-      <label class="fld"><span>Registrado por</span><input name="autor" maxlength="80" value="${esc(autor || '')}" autocomplete="name"></label>
-      <p class="mq-form-msg" data-msg></p>
     </div>
-    <div class="dlg-foot"><button type="button" class="btn" data-dlg-close>Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div>
-  </form>`;
+    ${s.clase === 'real' && s.abierta && !gestionada ? '<div class="dlg-foot"><span class="sp"></span><button type="button" class="btn btn-primary" data-mt="gestionar">Gestionar en el dashboard</button></div>' : ''}`;
 }
-/* Próxima acción de la máquina: la del trabajo abierto real de mayor prioridad (dato complementario). */
-const proxMaq = e => { const s = MT.abiertaPrincipal(e); if (!s) return '<span class="nota">Sin trabajo abierto</span>'; const g = MT.seguimientoDe(s); return g.proximaAccion ? esc(g.proximaAccion) : pend('Pendiente de definir'); };
+
+/* Bloque «Mantenimientos» de la ficha de la máquina. */
+function mantMaquinaHtml(e) {
+  const { abiertos, historial } = MT.trabajosDeEquipo(e);
+  const item = t => `<li class="mt-sol ${t.abierta ? 'abierta' : ''}"><button type="button" class="mq-link" data-act="${t.act}" ${t.fuente === 'odoo' ? 'data-sid' : 'data-oid'}="${esc(t.id)}"><b>${esc(t.titulo)}</b></button>
+    <span class="nota"> · ${esc(t.estado)} · ${esc(t.tipo)} · ${esc(t.prioridad)}</span> ${chipOrigen(t)}${t.avisos.length ? ' <span class="mt-aviso-ico">⚠</span>' : ''}
+    <br><small class="nota">${t.abierta ? `Reportado ${fd(t.fechaReporte) || '—'}${t.proximaAccion ? ` · próxima acción: ${esc(t.proximaAccion)}` : ''}` : `Cerrado ${fd(t.fechaCierre) || '—'}${t.fechaEjecucion ? ` · ejecución según Odoo ${fd(t.fechaEjecucion)}` : ''}`}</small></li>`;
+  return `<p><button type="button" class="btn btn-sm btn-primary" data-act="mt-orden-nuevo" data-eid="${esc(e.id)}">+ Nuevo trabajo para esta máquina</button></p>
+    <h4 class="pv-h4">Trabajos abiertos (${abiertos.length})</h4>
+    ${abiertos.length ? `<ul class="mt-sols">${abiertos.map(item).join('')}</ul>` : '<p class="vacio">Ningún trabajo abierto. Esto no confirma que la máquina esté operativa.</p>'}
+    <h4 class="pv-h4">Historial (${historial.length})</h4>
+    ${historial.length ? `<ul class="mt-sols">${historial.map(item).join('')}</ul>` : '<p class="vacio">Sin intervenciones registradas.</p>'}`;
+}
 
 /* ── Preventivos (Etapa 5): rutinas documentadas en Odoo; fechas solo con aprobación y ejecución registradas ── */
 const chipRutina = st => (!st.aprobada ? '<span class="mq-chip c-otra">Documentada · sin aprobar</span>' : st.vencida ? '<span class="mq-chip c-falta">Aprobada · vencida</span>' : '<span class="mq-chip c-stock">Aprobada</span>');
@@ -389,23 +436,23 @@ function preventivosMaquinaHtml(e) {
    Indicadores calculados desde la captura de Odoo y los datos complementarios registrados. Se cuentan EQUIPOS y
    SOLICITUDES por separado; las pruebas, la plantilla y los registros generales quedan fuera y se muestran aparte. */
 export function datosResumenMant() {
-  const maqs = MT.maquinas(), reales = MT.T.solicitudes.filter(s => s.clase === 'real');
-  const abiertas = reales.filter(s => s.abierta);
+  const maqs = MT.maquinas(), abiertas = MT.trabajosAbiertos(), hist = MT.historialTrabajos();
   const porCond = Object.fromEntries(MT.CONDICIONES.map(c => [c, maqs.filter(e => MT.condicionActual(e).condicion === c)]));
-  const bloqueadas = abiertas.filter(s => MT.seguimientoDe(s).bloqueo || s.bloqueada);
-  const hoyS = hoy();
-  const conFecha = abiertas.filter(s => MT.seguimientoDe(s).fechaPrevista);
-  // Reparaciones reales cerradas sin una verificación del equipo posterior al cierre: el cierre no confirma que funcione.
-  const sinComprobar = reales.filter(s => !s.abierta && s.etapa === 'Reparado').filter(s => {
-    const e = MT.equipoDeSolicitud(s); if (!e) return false;
-    const v = MT.verificaciones(e)[0]; return !v || v.fecha < String(s.fechaCierre || '').slice(0, 10);
+  const hoyS = hoy(), conFecha = abiertas.filter(t => t.fechaPrevista);
+  // Trabajos cerrados (no cancelados) sin una verificación del equipo posterior al cierre: el cierre no confirma que funcione.
+  const sinComprobar = hist.filter(t => t.estado !== 'Cancelado' && t.fechaCierre).filter(t => {
+    const e = MT.equipoPorId(t.equipoId); if (!e) return false;
+    const v = MT.verificaciones(e)[0]; return !v || v.fecha < String(t.fechaCierre).slice(0, 10);
   });
   return {
-    maqs, reales, abiertas, porCond, bloqueadas, conFecha, sinComprobar,
-    equiposAfectados: new Set(abiertas.map(s => s.equipoOdooId)).size,
-    altas: abiertas.filter(s => s.prioridad === '3'),
-    vencidas: conFecha.filter(s => MT.seguimientoDe(s).fechaPrevista < hoyS),
-    proximas: conFecha.filter(s => { const f = MT.seguimientoDe(s).fechaPrevista; return f >= hoyS && f <= sumarDias(hoyS, 14); }),
+    maqs, abiertas, porCond, conFecha, sinComprobar,
+    bloqueadas: abiertas.filter(t => t.bloqueo),
+    equiposAfectados: new Set(abiertas.map(t => t.equipoId)).size,
+    altas: abiertas.filter(t => t.prioridadN >= 3),
+    criticas: abiertas.filter(t => t.prioridad === 'Crítica'),
+    vencidas: conFecha.filter(t => t.fechaPrevista < hoyS),
+    proximas: conFecha.filter(t => t.fechaPrevista >= hoyS && t.fechaPrevista <= sumarDias(hoyS, 14)),
+    sinPasar: abiertas.filter(t => t.fuente === 'odoo'),
     fuera: { generales: MT.generales(), pruebas: MT.T.solicitudes.filter(s => s.clase === 'prueba'), plantillas: MT.T.solicitudes.filter(s => s.clase === 'plantilla') }
   };
 }
@@ -415,18 +462,21 @@ const cifraM = (n, t, act, extra = '') => `<li><a class="rs-cifra" href="${act}"
 /* Asuntos prioritarios: lo que requiere atención, con acceso directo a su ficha. */
 function asuntos(r) {
   const l = [];
-  r.abiertas.slice().sort((a, b) => Number(b.prioridad) - Number(a.prioridad)).forEach(s => {
-    const g = MT.seguimientoDe(s), e = MT.equipoDeSolicitud(s);
-    l.push({ peso: 10 + Number(s.prioridad) + (g.bloqueo || s.bloqueada ? 5 : 0), act: 'mt-trabajo', id: s.id, titulo: `${e ? e.codigo + ' · ' : ''}${s.asunto}`,
-      detalle: [`Prioridad ${s.prioridadTxt.toLowerCase()} · Odoo: ${s.etapa}`, g.bloqueo ? `Bloqueo: ${g.bloqueo}` : '', g.proximaAccion ? `Próxima acción: ${g.proximaAccion}` : 'Próxima acción pendiente de definir', ...s.avisos].filter(Boolean) });
+  r.abiertas.forEach(t => {
+    const e = MT.equipoPorId(t.equipoId);
+    l.push({ peso: 10 + t.prioridadN + (t.bloqueo ? 5 : 0) + (t.fechaPrevista && t.fechaPrevista < hoy() ? 3 : 0), act: t.act, attr: t.fuente === 'odoo' ? 'data-sid' : 'data-oid', id: t.id,
+      titulo: `${e ? e.codigo + ' · ' : ''}${t.titulo}`,
+      detalle: [`Prioridad ${String(t.prioridad).toLowerCase()} · ${t.fuente === 'odoo' ? `Odoo: ${t.estado} (sin pasar al dashboard)` : t.estado}`, t.bloqueo ? `Bloqueo: ${t.bloqueo}` : '',
+        t.proximaAccion ? `Próxima acción: ${t.proximaAccion}` : 'Próxima acción pendiente de definir', t.fechaPrevista && t.fechaPrevista < hoy() ? `Fecha prevista vencida (${fd(t.fechaPrevista)})` : '', ...t.avisos].filter(Boolean) });
   });
   [...r.porCond['Fuera de servicio'], ...r.porCond['Operativa con restricciones']].forEach(e => {
     const v = MT.condicionActual(e).verificacion;
-    l.push({ peso: v.condicion === 'Fuera de servicio' ? 14 : 9, act: 'mt-ficha', id: e.id, titulo: `${e.codigo} · ${e.nombreCorto}`,
+    l.push({ peso: v.condicion === 'Fuera de servicio' ? 14 : 9, act: 'mt-ficha', attr: 'data-eid', id: e.id, titulo: `${e.codigo} · ${e.nombreCorto}`,
       detalle: [`${v.condicion} (verificada el ${fd(v.fecha)} por ${v.responsable})`, v.restricciones ? `Restricciones: ${v.restricciones}` : ''].filter(Boolean) });
   });
   return l.sort((a, b) => b.peso - a.peso).slice(0, 6);
 }
+
 export function resumenMantHtml() {
   if (MT.T.estado !== 'listo') return `${cabeceraMant('resumen')}<p class="vacio">${MT.T.estado === 'error' ? 'Sin datos.' : 'Cargando…'}</p>`;
   const r = datosResumenMant(), M = '#/mantenimiento/maquinas', J = '#/mantenimiento/trabajos', a = asuntos(r);
@@ -445,15 +495,15 @@ export function resumenMantHtml() {
     </section>
     <section class="pj-sec rs-sec" aria-labelledby="mr-tr"><div class="sec-head"><h2 id="mr-tr">Mantenimientos</h2><a class="rg-abrir" href="${J}">Ver mantenimientos →</a></div>
       <ul class="mq-cifras rs-cifras">
-        ${cifraM(r.abiertas.length, 'Trabajos abiertos', J, `${plural(r.equiposAfectados, 'equipo afectado', 'equipos afectados')}`)}
-        ${cifraM(r.altas.length, 'De prioridad alta', J, 'Odoo no usa una prioridad «crítica»')}
+        ${cifraM(r.abiertas.length, 'Trabajos abiertos', J, `${plural(r.equiposAfectados, 'equipo afectado', 'equipos afectados')}${r.sinPasar.length ? ` · ${r.sinPasar.length} en Odoo sin pasar al dashboard` : ''}`)}
+        ${cifraM(r.altas.length, 'De prioridad crítica o alta', J, `${r.criticas.length} ${r.criticas.length === 1 ? 'crítica' : 'críticas'}`)}
         ${cifraM(r.bloqueadas.length, 'Con bloqueo documentado', J)}
-        ${cifraM(r.vencidas.length, 'Con fecha prevista vencida', J, `${r.proximas.length} en los próximos 14 días · solo fechas registradas en el seguimiento`)}
-        ${cifraM(r.sinComprobar.length, 'Reparaciones sin verificación posterior', M, 'cerradas en Odoo; el cierre no confirma que la máquina funcione')}
+        ${cifraM(r.vencidas.length, 'Con fecha prevista vencida', J, `${r.proximas.length} en los próximos 14 días · solo fechas registradas en el dashboard`)}
+        ${cifraM(r.sinComprobar.length, 'Trabajos cerrados sin verificación posterior', M, 'el cierre no confirma que la máquina funcione')}
       </ul>
     </section>
     <section class="pj-sec rs-sec" aria-labelledby="mr-as"><h2 id="mr-as">Asuntos prioritarios</h2>
-      ${a.length ? `<ul class="rs-alertas mt-asuntos">${a.map(x => `<li><button type="button" class="mq-link" data-act="${x.act}" ${x.act === 'mt-trabajo' ? 'data-sid' : 'data-eid'}="${esc(x.id)}"><b>${esc(x.titulo)}</b></button>${x.detalle.map(d => `<span>${esc(d)}</span>`).join('')}</li>`).join('')}</ul>`
+      ${a.length ? `<ul class="rs-alertas mt-asuntos">${a.map(x => `<li><button type="button" class="mq-link" data-act="${x.act}" ${x.attr}="${esc(x.id)}"><b>${esc(x.titulo)}</b></button>${x.detalle.map(d => `<span>${esc(d)}</span>`).join('')}</li>`).join('')}</ul>`
         : '<p class="vacio">No hay trabajos abiertos ni máquinas fuera de servicio o con restricciones registradas.</p>'}
       ${pc('Pendiente de verificar') ? `<p class="nota">${plural(pc('Pendiente de verificar'), 'máquina sigue', 'máquinas siguen')} pendiente de verificar: registrar su condición es el siguiente paso para que el resumen sea confiable.</p>` : ''}
     </section>

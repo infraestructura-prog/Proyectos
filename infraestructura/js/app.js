@@ -799,9 +799,9 @@ function pvFormRetiro(u, despues) {
 }
 /* Dentro de una ficha, los enlaces a otra ficha (máquina ↔ taller) cambian el contenido de la ventana. */
 dlg.addEventListener('click', e => {
-  const b = e.target.closest('[data-act="maq-ficha"], [data-act="pv-taller"], [data-act="vt-ficha"], [data-act="nube-pin"], [data-act="mt-ficha"], [data-act="mt-trabajo"], [data-act="mt-rutina"]'); if (!b || !dlg.contains(b)) return;
+  const b = e.target.closest('[data-act="maq-ficha"], [data-act="pv-taller"], [data-act="vt-ficha"], [data-act="nube-pin"], [data-act="mt-ficha"], [data-act="mt-trabajo"], [data-act="mt-rutina"], [data-act="mt-orden"], [data-act="mt-orden-nuevo"]'); if (!b || !dlg.contains(b)) return;
   e.stopPropagation();
-  if (b.dataset.act === 'mt-ficha') mtFicha(b.dataset.eid); else if (b.dataset.act === 'mt-trabajo') mtTrabajo(b.dataset.sid); else if (b.dataset.act === 'mt-rutina') mtRutina(b.dataset.rid); else if (b.dataset.act === 'nube-pin') { dlg.close(); NUBEUI.abrir(); } else if (b.dataset.act === 'maq-ficha') maqFicha(b.dataset.uid); else if (b.dataset.act === 'vt-ficha') vtFicha(b.dataset.vid); else pvTaller(b.dataset.tid);
+  if (b.dataset.act === 'mt-orden') mtOrden(b.dataset.oid); else if (b.dataset.act === 'mt-orden-nuevo') mtFormOrden(null, b.dataset.eid || ''); else if (b.dataset.act === 'mt-ficha') mtFicha(b.dataset.eid); else if (b.dataset.act === 'mt-trabajo') mtTrabajo(b.dataset.sid); else if (b.dataset.act === 'mt-rutina') mtRutina(b.dataset.rid); else if (b.dataset.act === 'nube-pin') { dlg.close(); NUBEUI.abrir(); } else if (b.dataset.act === 'maq-ficha') maqFicha(b.dataset.uid); else if (b.dataset.act === 'vt-ficha') vtFicha(b.dataset.vid); else pvTaller(b.dataset.tid);
 });
 
 /* ── Sincronización con la hoja privada compartida ── */
@@ -889,19 +889,40 @@ function mtFicha(id) {
 function mtTrabajo(id) {
   const s = MT.solicitudPorId(id); if (!s) return;
   abrirDialogo(dlg, MTV.fichaTrabajoHtml(s), `[data-act="mt-trabajo"][data-sid="${CSS.escape(s.id)}"]`);
-  const b = dlg.querySelector('[data-mt="seguimiento"]');
-  if (b) b.addEventListener('click', () => mtSeguimiento(s));
+  const b = dlg.querySelector('[data-mt="gestionar"]');
+  if (b) b.addEventListener('click', () => mtGestionar(s.id));
 }
-function mtSeguimiento(s) {
-  abrirDialogo(dlg, MTV.formSeguimientoHtml(s, NUBE.autor()), null);
+/* Pasa una solicitud abierta de Odoo al dashboard (copia única; Odoo no se modifica). */
+function mtGestionar(sid) {
+  const s = MT.solicitudPorId(sid); if (!s) return;
+  const r = MT.gestionarEnDashboard(s, NUBE.autor());
+  if (r.error) { toast(r.error); return; }
+  dlgRetorno = null; if (dlg.open) dlg.close(); render();
+  toast(r.existente ? 'Este trabajo ya se gestiona en el dashboard.' : 'Trabajo pasado al dashboard: ya se puede editar.');
+  mtOrden(r.orden.id);
+}
+/* Trabajos del dashboard: ficha, edición y eliminación. */
+function mtOrden(id) {
+  const o = MT.ordenPorId(id); if (!o) { toast('El trabajo ya no existe.'); return; }
+  abrirDialogo(dlg, MTV.fichaOrdenHtml(o), `[data-act="mt-orden"][data-oid="${CSS.escape(id)}"]`);
+  const ed = dlg.querySelector('[data-mt="editar-orden"]'), el = dlg.querySelector('[data-mt="eliminar-orden"]');
+  if (ed) ed.addEventListener('click', () => mtFormOrden(o, o.equipoId));
+  if (el) el.addEventListener('click', () => confirmar(`¿Eliminar «${o.titulo}»?`, '<p>El trabajo y su historial de cambios se eliminan para todo el equipo. No se puede deshacer. Si el trabajo terminó, es mejor marcarlo «Completado» o «Cancelado».</p>', 'Eliminar', () => {
+    const er = MT.eliminarOrden(o.id); render(); toast(er || 'Trabajo eliminado.');
+  }));
+}
+function mtFormOrden(o, equipoId) {
+  abrirDialogo(dlg, MTV.formOrdenHtml(o, equipoId, NUBE.autor()), o ? null : '[data-act="mt-orden-nuevo"]');
   const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]');
   form.addEventListener('submit', ev => {
     ev.preventDefault();
     const g = n => String(form.elements[n] ? form.elements[n].value : '').trim();
-    const r = MT.guardarSeguimiento(s, { atiende: g('atiende'), proximaAccion: g('proximaAccion'), bloqueo: g('bloqueo'), estado: g('estado'), fechaPrevista: g('fechaPrevista') }, g('autor'));
+    const datos = Object.fromEntries(['equipoId', 'titulo', 'tipo', 'prioridad', 'estado', 'atiende', 'fechaReporte', 'fechaPrevista', 'bloqueo', 'proximaAccion', 'descripcion',
+      'diagnostico', 'intervenciones', 'repuestos', 'costo', 'moneda', 'evidencias', 'resultadoPruebas', 'fechaCierre'].map(k => [k, g(k)]));
+    const r = MT.guardarOrden(datos, o ? o.id : null, g('autor'));
     if (r.error) { msg.innerHTML = `<span class="aviso err">${C.esc(r.error)}</span>`; return; }
-    dlgRetorno = null; dlg.close(); render(); toast(r.sinCambios ? 'Sin cambios.' : 'Seguimiento guardado.');
-    mtTrabajo(s.id);
+    dlgRetorno = null; dlg.close(); render(); toast(r.sinCambios ? 'Sin cambios.' : o ? 'Trabajo actualizado.' : 'Trabajo creado.');
+    mtOrden(r.orden.id);
   });
 }
 function mtRutina(id) {
@@ -1119,6 +1140,9 @@ document.addEventListener('click', e => {
     case 'mt-ficha': mtFicha(b.dataset.eid); break;
     case 'mt-trabajo': mtTrabajo(b.dataset.sid); break;
     case 'mt-rutina': mtRutina(b.dataset.rid); break;
+    case 'mt-orden': mtOrden(b.dataset.oid); break;
+    case 'mt-orden-nuevo': mtFormOrden(null, b.dataset.eid || S.mtTEquipo || ''); break;
+    case 'mt-gestionar': mtGestionar(b.dataset.sid); break;
     case 'mt-t-limpiar': S.mtTBusca = ''; S.mtTEquipo = ''; S.mtTCat = ''; S.mtTPrio = ''; S.mtTResp = ''; S.mtTEtapa = ''; render({ foco: '[data-act="mt-t-busca"]' }); break;
     case 'vt-localizar': vtLocalizar(b.dataset.vid); break;
     case 'vt-ubicacion': { const v = VT.ventaPorId(b.dataset.vid); if (v) vtUbicacion(v); break; }
@@ -1324,7 +1348,7 @@ const COLECCIONES_NUBE = [
   ['ventas-importacion', 'maq-ventas-importacion', 'unico'], ['talleres', 'maq-talleres', 'lista'], ['instalaciones', 'maq-instalaciones', 'lista'],
   ['servicios', 'maq-servicios', 'lista'], ['operacion', 'maq-operacion', 'lista'], ['complementos', 'maq-complementos', 'mapa'],
   ['soportes', 'maq-soportes', 'lista'], ['kits', 'maq-kits', 'lista'], ['kits-sembrados', 'maq-kits-sembrados', 'unico'], ['rep-datos', 'rep-datos', 'mapa'],
-  ['mant-complementos', 'mant-complementos', 'mapa'], ['mant-trabajos', 'mant-trabajos', 'mapa'], ['mant-preventivos', 'mant-preventivos', 'mapa']
+  ['mant-complementos', 'mant-complementos', 'mapa'], ['mant-trabajos', 'mant-trabajos', 'mapa'], ['mant-preventivos', 'mant-preventivos', 'mapa'], ['mant-ordenes', 'mant-ordenes', 'mapa']
 ].map(([col, k, forma, idDe]) => ({ col, key: PREF + k, forma, idDe }));
 /* Al llegar cambios de otra persona: se recargan los datos en memoria y se repinta sin perder el foco. */
 let repintadoRemoto = null;
@@ -1342,6 +1366,6 @@ NUBE.iniciar({ app: 'infra', prefijo: PREF, colecciones: COLECCIONES_NUBE, alRec
 NUBEUI.montar({ proyectos: 'Inicio de proyecto', tareas: 'Tarea', kanban: 'Kanban general', resultados: 'Resultados', eliminadas: 'Tarea eliminada', ventas: 'Venta',
   evidencias: 'Evidencia', 'evid-sin-clasificar': 'Archivo sin clasificar', 'ventas-importacion': 'Importación', talleres: 'Taller', instalaciones: 'Equipo entregado',
   servicios: 'Servicio', operacion: 'Equipo en operación', complementos: 'Ficha de máquina', soportes: 'Soporte', kits: 'Kit', 'kits-sembrados': 'Kits propuestos', 'rep-datos': 'Repuesto',
-  'mant-complementos': 'Verificación de máquina', 'mant-trabajos': 'Seguimiento de mantenimiento', 'mant-preventivos': 'Rutina preventiva' });
+  'mant-complementos': 'Verificación de máquina', 'mant-trabajos': 'Seguimiento de mantenimiento', 'mant-preventivos': 'Rutina preventiva', 'mant-ordenes': 'Trabajo de mantenimiento' });
 /* Al conectarse la base compartida (o al completarse la carga inicial) se repinta para mostrar el estado correcto. */
 { let previo = ''; NUBE.alCambiar(s => { const k = s.fase + '|' + s.nubeVacia; if (k !== previo) { previo = k; if (leerRuta().vista === 'maquinas') render(); } }); }

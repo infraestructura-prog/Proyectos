@@ -102,13 +102,9 @@ export function registrarVerificacion(e, d) {
 }
 /* Avisos que invitan a verificar de nuevo, sin concluir nada sobre la condición. */
 export function avisosCondicion(e) {
-  const a = [], v = verificaciones(e)[0], reales = solicitudesDe(e, 'real');
-  const abiertas = reales.filter(s => s.abierta);
-  if (abiertas.length) a.push(`Hay ${abiertas.length === 1 ? 'un trabajo abierto' : `${abiertas.length} trabajos abiertos`} en Odoo: confirma si afecta el uso de la máquina.`);
-  if (v) {
-    const posteriores = reales.filter(s => !s.abierta && (s.fechaCierre || '').slice(0, 10) > v.fecha);
-    if (posteriores.length) a.push('Se cerró una intervención en Odoo después de la última verificación: conviene verificar de nuevo.');
-  }
+  const a = [], v = verificaciones(e)[0], { abiertos, historial } = trabajosDeEquipo(e);
+  if (abiertos.length) a.push(`Hay ${abiertos.length === 1 ? 'un trabajo abierto' : `${abiertos.length} trabajos abiertos`}: confirma si afecta el uso de la máquina.`);
+  if (v && historial.some(t => t.estado !== 'Cancelado' && (t.fechaCierre || '').slice(0, 10) > v.fecha)) a.push('Se cerró una intervención después de la última verificación: conviene verificar de nuevo.');
   return a;
 }
 
@@ -119,10 +115,6 @@ export const solicitudesDe = (e, clase) => T.solicitudes.filter(s => s.equipoOdo
 export const categorias = () => [...new Set(maquinas().map(e => e.categoria))].sort((a, b) => a.localeCompare(b, 'es'));
 export const urlOdooEquipo = e => (T.fuente ? `${T.fuente.url}/odoo/equipments/${e.odooId}` : '');
 export const urlOdooSolicitud = s => (T.fuente ? `${T.fuente.url}/odoo/action-maintenance.hr_equipment_request_action/${s.odooId}` : '');
-/* Mantenimiento abierto real de mayor prioridad del equipo (las pruebas y plantillas no cuentan). */
-export function abiertaPrincipal(e) {
-  return solicitudesDe(e, 'real').filter(s => s.abierta).sort((a, b) => Number(b.prioridad) - Number(a.prioridad) || String(a.fechaSolicitud).localeCompare(String(b.fechaSolicitud)))[0] || null;
-}
 
 /* ── Seguimiento de trabajos abiertos (Etapa 4) ──
    Datos complementarios del dashboard para las solicitudes REALES abiertas: quién lo atiende, próxima acción,
@@ -211,3 +203,94 @@ export function estadoRutina(r) {
    exactamente la misma imagen (comparación de archivos): probablemente son imágenes de referencia del modelo. */
 const FOTO_COMPARTIDA = { EH01: 'EH02', EH02: 'EH01', EH04: 'EH05', EH05: 'EH04', MV01: 'MV02', MV02: 'MV01' };
 export const foto = e => (e.tieneFoto && e.codigo ? { src: `img/maquinas-taller/${e.codigo}.jpg`, compartidaCon: FOTO_COMPARTIDA[e.codigo] || '' } : null);
+
+/* ── Trabajos del dashboard ──
+   Los trabajos se crean, editan, cierran y eliminan directamente en el dashboard, independientes de Odoo (no se
+   escribe nada en Odoo). Se comparten con el equipo (colección mant-ordenes) y cada cambio queda en su historial.
+   El historial capturado de Odoo se conserva como consulta. Un trabajo abierto de Odoo puede pasarse al dashboard
+   una sola vez («Gestionar en el dashboard»): se copia con referencia a Odoo y deja de listarse aparte. */
+export const ESTADOS_ABIERTOS = ['Nuevo', 'En progreso', 'Programado', 'En espera', 'Pendiente de validación'];
+export const ESTADOS_CERRADOS = ['Completado', 'Cancelado'];
+export const PRIORIDADES = ['Baja', 'Normal', 'Alta', 'Crítica'];
+export const TIPOS = ['Correctivo', 'Preventivo', 'Inspección', 'Mejora'];
+const KO = 'ccs-infraestructura-v2:mant-ordenes';
+const leerO = () => { try { const v = JSON.parse(localStorage.getItem(KO) || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch { return {}; } };
+const escribirO = v => { try { localStorage.setItem(KO, JSON.stringify(v)); return true; } catch { return false; } };
+const fechaOk = v => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : '');
+const CAMPOS_ORDEN = { equipoId: 'Equipo', titulo: 'Trabajo', tipo: 'Tipo', prioridad: 'Prioridad', estado: 'Estado', atiende: 'Atiende', fechaReporte: 'Fecha de reporte',
+  fechaPrevista: 'Fecha prevista', bloqueo: 'Bloqueo', proximaAccion: 'Próxima acción', descripcion: 'Descripción', diagnostico: 'Diagnóstico', intervenciones: 'Intervenciones',
+  repuestos: 'Repuestos', costo: 'Costo', moneda: 'Moneda', evidencias: 'Evidencias', resultadoPruebas: 'Resultado de pruebas', fechaCierre: 'Fecha de cierre' };
+export const etiquetaCampoOrden = k => CAMPOS_ORDEN[k] || k;
+
+export const ordenes = () => Object.values(leerO()).filter(o => o && o.id).sort((a, b) => String(b.fechaReporte).localeCompare(String(a.fechaReporte)));
+export const ordenPorId = id => leerO()[id] || null;
+export const ordenAbierta = o => ESTADOS_ABIERTOS.includes(o.estado);
+export const ordenDeOdoo = odooId => ordenes().find(o => o.origenOdoo === odooId) || null;
+
+export function guardarOrden(d, id, autor) {
+  const todas = leerO(), actual = id ? todas[id] : null;
+  if (id && !actual) return { error: 'El trabajo ya no existe.' };
+  const n = {
+    equipoId: str(d.equipoId, 40), titulo: str(d.titulo, 200), tipo: TIPOS.includes(d.tipo) ? d.tipo : 'Correctivo',
+    prioridad: PRIORIDADES.includes(d.prioridad) ? d.prioridad : 'Normal', estado: [...ESTADOS_ABIERTOS, ...ESTADOS_CERRADOS].includes(d.estado) ? d.estado : 'Nuevo',
+    atiende: str(d.atiende, 120), fechaReporte: fechaOk(d.fechaReporte), fechaPrevista: fechaOk(d.fechaPrevista), bloqueo: str(d.bloqueo, 600), proximaAccion: str(d.proximaAccion, 600),
+    descripcion: str(d.descripcion, 3000), diagnostico: str(d.diagnostico, 2000), intervenciones: str(d.intervenciones, 3000), repuestos: str(d.repuestos, 1500),
+    costo: String(d.costo ?? '').trim() === '' ? null : Number(String(d.costo).replace(',', '.')), moneda: str(d.moneda, 10), evidencias: str(d.evidencias, 1500),
+    resultadoPruebas: str(d.resultadoPruebas, 1500), fechaCierre: fechaOk(d.fechaCierre)
+  };
+  if (!equipoPorId(n.equipoId)) return { error: 'Elige la máquina.' };
+  if (!n.titulo) return { error: 'Describe el trabajo o el problema.' };
+  if (!n.fechaReporte) return { error: 'Indica la fecha de reporte.' };
+  if (n.fechaReporte > hoyIso()) return { error: 'La fecha de reporte no puede ser futura.' };
+  if (n.costo !== null && (!Number.isFinite(n.costo) || n.costo < 0)) return { error: 'El costo debe ser un número positivo.' };
+  if (n.estado === 'Programado' && !n.fechaPrevista) return { error: 'Para «Programado» indica la fecha prevista.' };
+  if (ESTADOS_CERRADOS.includes(n.estado)) {
+    if (!n.fechaCierre) n.fechaCierre = hoyIso();
+    if (n.fechaCierre < n.fechaReporte) return { error: 'La fecha de cierre no puede ser anterior a la de reporte.' };
+    if (n.estado === 'Completado' && !n.intervenciones) return { error: 'Para completar el trabajo describe la intervención realizada.' };
+  } else n.fechaCierre = '';
+  const quien = str(autor, 80), ahora = new Date().toISOString();
+  if (actual) {
+    const cambios = Object.keys(CAMPOS_ORDEN).filter(k => JSON.stringify(n[k] ?? '') !== JSON.stringify(actual[k] ?? '')).map(k => ({ campo: k, antes: actual[k] ?? '', despues: n[k] ?? '' }));
+    if (!cambios.length) return { sinCambios: true, orden: actual };
+    todas[id] = { ...actual, ...n, actualizado: ahora, historial: [...(actual.historial || []), { fecha: ahora, autor: quien, cambios }].slice(-200) };
+  } else {
+    const nid = 'TR-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase();
+    todas[nid] = { id: nid, ...n, origenOdoo: d.origenOdoo || null, creado: ahora, creadoPor: quien, actualizado: ahora,
+      historial: [{ fecha: ahora, autor: quien, nota: d.origenOdoo ? `Pasado al dashboard desde la solicitud #${d.origenOdoo} de Odoo.` : 'Trabajo creado en el dashboard.' }] };
+    id = nid;
+  }
+  return escribirO(todas) ? { ok: true, orden: todas[id] } : { error: 'No se pudo guardar en este navegador.' };
+}
+export function eliminarOrden(id) {
+  const todas = leerO(); if (!todas[id]) return 'El trabajo ya no existe.';
+  delete todas[id]; return escribirO(todas) ? '' : 'No se pudo guardar en este navegador.';
+}
+/* Copia una solicitud abierta de Odoo como trabajo del dashboard (una sola vez). Odoo no se modifica. */
+export function gestionarEnDashboard(s, autor) {
+  const ya = ordenDeOdoo(s.odooId); if (ya) return { ok: true, orden: ya, existente: true };
+  const e = equipoDeSolicitud(s), g = seguimientoDe(s);
+  const prio = { 0: 'Baja', 1: 'Baja', 2: 'Normal', 3: 'Alta' }[s.prioridad] || 'Normal';
+  const desc = [s.descripcion, s.avisos.length ? `Avisos al pasar desde Odoo: ${s.avisos.join(' ')}` : ''].filter(Boolean).join('\n\n');
+  return guardarOrden({ equipoId: e ? e.id : '', titulo: s.asunto, tipo: s.tipo === 'preventive' ? 'Preventivo' : 'Correctivo', prioridad: prio,
+    estado: s.etapa === 'En progreso' ? 'En progreso' : (g.estado || 'Nuevo'), atiende: g.atiende, fechaReporte: s.fechaSolicitud, fechaPrevista: g.fechaPrevista,
+    bloqueo: g.bloqueo, proximaAccion: g.proximaAccion, descripcion: desc, diagnostico: [s.falla, s.modoFalla].filter(Boolean).join('\n'), intervenciones: s.accion,
+    origenOdoo: s.odooId }, null, autor);
+}
+
+/* ── Vista unificada de trabajos (dashboard + Odoo) para listas, fichas e indicadores ── */
+const PRIO_N = { 'Baja': 1, 'Normal': 2, 'Alta': 3, 'Crítica': 4 };
+const desdeOrden = o => ({ fuente: 'dashboard', id: o.id, act: 'mt-orden', equipoId: o.equipoId, titulo: o.titulo, tipo: o.tipo, prioridad: o.prioridad, prioridadN: PRIO_N[o.prioridad] || 2,
+  estado: o.estado, abierta: ordenAbierta(o), atiende: o.atiende, proximaAccion: o.proximaAccion, bloqueo: o.bloqueo, fechaReporte: o.fechaReporte, fechaPrevista: o.fechaPrevista,
+  fechaCierre: o.fechaCierre, avisos: [], resumen: o.descripcion.split('\n')[0] || o.titulo, origenOdoo: o.origenOdoo });
+const desdeOdoo = s => { const e = equipoDeSolicitud(s), g = seguimientoDe(s);
+  return { fuente: 'odoo', id: s.id, act: 'mt-trabajo', equipoId: e ? e.id : '', titulo: s.asunto, tipo: s.tipoTxt, prioridad: { 0: 'Muy baja', 1: 'Baja', 2: 'Normal', 3: 'Alta' }[s.prioridad] || 'Normal',
+    prioridadN: Number(s.prioridad) || 0, estado: s.etapa, abierta: s.abierta, atiende: g.atiende || s.responsable, proximaAccion: g.proximaAccion, bloqueo: g.bloqueo || (s.bloqueada ? 'Bloqueado en Odoo (sin motivo)' : ''),
+    fechaReporte: s.fechaSolicitud, fechaPrevista: g.fechaPrevista, fechaEjecucion: s.fechaProgramada, fechaCierre: s.fechaCierre, avisos: s.avisos, resumen: s.falla || (s.descripcion || '').split('\n')[0] || s.asunto }; };
+/* Abiertos: los del dashboard + los reales de Odoo que todavía no se pasaron al dashboard (sin duplicar). */
+export const trabajosAbiertos = () => [...ordenes().filter(ordenAbierta).map(desdeOrden),
+  ...T.solicitudes.filter(s => s.clase === 'real' && s.abierta && !ordenDeOdoo(s.odooId)).map(desdeOdoo)].sort((a, b) => b.prioridadN - a.prioridadN);
+export const historialTrabajos = () => [...ordenes().filter(o => !ordenAbierta(o)).map(desdeOrden),
+  ...T.solicitudes.filter(s => s.clase === 'real' && !s.abierta).map(desdeOdoo)].sort((a, b) => String(b.fechaCierre || b.fechaEjecucion || b.fechaReporte).localeCompare(String(a.fechaCierre || a.fechaEjecucion || a.fechaReporte)));
+export const trabajosDeEquipo = e => ({ abiertos: trabajosAbiertos().filter(t => t.equipoId === e.id), historial: historialTrabajos().filter(t => t.equipoId === e.id) });
+export const abiertaPrincipal = e => trabajosAbiertos().find(t => t.equipoId === e.id) || null;
