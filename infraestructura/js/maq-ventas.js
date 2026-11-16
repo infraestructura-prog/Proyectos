@@ -62,6 +62,91 @@ export const evidencias = () => { const v = leer(K.evidencias); return Array.isA
 export const sinClasificar = () => { const v = leer(K.sinClasificar); return Array.isArray(v) ? v.filter(e => e && e.id && !e.resuelto) : []; };
 export const evidenciasDe = ventaId => evidencias().filter(e => e.ventaId === ventaId);
 
+/* ── Ubicación del establecimiento ──
+   Vive en su propio bloque del registro (r.ubicacion), separado del dato importado (r.origen) y de las correcciones
+   comerciales (r.datos): reimportar no la toca. Cada cambio guarda la ubicación anterior en su historial.
+   · «aproximada»: punto representativo de la ciudad o zona conocida (no es la dirección del taller).
+   · «exacta»: solo cuando una persona confirma que el punto es la entrada del taller. Nunca se marca sola. */
+export const PRECISIONES = { aproximada: 'Aproximada', exacta: 'Exacta confirmada' };
+const plegar = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+/* Puntos representativos de ciudades/zonas (plazas o centros urbanos de referencia). No son direcciones de talleres. */
+export const REFERENCIAS = {
+  'puerto ordaz': { lat: 8.2833, lng: -62.7333, ciudad: 'Puerto Ordaz', estado: 'Bolívar', referencia: 'Puerto Ordaz, estado Bolívar (centro de la ciudad)' },
+  caracas: { lat: 10.5061, lng: -66.9146, ciudad: 'Caracas', estado: 'Distrito Capital', referencia: 'Caracas (Plaza Bolívar), Distrito Capital', nota: 'Distrito Capital es una referencia provisional: falta confirmar la jurisdicción exacta.' },
+  barinas: { lat: 8.6226, lng: -70.2075, ciudad: 'Barinas', estado: 'Barinas', referencia: 'Barinas (Plaza Bolívar), estado Barinas' },
+  'san cristobal': { lat: 7.7669, lng: -72.2250, ciudad: 'San Cristóbal', estado: 'Táchira', referencia: 'San Cristóbal, estado Táchira (centro de la ciudad)' },
+  margarita: { lat: 10.9577, lng: -63.8697, ciudad: 'Isla de Margarita', estado: 'Nueva Esparta', referencia: 'Isla de Margarita, estado Nueva Esparta (punto representativo: Porlamar)' }
+};
+const coord = v => { const n = Number(String(v ?? '').trim().replace(',', '.')); return String(v ?? '').trim() !== '' && Number.isFinite(n) ? n : null; };
+function normUbic(u) {
+  if (!u || typeof u !== 'object') return null;
+  const lat = coord(u.lat), lng = coord(u.lng);
+  return { lat, lng, precision: u.precision === 'exacta' && lat !== null ? 'exacta' : 'aproximada', referencia: str(u.referencia, 300), direccion: str(u.direccion, 300),
+    ciudad: str(u.ciudad, 120), estado: str(u.estado, 60), enlace: str(u.enlace, 2000), enlaceNota: str(u.enlaceNota, 400), nota: str(u.nota, 400),
+    origen: str(u.origen, 80), actualizado: str(u.actualizado, 40), autor: str(u.autor, 80),
+    historial: (Array.isArray(u.historial) ? u.historial : []).slice(-50) };
+}
+export const ubicacionDe = r => normUbic(r.ubicacion);
+/* Asigna la referencia provisional a las ventas que todavía no tienen ubicación (una sola vez; no pisa nada). */
+export function asegurarUbicaciones() {
+  const l = registros(); let n = 0;
+  l.forEach(r => {
+    if (r.ubicacion) return;
+    const d = r.datos || {};
+    if (coord(d.lat) !== null && coord(d.lng) !== null) {
+      r.ubicacion = { lat: d.lat, lng: d.lng, precision: d.ubicacionConfirmada ? 'exacta' : 'aproximada', referencia: 'Coordenadas cargadas antes en la ficha', direccion: d.direccion || '',
+        ciudad: d.ciudad || '', estado: d.estadoVE || '', origen: 'Trasladada desde la ficha', actualizado: ahora(), historial: [] };
+    } else {
+      const ref = REFERENCIAS[plegar(d.ciudad || r.origen.ciudad)]; if (!ref) return;
+      r.ubicacion = { lat: ref.lat, lng: ref.lng, precision: 'aproximada', referencia: ref.referencia, direccion: '', ciudad: ref.ciudad, estado: ref.estado, nota: ref.nota || '',
+        origen: 'Referencia provisional por ciudad', actualizado: ahora(), historial: [] };
+    }
+    r.historial.push({ fecha: ahora(), nota: `Ubicación aproximada asignada: ${r.ubicacion.referencia}.` }); n++;
+  });
+  if (n) escribir(K.ventas, l);
+  return n;
+}
+/* Guarda una ubicación nueva. La precisión debe venir confirmada por la persona (no hay valor por defecto). */
+export function guardarUbicacion(id, nueva, autor) {
+  const l = registros(), r = l.find(x => x.id === id); if (!r) return { error: 'La venta no existe.' };
+  const lat = coord(nueva.lat), lng = coord(nueva.lng);
+  if (lat === null || lng === null) return { error: 'Indica el punto: haz clic en el mapa, arrastra el marcador o escribe latitud y longitud.' };
+  if (!PV.dentroDeVenezuela(lat, lng)) return { error: 'Ese punto queda fuera de Venezuela. Revisa el orden (latitud primero) y el signo de la longitud.' };
+  if (!['aproximada', 'exacta'].includes(nueva.precision)) return { error: 'Confirma si el punto es una referencia aproximada o la ubicación exacta del taller.' };
+  const ant = normUbic(r.ubicacion);
+  const u = normUbic({ ...nueva, lat, lng, origen: 'Editada en la aplicación', actualizado: ahora(), autor, historial: ant ? [...ant.historial, { ...ant, historial: undefined, reemplazada: ahora() }] : [] });
+  r.ubicacion = u;
+  r.historial.push({ fecha: ahora(), nota: `Ubicación ${u.precision === 'exacta' ? 'exacta confirmada' : 'aproximada'} guardada${ant ? ` (antes: ${ant.precision}, ${ant.referencia || `${ant.lat}, ${ant.lng}`})` : ''}.` });
+  escribir(K.ventas, l); return { ok: true, ubicacion: u };
+}
+
+/* ── Enlaces de Google Maps ──
+   Solo se aceptan dominios de Google Maps. Se distingue qué representan las coordenadas del enlace:
+   · «lugar» (!3d…!4d…): coordenadas del sitio marcado.  · «consulta» (q=, query=, /search/lat,lng): punto pedido explícitamente.
+   · «camara» (@lat,lng): solo el centro de la vista; NO se asume que sea el taller.
+   · «corto» (maps.app.goo.gl, goo.gl/maps): no se puede leer desde el navegador; hay que abrirlo y copiar el enlace completo.
+   En ningún caso se guarda solo: la persona revisa el punto y confirma su precisión. */
+export function analizarEnlaceMaps(texto) {
+  const t = String(texto || '').trim(); if (!t) return { tipo: 'vacio' };
+  const par = t.match(/^\s*(-?\d{1,2}(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:[.,]\d+)?)\s*$/);
+  if (par) return { tipo: 'coordenadas', lat: Number(par[1].replace(',', '.')), lng: Number(par[2].replace(',', '.')), mensaje: 'Coordenadas escritas a mano. Revisa el punto en el mapa antes de guardar.' };
+  let u; try { u = new URL(t); } catch { return { tipo: 'invalido', mensaje: 'No parece un enlace. Pega el enlace completo de Google Maps o escribe «latitud, longitud».' }; }
+  const host = u.hostname.toLowerCase(), ruta = decodeURIComponent(u.pathname + u.search + u.hash).replace(/\+/g, ' ');
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') return { tipo: 'invalido', mensaje: 'El enlace no es una dirección web.' };
+  if (host === 'maps.app.goo.gl' || (host === 'goo.gl' && /^\/maps/.test(u.pathname)) || host === 'g.co')
+    return { tipo: 'corto', mensaje: 'Es un enlace corto de Google Maps: no se puede leer desde la página. Ábrelo, espera a que cargue el lugar y copia el enlace completo de la barra de direcciones; o marca el punto a mano. El enlace se conserva como referencia.' };
+  const esGoogle = /(^|\.)google\.[a-z]{2,3}(\.[a-z]{2})?$/.test(host) && (/^\/maps/.test(u.pathname) || host.startsWith('maps.'));
+  if (!esGoogle) return { tipo: 'invalido', mensaje: 'Solo se aceptan enlaces de Google Maps.' };
+  const n = '(-?\\d{1,2}\\.\\d+)', m = '(-?\\d{1,3}\\.\\d+)';
+  let x = ruta.match(new RegExp(`!3d${n}!4d${m}`));
+  if (x) return { tipo: 'lugar', lat: +x[1], lng: +x[2], mensaje: 'El enlace trae las coordenadas del lugar marcado en Google Maps. Confirma en el mapa que es el taller.' };
+  x = ruta.match(new RegExp(`[?&](?:q|query|ll|destination)=${n}\\s*,\\s*${m}`)) || ruta.match(new RegExp(`/maps/search/${n}\\s*,\\s*${m}`)) || ruta.match(new RegExp(`/maps/place/${n}\\s*,\\s*${m}`));
+  if (x) return { tipo: 'consulta', lat: +x[1], lng: +x[2], mensaje: 'El enlace apunta a unas coordenadas concretas. Confirma en el mapa que es el taller.' };
+  x = ruta.match(new RegExp(`@${n},${m}`));
+  if (x) return { tipo: 'camara', lat: +x[1], lng: +x[2], mensaje: 'Las coordenadas de este enlace son solo el centro de la vista del mapa, no necesariamente el taller. No se usan solas: puedes tomarlas como punto de partida y ajustar el marcador.' };
+  return { tipo: 'sin-coordenadas', mensaje: 'El enlace no contiene coordenadas que se puedan leer con seguridad. Se conserva como referencia; marca el punto en el mapa o escribe las coordenadas.' };
+}
+
 /* ── Importación idempotente ── */
 export async function importar() {
   const r = await fetch(ARCHIVO_CARGA, { cache: 'no-store' });
@@ -94,6 +179,7 @@ export async function importar() {
   }
   escribir(K.sinClasificar, lsc);
   escribir(K.meta, { version: c.version || 1, fecha: ahora(), fuente: str(c.fuente, 300), parametros: c.parametros || {}, noImportados: Array.isArray(c.noImportados) ? c.noImportados : [] });
+  res.ubicaciones = asegurarUbicaciones();
   return res;
 }
 
@@ -123,11 +209,12 @@ export function ventas() {
     else if (r.datos.docEstado === 'Completa según la fuente') alertas.push({ t: 'Documentación por verificar', nivel: 'baja' });
     if (r.datos.precio === null) alertas.push({ t: 'Precio no registrado', nivel: 'baja' });
     if (r.datos.telefono && !r.datos.telefonoVerificado) alertas.push({ t: 'Teléfono por verificar', nivel: 'baja' });
-    if (!r.datos.ubicacionConfirmada) alertas.push({ t: 'Ubicación exacta pendiente', nivel: 'baja' });
+    const ub = ubicacionDe(r);
+    if (!ub || ub.precision !== 'exacta') alertas.push({ t: 'Ubicación exacta pendiente', nivel: 'baja' });
     if (g.estado === 'Por vencer' || g.estado === 'Vencida') alertas.push({ t: `Garantía ${g.estado.toLowerCase()}`, nivel: 'alta' });
     else if (g.estado === 'No calculable') alertas.push({ t: 'Garantía no calculable', nivel: 'media' });
     else if (!g.confirmada) alertas.push({ t: 'Inicio de garantía pendiente de confirmar', nivel: 'baja' });
-    return { ...r, datos: { red: '', contactos: [], ...r.datos }, dup, garantia: g, entregados, alertas, nombre: r.datos.establecimiento || r.datos.empresa || r.datos.dueno || r.id };
+    return { ...r, datos: { red: '', contactos: [], ...r.datos }, ubicacion: ub, dup, garantia: g, entregados, alertas, nombre: r.datos.establecimiento || r.datos.empresa || r.datos.dueno || r.id };
   }).sort((a, b) => a.id.localeCompare(b.id));
 }
 export const ventaPorId = id => ventas().find(v => v.id === id);
@@ -189,7 +276,8 @@ export function indicadores() {
     sinPrecio: vs.filter(v => v.datos.precio === null).length,
     docPendiente: vs.filter(v => v.datos.docEstado === 'Pendiente').length,
     docPorVerificar: vs.filter(v => v.datos.docEstado === 'Completa según la fuente').length,
-    ubicConfirmada: vs.filter(v => v.datos.ubicacionConfirmada).length,
+    ubicConfirmada: vs.filter(v => v.ubicacion && v.ubicacion.precision === 'exacta').length,
+    ubicAproximada: vs.filter(v => v.ubicacion && v.ubicacion.precision === 'aproximada').length,
     garCalculadas: vs.filter(v => v.garantia.estado !== 'No calculable').length,
     garConfirmadas: vs.filter(v => v.garantia.confirmada).length,
     garPorVencer: vs.filter(v => v.garantia.estado === 'Por vencer').length,

@@ -477,3 +477,73 @@ input[type=date] { color-scheme: dark; }
 .vt-ficha code, .vt-card code { overflow-wrap: anywhere; }
 .mq-sync { margin-top: 6px; }
 .sync-pre { max-height: 220px; overflow: auto; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* ── Postventa · panel «Ubicación de las ventas» (Google Maps) ── */
+.vt-mapa-panel h3, .vt-mapa-cab h3 { font-family: var(--in-font-head); letter-spacing: .02em; }
+.vt-mapa-panel { margin: 14px 0 18px; border: 1px solid var(--line-hi); border-top: 3px solid var(--in-orange); border-radius: 6px; background: var(--in-graphite); padding: 12px; }
+.vt-mapa-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.vt-mapa-cab h3 { margin: 0; font-size: 17px; }
+.vt-mapa-cuenta { margin: 0; font-size: 13px; color: var(--text-2); }
+.vt-ley-aprox { color: var(--in-warn); font-weight: 700; }
+.vt-ley-exacta { color: var(--c-completed); font-weight: 700; }
+.vt-mapa-aviso { margin: 10px 0 8px; padding: 8px 10px; border-left: 3px solid var(--in-warn); background: rgba(232,194,74,.08); font-size: 13px; }
+.vt-gmap-wrap { position: relative; }
+.vt-gmap-slot { height: 500px; border: 1px solid var(--line-hi); border-radius: 4px; overflow: hidden; background: var(--in-raised); }
+.vt-gmap-slot.sin-mapa { height: auto; min-height: 140px; overflow: visible; }
+.vt-gmap { width: 100%; height: 100%; }
+.vt-gmap-msg { margin: 0; padding: 16px; font-size: 14px; line-height: 1.5; }
+.vt-gmap-msg .vt-pasos { margin: 8px 0 0; padding-left: 20px; }
+.vt-gmap-vacio { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); margin: 0; padding: 6px 12px; background: rgba(20,22,21,.92); border: 1px solid var(--line-hi); border-radius: 4px; font-size: 13px; z-index: 2; }
+.vt-leyenda { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 0; margin: 10px 0 4px; font-size: 13px; color: var(--text-2); }
+.vt-leyenda li { display: flex; align-items: center; gap: 8px; }
+.vt-mapa-guardado { margin: 4px 0 0; }
+.vt-barra-lista { margin-top: 6px; }
+.vt-h3 { margin: 0; font-size: 16px; }
+@media (max-width: 700px) { .vt-gmap-slot { height: min(60vh, 380px); } }
+
+/* Marcadores: etiqueta con el ID + símbolo y texto de precisión (no depende solo del color). */
+.vt-pin { display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px 3px 4px; border-radius: 14px; font: 700 12px/1.1 system-ui, sans-serif; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.45); cursor: pointer; }
+.vt-pin b { font-weight: 800; letter-spacing: .02em; }
+.vt-pin small { font-size: 10px; font-weight: 700; opacity: .9; }
+.vt-pin-ico { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; font-size: 12px; }
+.vt-pin-aprox { background: #2b2f2d; color: #f3e3b0; border: 2px dashed #E8C24A; }
+.vt-pin-aprox .vt-pin-ico { background: #E8C24A; color: #1b1d1c; }
+.vt-pin-exacta { background: #F28C28; color: #1b1d1c; border: 2px solid #fff; }
+.vt-pin-exacta .vt-pin-ico { background: #1b1d1c; color: #fff; }
+.vt-pin-edicion { background: #fff; color: #1b1d1c; border: 2px solid #F28C28; cursor: grab; }
+.vt-pin.activo { transform: scale(1.18); outline: 3px solid #F28C28; outline-offset: 2px; z-index: 3; }
+.vt-leyenda .vt-pin { cursor: default; box-shadow: none; }
+
+/* Ventana del marcador (fondo claro de Google: colores oscuros legibles). */
+.vt-info { color: #1b1d1c; font: 13px/1.4 system-ui, sans-serif; min-width: 200px; }
+.vt-info p { margin: 3px 0; }
+.vt-info-id { font-size: 11px; font-weight: 800; color: #8a4b0f; letter-spacing: .04em; }
+.vt-info code { font-size: 12px; }
+.vt-info-acc { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.vt-info-acc button { font: 700 12px system-ui, sans-serif; padding: 5px 9px; border-radius: 4px; border: 1px solid #1b1d1c; background: #fff; color: #1b1d1c; cursor: pointer; }
+.vt-info-acc button:first-child { background: #F28C28; border-color: #c96d14; }
+
+/* Botón «Ubicar en el mapa» en las tarjetas (por encima del enlace que cubre la tarjeta). */
+.vt-card .vt-ubicar { position: absolute; top: 8px; right: 8px; z-index: 2; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 4px; border: 1px solid var(--line-hi); background: transparent; color: var(--text-2); cursor: pointer; }
+.vt-card .vt-ubicar:hover, .vt-card .vt-ubicar:focus-visible { color: var(--in-orange); border-color: var(--in-orange); }
+
+/* Editor de ubicación */
+.vt-ub-mapa { height: 320px; border: 1px solid var(--line-hi); border-radius: 4px; overflow: hidden; margin: 6px 0; }
+.vt-ub-mapa:has(.vt-gmap-msg) { height: auto; }
+.vt-enlace { display: flex; gap: 6px; }
+.vt-enlace input { flex: 1; min-width: 0; }
+.vt-enlace-msg p { margin: 6px 0; font-size: 13px; }
+.vt-precision .check { align-items: flex-start; }
+@media (max-width: 700px) { .vt-ub-mapa { height: 260px; } }
+/* Mapa de ventas con Leaflet + OpenStreetMap */
+.vt-mapa-leaflet { position: relative; width: 100%; height: 100%; background: var(--in-raised); }
+.vt-pin-wrap { display: flex; align-items: center; justify-content: center; background: none; border: 0; }
+.vt-pin-wrap:focus-visible { outline: none; }
+.vt-pin-wrap:focus-visible .vt-pin { outline: 3px solid var(--in-orange); outline-offset: 2px; }
+.vt-mapa-fallo { position: absolute; inset: auto 12px 12px 12px; z-index: 1000; padding: 10px 12px; border: 1px solid var(--in-warn); border-radius: 4px; background: rgba(20,22,21,.94); color: var(--text); font-size: 13px; }
+.vt-mapa-fallo[hidden] { display: none; }
+.vt-mapa-fallo p { margin: 0 0 6px; }
+.vt-ub-mapa { position: relative; }
+.leaflet-popup-content .vt-info { margin: 0; }
+.vt-mapa-tactil { display: none; margin: 4px 0 0; font-size: 12px; }
+@media (pointer: coarse) { .vt-mapa-tactil { display: block; } }

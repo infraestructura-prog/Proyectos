@@ -24,7 +24,7 @@ export function cargarLeaflet() {
     .catch(e => { carga = null; throw e; });
   return carga;
 }
-const capaBase = L => L.tileLayer(TESELAS.url, { maxZoom: TESELAS.max, attribution: TESELAS.atribucion });
+export const capaBase = L => L.tileLayer(TESELAS.url, { maxZoom: TESELAS.max, attribution: TESELAS.atribucion });
 const icono = (L, n) => L.divIcon({ className: 'mq-marcador', html: `<span>${n || ''}</span>`, iconSize: [30, 30], iconAnchor: [15, 28], popupAnchor: [0, -26] });
 
 /* Mapa principal: un marcador por taller con coordenadas confirmadas, agrupados cuando están cerca.

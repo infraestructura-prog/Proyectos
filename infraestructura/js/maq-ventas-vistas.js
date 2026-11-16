@@ -16,7 +16,7 @@ const driveUrl = id => `https://drive.google.com/file/d/${encodeURIComponent(id)
 const chipGar = g => `<span class="mq-chip ${g.estado === 'Vigente' ? 'c-stock' : g.estado === 'No calculable' ? 'c-otra' : 'c-falta'}">${esc(g.estado)}</span>`;
 const chipAlerta = a => `<span class="mq-chip ${a.nivel === 'alta' ? 'c-falta vt-alta' : a.nivel === 'media' ? 'c-falta' : 'c-otra'}">${esc(a.t)}</span>`;
 const precioTxt = v => (v.datos.precio === null ? pend('Precio no registrado') : `${esc(String(v.datos.precio))}${v.datos.moneda ? ` ${esc(v.datos.moneda)}` : ''}`);
-const lugar = v => [v.datos.ciudad, v.datos.estadoVE].filter(Boolean).join(' · ');
+const lugar = v => [v.datos.ciudad, (v.ubicacion && v.ubicacion.estado) || v.datos.estadoVE].filter(Boolean).join(' · ');
 export const ALERTAS = [V.DUP, 'Documentación pendiente', 'Documentación por verificar', 'Precio no registrado', 'Teléfono por verificar', 'Ubicación exacta pendiente', 'Inicio de garantía pendiente de confirmar', 'Garantía por vencer', 'Garantía vencida', 'Garantía no calculable'];
 
 /* Ventas que cumplen la búsqueda y los filtros. */
@@ -28,14 +28,16 @@ export function ventasFiltradas(S) {
 }
 const hayFiltro = S => !!(S.vtCiudad || S.vtDoc || S.vtAlerta || String(S.vtBusca || '').trim());
 
-/* ── Sección de registros de venta dentro de Postventa ── */
-export function ventasHtml(S) {
+/* ── Sección de registros de venta dentro de Postventa ──
+   Orden: indicadores y filtros → panel «Ubicación de las ventas» (mapa siempre visible, contraíble) → listado
+   (tarjetas o tabla). Los filtros se aplican a la vez al listado y a los marcadores. */
+export function ventasHtml(S, mapaEstado) {
   const todas = V.ventas();
   if (!todas.length) return `<section class="pj-sec mq-vacio" aria-labelledby="vt-t"><h2 id="vt-t">Registros de venta</h2>
     <p>Información pendiente de levantar: todavía no hay registros de venta cargados.</p>
     ${V.esLocal() ? '<p><button type="button" class="btn btn-primary" data-act="vt-importar">Importar registros de venta</button></p><p class="nota">Se leen del archivo privado de este equipo. No se publica ni se envía a ningún servicio.</p>' : ''}</section>`;
   const lista = ventasFiltradas(S), filtrado = hayFiltro(S);
-  const vista = ['tabla', 'mapa'].includes(S.vtVista) ? S.vtVista : 'tarjetas';
+  const vista = S.vtVista === 'tabla' ? 'tabla' : 'tarjetas';
   const ciudades = [...new Set(todas.map(v => v.datos.ciudad).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
   const n = f => lista.filter(f).length;
   const m = V.meta(), sc = V.sinClasificar();
@@ -48,24 +50,72 @@ export function ventasHtml(S) {
       <li><b>${n(v => v.datos.docEstado === 'Pendiente')}</b><span>Con documentación pendiente</span></li>
     </ul>
     <div class="mq-barra">
-      <div class="seg" role="group" aria-label="Vista de registros">${[['tarjetas', 'Tarjetas'], ['tabla', 'Tabla'], ['mapa', 'Mapa']].map(([x, t]) => `<button type="button" data-act="vt-vista" data-vista="${x}" aria-pressed="${vista === x}">${t}</button>`).join('')}</div>
       <label class="mq-filtro"><span class="sr-only">Buscar registro</span><input type="search" data-act="vt-busca" value="${esc(S.vtBusca || '')}" placeholder="Cliente, empresa, serial, ciudad…" autocomplete="off"></label>
       <label class="mq-filtro"><span class="sr-only">Ciudad</span><select data-act="vt-ciudad"><option value="">Todas las ciudades</option>${ciudades.map(c => `<option ${c === S.vtCiudad ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
       <label class="mq-filtro"><span class="sr-only">Documentación</span><select data-act="vt-doc"><option value="">Cualquier documentación</option>${V.ESTADOS_DOC.map(c => `<option ${c === S.vtDoc ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
       <label class="mq-filtro"><span class="sr-only">Alerta</span><select data-act="vt-alerta"><option value="">Cualquier alerta</option>${ALERTAS.map(c => `<option ${c === S.vtAlerta ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
       ${filtrado ? '<button type="button" class="btn btn-sm btn-ghost" data-act="vt-limpiar">Quitar filtros</button>' : ''}
     </div>
-    ${!lista.length ? '<p class="vacio">Ningún registro cumple la búsqueda o los filtros.</p>' : vista === 'tabla' ? tablaVentas(lista) : vista === 'mapa' ? mapaVentas(lista) : tarjetasVentas(lista)}
+    ${panelMapaHtml(S, lista, todas, mapaEstado)}
+    <div class="mq-barra vt-barra-lista">
+      <h3 class="vt-h3">Ventas <small class="nota">${filtrado ? `${lista.length} de ${todas.length}` : todas.length}</small></h3>
+      <span class="sp"></span>
+      <div class="seg" role="group" aria-label="Vista del listado">${[['tarjetas', 'Tarjetas'], ['tabla', 'Tabla']].map(([x, t]) => `<button type="button" data-act="vt-vista" data-vista="${x}" aria-pressed="${vista === x}">${t}</button>`).join('')}</div>
+    </div>
+    ${!lista.length ? '<p class="vacio">Los filtros no coinciden con ningún registro de venta.</p>' : vista === 'tabla' ? tablaVentas(lista) : tarjetasVentas(lista)}
     ${sc.length ? sinClasificarHtml(sc, todas) : ''}
     ${m && m.noImportados && m.noImportados.length ? `<details class="mas"><summary>Filas de la fuente no importadas como venta (${m.noImportados.length})</summary><ul class="vt-noimp">${m.noImportados.map(x => `<li>${x.fila ? `Fila ${esc(String(x.fila))}` : 'Fila'}${x.serial ? ` · serial ${esc(x.serial)}` : ''}: ${esc(x.motivo)}</li>`).join('')}</ul></details>` : ''}
     ${m ? `<p class="nota">Última importación: ${esc(fdt(m.fecha))}.</p>` : ''}
   </section>`;
 }
 
+/* Panel del mapa. El mapa (Leaflet + OpenStreetMap) lo coloca app.js dentro de #vt-gmap-slot después de pintar. */
+function mensajeMaps(e) {
+  if (!e || e.fase === 'inicial' || e.fase === 'cargando') return '<p class="vt-gmap-msg">Cargando mapa…</p>';
+  if (e.fase === 'error') return `<div class="vt-gmap-msg"><p><b>Mapa no disponible.</b> ${esc(e.mensaje || 'No se pudo cargar el mapa.')} Las ventas siguen disponibles en el listado.</p><p><button type="button" class="btn btn-sm" data-act="vt-mapa-reintentar">Reintentar</button></p></div>`;
+  return '';
+}
+function panelMapaHtml(S, lista, todas, e) {
+  const con = lista.filter(v => v.ubicacion && v.ubicacion.lat !== null);
+  const ap = con.filter(v => v.ubicacion.precision === 'aproximada').length, ex = con.length - ap, sin = lista.length - con.length;
+  const contraido = !!S.vtMapaContraido, listo = e && e.fase === 'listo';
+  return `<section class="vt-mapa-panel ${contraido ? 'contraido' : ''}" aria-labelledby="vt-mapa-t">
+    <div class="vt-mapa-cab">
+      <h3 id="vt-mapa-t">Ubicación de las ventas</h3>
+      <p class="vt-mapa-cuenta" aria-live="polite">Mostrando ${plural(lista.length, 'venta', 'ventas')}${hayFiltro(S) ? ` de ${todas.length}` : ''} · <span class="vt-ley-aprox">≈ ${ap} ${ap === 1 ? 'aproximada' : 'aproximadas'}</span> · <span class="vt-ley-exacta">✓ ${ex} ${ex === 1 ? 'confirmada' : 'confirmadas'}</span>${sin ? ` · ${sin} sin ubicación` : ''}</p>
+      <span class="sp"></span>
+      ${contraido || !listo ? '' : `<button type="button" class="btn btn-sm" data-act="vt-mapa-todas" ${lista.length ? '' : 'disabled'}>Ver todas las ubicaciones</button>`}
+      <button type="button" class="btn btn-sm btn-ghost" data-act="vt-mapa-contraer" aria-expanded="${!contraido}" aria-controls="vt-gmap-slot">${contraido ? 'Mostrar mapa' : 'Contraer mapa'}</button>
+    </div>
+    ${contraido ? '' : `${ap ? '<p class="vt-mapa-aviso">Ubicaciones aproximadas según la información disponible. Los marcadores no representan todavía la dirección exacta de los talleres.</p>' : ''}
+    <div class="vt-gmap-wrap">
+      <div id="vt-gmap-slot" class="vt-gmap-slot ${listo ? '' : 'sin-mapa'}">${listo ? '' : mensajeMaps(e)}</div>
+      ${!lista.length && listo ? '<p class="vt-gmap-vacio">Los filtros no coinciden con ningún registro de venta.</p>' : ''}
+    </div>
+    <ul class="vt-leyenda" aria-label="Leyenda de precisión">
+      <li><span class="vt-pin vt-pin-aprox"><span class="vt-pin-ico" aria-hidden="true">≈</span><b>VT</b><small>Aprox.</small></span> Aproximada: punto representativo de la ciudad o zona.</li>
+      <li><span class="vt-pin vt-pin-exacta"><span class="vt-pin-ico" aria-hidden="true">✓</span><b>VT</b><small>Exacta</small></span> Exacta: entrada del taller, confirmada por una persona.</li>
+    </ul>
+    <p class="nota vt-mapa-tactil">En el celular, mueve y acerca el mapa con dos dedos o con los botones + y −; con un dedo se desplaza la página.</p>
+    <p class="nota vt-mapa-guardado">Las ubicaciones se guardan en este navegador y se comparten con el equipo al pulsar «Sincronizar».</p>`}
+  </section>`;
+}
+/* Ventana del marcador: sin teléfonos ni otros datos personales. */
+export const popupMapaHtml = v => {
+  const u = v.ubicacion;
+  return `<div class="vt-info"><p class="vt-info-id">${esc(v.id)}</p><b>${esc(v.nombre)}</b>
+    <p>${esc([u.ciudad || v.datos.ciudad, u.estado].filter(Boolean).join(', ')) || 'Ciudad pendiente'}</p>
+    <p>Serial consignado: <code>${esc(v.origen.serial || '—')}</code>${v.dup ? ' <small>(duplicado, por conciliar)</small>' : ''}</p>
+    <p>Precisión: <b>${u.precision === 'exacta' ? '✓ Exacta confirmada' : '≈ Aproximada'}</b></p>
+    <div class="vt-info-acc"><button type="button" data-act="vt-ficha" data-vid="${esc(v.id)}">Ver ficha</button><button type="button" data-act="vt-ubicacion" data-vid="${esc(v.id)}">Editar ubicación</button></div></div>`;
+};
+
+const PIN_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 22s7-7.2 7-12.5A7 7 0 0 0 5 9.5C5 14.8 12 22 12 22z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="9.5" r="2.5" fill="currentColor"/></svg>';
 function tarjetasVentas(l) {
   // Tarjeta limpia: solo identificación, ciudad, serial, fecha y garantía. Los avisos se ven en la ficha.
-  return `<ul class="mq-grid pv-grid vt-grid">${l.map(v => `<li class="mq-card pv-card vt-card"><div class="mq-card-body">
+  return `<ul class="mq-grid pv-grid vt-grid">${l.map(v => `<li class="mq-card pv-card vt-card" data-vid="${esc(v.id)}"><div class="mq-card-body">
       <p class="mq-tipo">${esc(v.id)} · Venta ${v.datos.empresa || v.datos.establecimiento ? '· Empresa' : '· Cliente'}</p>
+      ${v.ubicacion ? `<button type="button" class="vt-ubicar" data-act="vt-localizar" data-vid="${esc(v.id)}" aria-label="Ubicar ${esc(v.id)} en el mapa" title="Ubicar en el mapa">${PIN_SVG}</button>` : ''}
       <h3><button type="button" class="mq-link" data-act="vt-ficha" data-vid="${esc(v.id)}">${esc(v.nombre)}</button></h3>
       <dl class="vt-dl">
         <div><dt>Ciudad o zona</dt><dd>${esc(lugar(v)) || pend(PENDLEV)}</dd></div>
@@ -76,26 +126,15 @@ function tarjetasVentas(l) {
     </div></li>`).join('')}</ul>`;
 }
 function tablaVentas(l) {
-  return `<div class="tabla-wrap"><table class="map-tabla mq-tabla vt-tabla"><thead><tr><th>Registro</th><th>Cliente / empresa</th><th>Ciudad</th><th>Serial consignado</th><th>Fecha de venta</th><th>Pago</th><th>Precio</th><th>Documentación</th><th>Garantía</th><th>Alertas</th></tr></thead><tbody>
+  return `<div class="tabla-wrap"><table class="map-tabla mq-tabla vt-tabla"><thead><tr><th>Registro</th><th>Cliente / empresa</th><th>Ciudad</th><th>Serial consignado</th><th>Fecha de venta</th><th>Pago</th><th>Precio</th><th>Documentación</th><th>Garantía</th><th>Ubicación</th></tr></thead><tbody>
     ${l.map(v => `<tr${v.dup ? ' class="vt-dup"' : ''}><td>${esc(v.id)}</td>
       <td><button type="button" class="mq-link" data-act="vt-ficha" data-vid="${esc(v.id)}"><b>${esc(v.nombre)}</b></button>${v.nombre !== v.datos.dueno && v.datos.dueno ? `<br><small class="nota">${esc(v.datos.dueno)}</small>` : ''}</td>
       <td>${esc(lugar(v)) || '—'}</td><td><code>${esc(v.origen.serial) || '—'}</code>${v.dup ? '<br><small class="vt-txt-alerta">Duplicado, por conciliar</small>' : ''}</td>
       <td>${fd(v.origen.fechaVenta) || '—'}</td><td>${esc(v.datos.formaPago) || '—'}</td><td>${precioTxt(v)}</td>
       <td>${esc(v.datos.docEstado)}</td><td>${chipGar(v.garantia)}${v.garantia.fin ? `<br><small class="nota">${fd(v.garantia.fin)}</small>` : ''}</td>
-      <td>${v.alertas.length}</td></tr>`).join('')}</tbody></table></div>`;
+      <td>${v.ubicacion ? `${chipPrec(v.ubicacion)} <button type="button" class="btn btn-sm btn-ghost" data-act="vt-localizar" data-vid="${esc(v.id)}">Ubicar</button>` : pend('Sin ubicación')}</td></tr>`).join('')}</tbody></table></div>`;
 }
-/* Mapa: solo establecimientos con ubicación confirmada. El resto se lista por ciudad, sin marcadores aproximados. */
-function mapaVentas(l) {
-  const con = l.filter(v => v.datos.ubicacionConfirmada), sin = l.filter(v => !v.datos.ubicacionConfirmada);
-  const grupos = {}; sin.forEach(v => { const c = v.datos.ciudad || 'Sin ciudad'; (grupos[c] = grupos[c] || []).push(v); });
-  return `${con.length ? '<div class="pv-mapa-wrap"><div id="vt-mapa" class="pv-mapa" role="region" aria-label="Mapa de establecimientos"><p class="vacio">Cargando mapa…</p></div></div>'
-    : '<p class="aviso vt-aviso-mapa">Ningún establecimiento tiene todavía la ubicación exacta confirmada. No se colocan marcadores en el centro de las ciudades.</p>'}
-    ${sin.length ? `<h3 class="rp-h">Ubicación exacta pendiente</h3><ul class="vt-ciudades">${Object.keys(grupos).sort((a, b) => a.localeCompare(b, 'es')).map(c => `<li><b>${esc(c)}</b> <small class="nota">${plural(grupos[c].length, 'registro', 'registros')}</small>
-      <ul class="pv-chips">${grupos[c].map(v => `<li><button type="button" class="mq-link" data-act="vt-ficha" data-vid="${esc(v.id)}">${esc(v.nombre)}</button> <small class="nota">${esc(v.id)}</small></li>`).join('')}</ul></li>`).join('')}</ul>` : ''}`;
-}
-export const marcadoresVentas = l => l.filter(v => v.datos.ubicacionConfirmada && v.datos.lat !== null && v.datos.lng !== null).map(v => ({ t: { ...v, lat: v.datos.lat, lng: v.datos.lng }, n: '' }));
-export const popupVentaHtml = v => `<div class="pv-popup"><b>${esc(v.nombre)}</b><br><small>${esc(lugar(v))}</small><br><small>Serial consignado: ${esc(v.origen.serial || '—')}</small>
-  <button type="button" class="pv-popup-btn" data-act="vt-ficha" data-vid="${esc(v.id)}">Ver ficha</button></div>`;
+export const chipPrec = u => (u.precision === 'exacta' ? '<span class="mq-chip c-stock">✓ Exacta</span>' : '<span class="mq-chip c-falta">≈ Aproximada</span>');
 
 function sinClasificarHtml(sc, todas) {
   const nom = id => (todas.find(v => v.id === id) || {}).nombre || id;
@@ -136,9 +175,7 @@ export function fichaVentaHtml(v) {
         ${fila('Teléfono del dueño', telefonoHtml(v))}
         ${fila('Contactos', d.contactos.length ? `<ul class="pv-contactos">${d.contactos.map(c => `<li><b>${esc(c.nombre || 'Sin nombre')}</b>${c.cargo ? ` · ${esc(c.cargo)}` : ''}${c.telefono ? `<br>${esc(c.telefono)}` : ''}${c.correo ? `<br><a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a>` : ''}</li>`).join('')}</ul>` : pend(SININFO))}
         ${fila('Ciudad o zona', val(d.ciudad, PENDLEV))}
-        ${fila('Estado', val(d.estadoVE, PENDLEV))}
-        ${fila('Dirección', val(d.direccion, PENDLEV))}
-        ${fila('Ubicación exacta', d.ubicacionConfirmada ? `${d.lat}, ${d.lng} <span class="mq-chip c-stock">Confirmada</span>` : pend('Ubicación exacta pendiente'))}
+        ${ubicacionFilas(v)}
       </dl>
       <h3 class="rp-h">2 · Equipo y venta</h3>
       <dl class="org-dl">
@@ -242,13 +279,8 @@ export function formVentaHtml(v) {
         ${chk('telefonoVerificado', 'Teléfono verificado con el cliente')}
         <fieldset class="fld"><legend>Contactos del establecimiento</legend><div data-contactos>${(d.contactos.length ? d.contactos : [{}]).map(c => contactoFila(c)).join('')}</div>
           <button type="button" class="btn btn-sm" data-vt-agregar-contacto>+ Agregar contacto</button></fieldset>
-        <div class="fld-row">${inp('ciudad', 'Ciudad o zona', 'maxlength="120"')}
-          <label class="fld"><span>Estado</span><select name="estadoVE"><option value="">Sin definir</option>${PV.ESTADOS_VE.map(e => `<option ${e === d.estadoVE ? 'selected' : ''}>${esc(e)}</option>`).join('')}</select></label></div>
-        ${inp('direccion', 'Dirección', 'maxlength="300"')}
-        <p class="hint">Acércate en el mapa hasta ver la calle y haz clic en la entrada del establecimiento, o pega sus coordenadas (por ejemplo, copiadas de Google Maps). No uses el centro de la ciudad.</p>
-        <div class="pv-minimapa" data-minimapa></div>
-        <div class="fld-row">${inp('lat', 'Latitud', 'inputmode="decimal" placeholder="10.4806"')}${inp('lng', 'Longitud', 'inputmode="decimal" placeholder="-66.9036"')}</div>
-        ${chk('ubicacionConfirmada', 'Ubicación exacta confirmada (no el centro de la ciudad)')}
+        ${inp('ciudad', 'Ciudad o zona (dato comercial)', 'maxlength="120"')}
+        <p class="nota">La dirección, el estado y el punto en el mapa se cambian con «Editar ubicación» en la ficha.</p>
       </fieldset>
       <fieldset class="fld"><legend>Equipo y venta</legend>
         ${chk('serialConciliado', 'Serial conciliado (se resolvió la duplicidad o se confirmó el equipo)')}
@@ -272,5 +304,58 @@ export function formVentaHtml(v) {
       <p class="mq-form-msg" data-msg></p>
     </div>
     <div class="dlg-foot"><button type="button" class="btn" data-dlg-close>Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div>
+  </form>`;
+}
+
+/* ── Ubicación en la ficha ── */
+function ubicacionFilas(v) {
+  const u = v.ubicacion;
+  if (!u) return fila('Ubicación', `${pend('Sin ubicación')} <button type="button" class="btn btn-sm" data-vt="ubicacion">Editar ubicación</button>`);
+  const hist = u.historial || [];
+  return `${fila('Ubicación', `${chipPrec(u)} <button type="button" class="btn btn-sm" data-vt="ubicacion">Editar ubicación</button>`)}
+    ${fila('Referencia utilizada', esc(u.referencia) || pend(SININFO))}
+    ${u.nota ? fila('Nota', esc(u.nota)) : ''}
+    ${fila('Estado', val(u.estado, PENDLEV))}
+    ${fila('Dirección exacta', val(u.direccion, 'Pendiente'))}
+    ${fila('Coordenadas', u.lat !== null ? `${u.lat}, ${u.lng}` : pend('Pendiente'))}
+    ${u.enlace ? fila('Enlace de Google Maps', `<a href="${esc(u.enlace)}" target="_blank" rel="noopener noreferrer">Abrir el enlace guardado</a>${u.enlaceNota ? `<br><small class="nota">${esc(u.enlaceNota)}</small>` : ''}`) : ''}
+    ${fila('Actualizada', `${esc(fdt(u.actualizado)) || '—'} <small class="nota">${esc(u.origen || '')}${u.autor ? ` · ${esc(u.autor)}` : ''}</small>`)}
+    ${hist.length ? fila('Ubicaciones anteriores', `<details><summary>${hist.length}</summary><ol class="hist">${[...hist].reverse().map(h => `<li><span class="nota">${esc(fdt(h.reemplazada))}</span> ${h.precision === 'exacta' ? '✓ exacta' : '≈ aproximada'} · ${esc(h.referencia || '')} (${h.lat}, ${h.lng})${h.enlace ? ' · con enlace' : ''}</li>`).join('')}</ol></details>`) : ''}`;
+}
+
+/* ── Editor de ubicación ──
+   Mapa de vista previa con marcador arrastrable (solo aquí), clic para colocar el punto, enlace de Google Maps (solo referencia)
+   y coordenadas manuales. La precisión no tiene valor por defecto: hay que confirmar qué representa el punto. */
+export function formUbicacionHtml(v, mapaListo) {
+  const u = v.ubicacion || {}, ref = u.referencia || '';
+  return `<form class="dlg-form vt-ub-form" novalidate>
+    <div class="dlg-head"><div><p class="dlg-kicker">${esc(v.id)} · ${esc(v.nombre)}</p><h2 id="dlg-titulo">Editar ubicación</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cancelar">×</button></div>
+    <div class="dlg-body">
+      <p class="nota">Ubicación guardada: ${u.lat !== undefined && u.lat !== null ? `${chipPrec(u)} ${esc(ref)} (${u.lat}, ${u.lng})` : 'ninguna'}. Nada cambia hasta que pulses «Guardar ubicación».</p>
+      <label class="fld"><span>Enlace de Google Maps</span>
+        <div class="vt-enlace"><input name="enlace" maxlength="2000" value="${esc(u.enlace || '')}" placeholder="https://www.google.com/maps/place/…" autocomplete="off" inputmode="url"><button type="button" class="btn btn-sm" data-ub="leer">Leer enlace</button></div>
+        <small class="hint">Se guarda como referencia (no se consulta a Google). Si el enlace trae las coordenadas del lugar, se proponen en el mapa para que las confirmes; si no, coloca el punto a mano. También puedes escribir «latitud, longitud».</small></label>
+      <div class="vt-enlace-msg" data-enlace-msg aria-live="polite"></div>
+      <div class="vt-ub-mapa" data-ub-mapa>${mapaListo ? '' : '<p class="vt-gmap-msg">No se pudo cargar el mapa. Puedes escribir las coordenadas a mano.</p>'}</div>
+      <p class="hint">${mapaListo ? 'Haz clic en el mapa para colocar el punto o arrastra el marcador. Acércate hasta ver la calle.' : ''}</p>
+      <div class="fld-row">
+        <label class="fld"><span>Latitud</span><input name="lat" inputmode="decimal" value="${u.lat ?? ''}" autocomplete="off" placeholder="10.4806"></label>
+        <label class="fld"><span>Longitud</span><input name="lng" inputmode="decimal" value="${u.lng ?? ''}" autocomplete="off" placeholder="-66.9036"></label>
+      </div>
+      <label class="fld"><span>Dirección</span><input name="direccion" maxlength="300" value="${esc(u.direccion || '')}" autocomplete="off" placeholder="Calle, sector, punto de referencia"></label>
+      <div class="fld-row">
+        <label class="fld"><span>Ciudad o zona</span><input name="ciudad" maxlength="120" value="${esc(u.ciudad || v.datos.ciudad || '')}" autocomplete="off"></label>
+        <label class="fld"><span>Estado</span><select name="estado"><option value="">Sin definir</option>${PV.ESTADOS_VE.map(e => `<option ${e === u.estado ? 'selected' : ''}>${esc(e)}</option>`).join('')}</select></label>
+      </div>
+      <label class="fld"><span>Referencia utilizada</span><input name="referencia" maxlength="300" value="${esc(ref)}" autocomplete="off" placeholder="Ej.: entrada del taller, verificada con el cliente"></label>
+      <fieldset class="fld vt-precision"><legend>¿Qué representa este punto? <b class="req">*</b></legend>
+        <label class="check"><input type="radio" name="precision" value="aproximada"> <span><b>≈ Referencia aproximada</b>: zona o ciudad; no es la entrada del taller.</span></label>
+        <label class="check"><input type="radio" name="precision" value="exacta"> <span><b>✓ Ubicación exacta del taller</b>: confirmé que el punto es el establecimiento.</span></label>
+        <small class="hint">Pegar un enlace no confirma la ubicación: elige tú la opción que corresponde.</small>
+      </fieldset>
+      <p class="nota">Se guarda en este navegador (la ubicación anterior queda en el historial) y se comparte con el equipo al pulsar «Sincronizar».</p>
+      <p class="mq-form-msg" data-msg></p>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn" data-dlg-close>Cancelar</button><button type="submit" class="btn btn-primary">Guardar ubicación</button></div>
   </form>`;
 }

@@ -21,6 +21,7 @@ import * as RSV from './maq-res-vistas.js';
 import * as VT from './maq-ventas.js';
 import * as VTV from './maq-ventas-vistas.js';
 import * as SY from './maq-sync.js';
+import * as MVT from './maq-mapa-ventas.js';
 import { leerRuta, rutaRegistro, rutaMacro, habilitado } from './rutas.js';
 
 const $ = s => document.querySelector(s);
@@ -106,8 +107,13 @@ function render({ foco } = {}) {
     if (((r.ventana === 'stock' && r.sub === 'repuestos') || r.ventana === 'resumen') && RP.R.estado === 'inicial')
       RP.cargar().then(() => { const x = leerRuta(); if (x.vista === 'maquinas' && (x.sub === 'repuestos' || x.ventana === 'resumen')) render(); });
     const v = r.ventana;
+    if (v === 'postventa') {
+      // Ubicaciones provisionales por ciudad (una sola vez por venta; no pisa ediciones) y carga del mapa (Leaflet + OpenStreetMap).
+      if (!S.vtUbAseguradas) { S.vtUbAseguradas = true; VT.asegurarUbicaciones(); }
+      if (MVT.estadoMapa().fase === 'inicial') MVT.cargarMapa().then(() => render(), () => render());
+    }
     html = v === 'stock' ? MQ.stockHtml(S)
-      : v === 'postventa' ? PVV.postventaHtml(S)
+      : v === 'postventa' ? PVV.postventaHtml(S, MVT.estadoMapa())
         : v === 'operacion' ? OPV.operacionHtml(S)
           : RSV.resumenHtml();
     titulo = `${MQ.VENTANAS.find(x => x.id === v).titulo} · Máquinas de simulación`;
@@ -139,12 +145,13 @@ function render({ foco } = {}) {
   ctx.nuevo = null;
   if (prev) { const el = document.querySelector(prev); if (el) el.focus({ preventScroll: true }); }
   if ((r.vista === 'registro' && r.pagina === 'kanban') || r.vista === 'kanban') bindDrag();
-  // Mapa de Postventa: se monta después de pintar (Leaflet necesita el contenedor en la página).
-  const elMapa = document.getElementById('pv-mapa'), elMapaVt = document.getElementById('vt-mapa');
-  if (elMapaVt && r.vista === 'maquinas' && r.ventana === 'postventa') {
-    const marcas = VTV.marcadoresVentas(VTV.ventasFiltradas(S));
-    if (marcas.length) MP.montarMapa(elMapaVt, marcas, VTV.popupVentaHtml).catch(err => { elMapaVt.innerHTML = `<p class="aviso err">${C.esc(err.message)}</p>`; });
-  } else if (elMapa && r.vista === 'maquinas' && r.ventana === 'postventa') {
+  // Mapa de Postventa (Leaflet + OpenStreetMap): el mismo mapa se vuelve a colocar tras cada repintado, sin perder zoom ni posición.
+  const elMapa = document.getElementById('pv-mapa'), slotGm = document.getElementById('vt-gmap-slot');
+  if (slotGm && r.vista === 'maquinas' && r.ventana === 'postventa' && MVT.estadoMapa().fase === 'listo') {
+    try { MVT.montarPrincipal(slotGm, VTV.ventasFiltradas(S), VT.ventas(), VTV.popupMapaHtml); }
+    catch (err) { slotGm.innerHTML = `<p class="vt-gmap-msg">No se pudo mostrar el mapa: ${C.esc(err.message)}</p>`; }
+  }
+  if (elMapa && r.vista === 'maquinas' && r.ventana === 'postventa') {
     const marcas = PVV.marcadoresMapa(PVV.talleresFiltrados(S));
     if (marcas.length) MP.montarMapa(elMapa, marcas, PVV.popupTallerHtml).catch(err => { elMapa.innerHTML = `<p class="aviso err">${C.esc(err.message)}</p>`; });
   } else MP.desmontarMapa();
@@ -816,6 +823,7 @@ function vtFicha(id) {
     else if (b.dataset.vt === 'servicio') pvFormServicio(null, { ventaId: v.id });
     else if (b.dataset.vt === 'editar-servicio') pvFormServicio(b.dataset.sid, {});
     else if (b.dataset.vt === 'entregar') vtEntrega(v);
+    else if (b.dataset.vt === 'ubicacion') vtUbicacion(v);
     else if (b.dataset.vt === 'retirar') { const u = MD.unidadPorId(b.dataset.uid); if (u) pvFormRetiro(u, () => vtFicha(v.id)); }
   };
   pie.addEventListener('click', enAccion); cuerpo.addEventListener('click', enAccion);
@@ -837,35 +845,82 @@ function vtEntrega(v) {
 function vtForm(v) {
   abrirDialogo(dlg, VTV.formVentaHtml(v), null);
   const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]'), cont = form.querySelector('[data-contactos]');
-  const numCoord = x => { const n = Number(String(x).trim().replace(',', '.')); return String(x).trim() === '' ? null : Number.isFinite(n) ? n : NaN; };
-  let mapa = null;
-  MP.miniMapa(form.querySelector('[data-minimapa]'), v.datos.lat ?? NaN, v.datos.lng ?? NaN, (lat, lng) => { form.elements.lat.value = lat; form.elements.lng.value = lng; })
-    .then(m => { mapa = m; }).catch(() => { form.querySelector('[data-minimapa]').innerHTML = '<p class="nota">No se pudo cargar el mapa. Puedes escribir las coordenadas.</p>'; });
-  const alPegar = () => {
-    // Se acepta pegar «10.4806, -66.9036» en la latitud.
-    const m = String(form.elements.lat.value).match(/^\s*(-?\d+(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d+(?:[.,]\d+)?)\s*$/);
-    if (m) { form.elements.lat.value = m[1].replace(',', '.'); form.elements.lng.value = m[2].replace(',', '.'); }
-    const a = numCoord(form.elements.lat.value), b = numCoord(form.elements.lng.value);
-    if (mapa && Number.isFinite(a) && Number.isFinite(b)) mapa.mover(a, b);
-  };
-  form.elements.lat.addEventListener('change', alPegar); form.elements.lng.addEventListener('change', alPegar);
   form.addEventListener('click', e => {
     if (e.target.closest('[data-vt-agregar-contacto]')) { cont.insertAdjacentHTML('beforeend', VTV.contactoFilaVentaHtml({})); cont.lastElementChild.querySelector('input').focus(); }
     const q = e.target.closest('[data-vt-quitar-contacto]'); if (q) q.closest('[data-contacto]').remove();
   });
-  dlg.addEventListener('close', () => { if (mapa) { mapa.quitar(); mapa = null; } }, { once: true });
   form.addEventListener('submit', e => {
     e.preventDefault();
     const cambios = {};
     Object.keys(VT.CAMPOS).forEach(k => { const el = form.elements[k]; if (el && el.name === k) cambios[k] = el.type === 'checkbox' ? el.checked : el.value; });
     cambios.contactos = [...cont.querySelectorAll('[data-contacto]')].map(f => ({ nombre: f.querySelector('[name="c-nombre"]').value, cargo: f.querySelector('[name="c-cargo"]').value,
       telefono: f.querySelector('[name="c-telefono"]').value, correo: f.querySelector('[name="c-correo"]').value }));
-    const lat = numCoord(cambios.lat), lng = numCoord(cambios.lng);
-    if (Number.isNaN(lat) || Number.isNaN(lng)) { msg.innerHTML = '<span class="aviso err">Escribe latitud y longitud como números (por ejemplo, 10.4806 y -66.9036).</span>'; return; }
     const r = VT.editar(v.id, cambios, form.elements.motivo.value);
     if (r.error) { msg.innerHTML = `<span class="aviso err">${C.esc(r.error)}</span>`; return; }
     dlgRetorno = null; dlg.close(); render();
     toast(r.sinCambios ? 'Sin cambios.' : `${r.ok === 1 ? 'Cambio guardado' : `${r.ok} cambios guardados`} en el historial.`);
+    vtFicha(v.id);
+  });
+}
+
+/* ── Mapa de Postventa: localizar una venta y editar su ubicación ── */
+function vtLocalizar(id) {
+  if (MVT.estadoMapa().fase !== 'listo') { toast('El mapa no está disponible en este momento. Usa «Reintentar» en el panel del mapa.'); return; }
+  if (S.vtMapaContraido) { S.vtMapaContraido = false; render(); }
+  const panel = document.querySelector('.vt-mapa-panel');
+  if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (!MVT.localizar(id)) toast('Esta venta no aparece en el mapa con los filtros actuales.');
+}
+function vtUbicacion(v) {
+  const listo = MVT.estadoMapa().fase === 'listo';
+  abrirDialogo(dlg, VTV.formUbicacionHtml(v, listo), null);
+  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]'), emsg = form.querySelector('[data-enlace-msg]');
+  const num = x => { const s = String(x ?? '').trim().replace(',', '.'); const n = Number(s); return s === '' ? null : Number.isFinite(n) ? n : NaN; };
+  const ant = v.ubicacion;
+  const poner = (lat, lng) => { form.elements.lat.value = lat; form.elements.lng.value = lng; };
+  const ed = listo ? MVT.montarEditor(form.querySelector('[data-ub-mapa]'), ant && ant.lat !== null ? { lat: ant.lat, lng: ant.lng } : null, poner) : null;
+  if (ed) dlg.addEventListener('close', () => ed.quitar(), { once: true });
+  const alEscribir = () => {
+    // Se acepta pegar «10.4806, -66.9036» en la latitud.
+    const m = String(form.elements.lat.value).match(/^\s*(-?\d+(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d+(?:[.,]\d+)?)\s*$/);
+    if (m) poner(m[1].replace(',', '.'), m[2].replace(',', '.'));
+    const a = num(form.elements.lat.value), b = num(form.elements.lng.value);
+    if (ed && Number.isFinite(a) && Number.isFinite(b)) ed.mover(a, b);
+  };
+  form.elements.lat.addEventListener('change', alEscribir); form.elements.lng.addEventListener('change', alEscribir);
+  let analisis = null;
+  const leerEnlace = () => {
+    analisis = VT.analizarEnlaceMaps(form.elements.enlace.value);
+    if (analisis.tipo === 'vacio') { emsg.innerHTML = ''; return; }
+    const aplicable = ['lugar', 'consulta', 'coordenadas'].includes(analisis.tipo);
+    emsg.innerHTML = `<p class="${aplicable ? 'nota' : 'aviso-lectura'}">${C.esc(analisis.mensaje)}</p>${analisis.tipo === 'camara' ? '<button type="button" class="btn btn-sm" data-ub="camara">Usar el centro de la vista como punto de partida</button>' : ''}`;
+    // Un enlace con coordenadas del lugar solo PROPONE el punto: no se guarda ni se marca exacto sin confirmación.
+    if (aplicable) { poner(analisis.lat, analisis.lng); alEscribir(); }
+  };
+  form.elements.enlace.addEventListener('change', leerEnlace);
+  form.addEventListener('click', e => {
+    const b = e.target.closest('[data-ub]'); if (!b) return;
+    if (b.dataset.ub === 'leer') leerEnlace();
+    if (b.dataset.ub === 'camara' && analisis && analisis.tipo === 'camara') { poner(analisis.lat, analisis.lng); alEscribir(); }
+  });
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const g = n => String(form.elements[n] ? form.elements[n].value : '').trim();
+    const lat = num(g('lat')), lng = num(g('lng')), prec = form.querySelector('input[name="precision"]:checked');
+    if (Number.isNaN(lat) || Number.isNaN(lng)) { msg.innerHTML = '<span class="aviso err">Escribe latitud y longitud como números (por ejemplo, 10.4806 y -66.9036).</span>'; return; }
+    const enlace = g('enlace'), an = enlace ? VT.analizarEnlaceMaps(enlace) : null;
+    if (an && an.tipo === 'invalido') { msg.innerHTML = `<span class="aviso err">${C.esc(an.mensaje)}</span>`; return; }
+    let referencia = g('referencia');
+    const movido = !ant || ant.lat !== lat || ant.lng !== lng;
+    if (ant && referencia === ant.referencia) {
+      if (prec && prec.value === 'exacta' && ant.precision !== 'exacta') referencia = 'Entrada del taller (confirmada)';
+      else if (movido) referencia = 'Punto elegido en el mapa';
+    }
+    const r = VT.guardarUbicacion(v.id, { lat, lng, precision: prec ? prec.value : '', direccion: g('direccion'), ciudad: g('ciudad'), estado: g('estado'), referencia,
+      enlace, enlaceNota: an ? an.mensaje : '', nota: ant && ant.nota && prec && prec.value === 'aproximada' && g('estado') === ant.estado ? ant.nota : '' }, S.syncAutor);
+    if (r.error) { msg.innerHTML = `<span class="aviso err">${C.esc(r.error)}</span>`; return; }
+    dlgRetorno = null; dlg.close(); render();
+    toast(`Ubicación ${r.ubicacion.precision === 'exacta' ? 'exacta' : 'aproximada'} guardada; la anterior queda en el historial.`);
     vtFicha(v.id);
   });
 }
@@ -984,6 +1039,13 @@ document.addEventListener('click', e => {
     case 'vt-vista': S.vtVista = b.dataset.vista; render({ foco: `[data-act="vt-vista"][data-vista="${b.dataset.vista}"]` }); break;
     case 'vt-ficha': vtFicha(b.dataset.vid); break;
     case 'sync-abrir': syncForm(); break;
+    case 'vt-localizar': vtLocalizar(b.dataset.vid); break;
+    case 'vt-ubicacion': { const v = VT.ventaPorId(b.dataset.vid); if (v) vtUbicacion(v); break; }
+    case 'vt-mapa-todas': MVT.verTodas(VTV.ventasFiltradas(S)); break;
+    case 'vt-mapa-contraer': S.vtMapaContraido = !S.vtMapaContraido; render({ foco: '[data-act="vt-mapa-contraer"]' }); break;
+    case 'vt-mapa-reintentar':
+      if (MVT.estadoMapa().fase === 'error') { MVT.reiniciarCarga(); MVT.cargarMapa().then(() => render(), () => render()); render(); } else MVT.reintentarTeselas();
+      break;
     case 'vt-limpiar': S.vtBusca = ''; S.vtCiudad = ''; S.vtDoc = ''; S.vtAlerta = ''; render({ foco: '[data-act="vt-busca"]' }); break;
     case 'vt-importar':
       VT.importar().then(x => { render(); toast(x.nuevas + x.evidNuevas + x.pendNuevos ? `Importado: ${x.nuevas} ventas y ${x.evidNuevas} evidencias nuevas.` : 'Nada nuevo: no se duplicó ningún registro y tus correcciones se conservan.'); }).catch(err => toast(err.message));

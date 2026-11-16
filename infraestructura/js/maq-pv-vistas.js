@@ -20,11 +20,11 @@ export function talleresFiltrados(S) {
     .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 }
 
-export function postventaHtml(S) {
+export function postventaHtml(S, mapsEstado) {
   // Postventa unificado: todo se organiza por registro de venta (cliente). Los datos del establecimiento,
   // contactos, ubicación, equipos entregados y servicios están en la ficha de cada venta.
   const ts = PV.talleres(), sinVenta = PV.vendidasSinTaller();
-  return `${cabecera('postventa')}${estadoLectura()}${ventasHtml(S)}
+  return `${cabecera('postventa')}${estadoLectura()}${ventasHtml(S, mapsEstado)}
     ${sinVenta.length ? `<details class="mas"><summary>Máquinas vendidas según la hoja sin venta asociada (${sinVenta.length})</summary><p class="nota">La hoja de máquinas las indica como vendidas, pero no están registradas como entregadas en ninguna venta. Ábrela en la ficha de la venta con «+ Equipos entregados».</p>
       <ul class="pv-chips">${sinVenta.map(u => `<li><button type="button" class="mq-link" data-act="maq-ficha" data-uid="${esc(u.id)}">${esc(u.codigo)}</button></li>`).join('')}</ul></details>` : ''}
     ${ts.length ? `<details class="mas"><summary>Talleres registrados antes de la unificación (${ts.length})</summary>${tarjetasTalleres(ts)}</details>` : ''}`;
