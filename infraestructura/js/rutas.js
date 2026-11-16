@@ -11,6 +11,7 @@
      #/pendientes                         Pendientes de clasificación (administración): migración, correspondencia y conflictos
      #/maquinas                           Máquinas de simulación · Resumen
      #/maquinas/postventa · /stock · /stock/repuestos · /operacion   Ventanas del módulo
+     #/mantenimiento · /mantenimiento/maquinas · /mantenimiento/trabajos   Mantenimiento (Odoo, captura fechada)
    Los proyectos condicionados usan la ruta de proyectos. */
 import { HABILITADOS } from './datos.js';
 
@@ -30,6 +31,11 @@ export function leerRuta() {
     // Rutas antiguas del módulo anterior: vendidas → Postventa; referencia → Resumen.
     const v = { vendidas: 'postventa', referencia: 'resumen' }[seg[1]] || seg[1] || 'resumen';
     return { vista: 'maquinas', seccion: 'maquinas', ventana: ['resumen', 'postventa', 'stock', 'operacion'].includes(v) ? v : 'resumen', sub: seg[2] || '' };
+  }
+  if (seg[0] === 'mantenimiento') {
+    // Mantenimiento: Resumen · Máquinas del taller · Mantenimientos.
+    const v = seg[1] || 'resumen';
+    return { vista: 'mantenimiento', seccion: 'mantenimiento', ventana: ['resumen', 'maquinas', 'trabajos'].includes(v) ? v : 'resumen' };
   }
   return { vista: 'objetivos', macro: p.get('macro') || '' };
 }

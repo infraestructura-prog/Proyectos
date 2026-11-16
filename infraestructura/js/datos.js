@@ -18,6 +18,8 @@ export const SECCIONES = [
   { id: 'kanban', titulo: 'Kanban', activa: true },   // Kanban general: una tarjeta por macroobjetivo
   { id: 'maquinas', titulo: 'Máquinas de simulación', bloque: 2, activa: true,
     descripcion: 'Máquinas vendidas y en stock, leídas de Google Sheets. Agregar o editar guarda directamente en la hoja (requiere sesión de Google y la clave de edición).' },
+  { id: 'mantenimiento', titulo: 'Mantenimiento', bloque: 2, activa: true,
+    descripcion: 'Máquinas del taller y sus mantenimientos, desde una captura fechada de Odoo (solo lectura).' },
   { id: 'documentacion', titulo: 'Documentación', bloque: 2 },
   { id: 'pendientes', titulo: 'Pendientes de clasificación', admin: true, activa: true }
 ];

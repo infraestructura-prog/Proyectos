@@ -547,3 +547,35 @@ input[type=date] { color-scheme: dark; }
 .leaflet-popup-content .vt-info { margin: 0; }
 .vt-mapa-tactil { display: none; margin: 4px 0 0; font-size: 12px; }
 @media (pointer: coarse) { .vt-mapa-tactil { display: block; } }
+
+/* ── Mantenimiento ── */
+.mt-fuente { margin: 8px 0 12px; padding: 8px 12px; border-left: 3px solid var(--in-info); background: rgba(143,178,201,.08); font-size: 13px; }
+.mt-fuente-mini { margin: 0 0 8px; font-size: 12px; color: var(--text-3); }
+.mt-alcance { margin: 4px 0 10px; }
+.mt-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+.mt-card { border-top: 3px solid var(--in-steel-hi); position: relative; }
+.mt-card h3 .mq-link::after { content: ""; position: absolute; inset: 0; }
+.mt-card:hover { border-color: var(--line-hi); }
+.mt-cond { font-weight: 800; }
+.mt-cond-ok { color: var(--c-completed); border-color: rgba(127,184,106,.6); }
+.mt-cond-rest { color: var(--in-warn); border-color: rgba(232,194,74,.6); }
+.mt-cond-fuera { color: var(--in-err); border-color: rgba(239,107,94,.6); }
+.mt-cond-pend { color: var(--text-2); border-style: dashed; }
+.mt-aviso-ico { color: var(--in-warn); font-weight: 800; }
+.mt-aviso, .mt-aviso-txt { color: var(--in-warn); font-size: 13px; }
+.mt-aviso { margin: 4px 0; padding: 6px 8px; border-left: 3px solid var(--in-warn); background: rgba(232,194,74,.08); }
+.mt-sols { list-style: none; padding: 0; display: grid; gap: 6px; }
+.mt-sol { border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; }
+.mt-sol.abierta { border-left: 3px solid var(--in-orange); }
+.mt-sol summary { cursor: pointer; }
+.mt-pres { margin: 0; padding-left: 18px; }
+.mt-generales { margin-top: 18px; }
+.mt-trab { list-style: none; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+.mt-trab-card { border-top-color: var(--in-orange); }
+.mt-trab-card.bloq { border-top-color: var(--in-err); }
+.mt-filtros select { max-width: 220px; }
+.mt-prev { list-style: none; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.mt-rutinas { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 6px; }
+.mt-tareas { margin: 0; padding-left: 20px; }
+.mt-asuntos li { display: grid; gap: 2px; }
+.mt-asuntos li span { font-size: 13px; color: var(--text-2); }

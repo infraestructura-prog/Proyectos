@@ -79,6 +79,16 @@ export function sidebarHtml(S, ctx) {
         ${VENT_MAQ.map(([id, t, h]) => { const sel = enSec && r.ventana === id; return `<li class="sb-proy ${sel ? 'is-sel' : ''}"><a class="sb-idx sb-proy-link" href="${h}" ${sel ? 'aria-current="page"' : ''}><span>${t}</span></a></li>`; }).join('')}
       </ul></li>`;
   };
+  const VENT_MANT = [['resumen', 'Resumen', '#/mantenimiento'], ['maquinas', 'Máquinas del taller', '#/mantenimiento/maquinas'], ['trabajos', 'Mantenimientos', '#/mantenimiento/trabajos']];
+  const secMant = () => {
+    const abierta = S.sbSec.mantenimiento !== false, enSec = r.vista === 'mantenimiento';
+    return `<li class="sb-item ${enSec ? 'is-active' : ''}">
+      <div class="sb-row"><a class="sb-link" href="#/mantenimiento" ${enSec && r.ventana === 'resumen' ? 'aria-current="page"' : ''}>${ICON.llave}<span>Mantenimiento</span></a>
+        <button type="button" class="sb-disclose" data-act="toggle-seccion" data-sec="mantenimiento" aria-expanded="${abierta}" aria-controls="sb-mantenimiento" aria-label="${abierta ? 'Ocultar' : 'Mostrar'} las ventanas de Mantenimiento">${ICON.chev}</button></div>
+      <ul id="sb-mantenimiento" class="sb-indice sb-proys" ${abierta ? '' : 'hidden'}>
+        ${VENT_MANT.map(([id, t, h]) => { const sel = enSec && r.ventana === id; return `<li class="sb-proy ${sel ? 'is-sel' : ''}"><a class="sb-idx sb-proy-link" href="${h}" ${sel ? 'aria-current="page"' : ''}><span>${t}</span></a></li>`; }).join('')}
+      </ul></li>`;
+  };
   // Secciones pendientes: visibles y claramente identificadas, sin enlace.
   const ICONO_SEC = { investigaciones: ICON.lupa, kanban: ICON.tablero, maquinas: ICON.engranaje, documentacion: ICON.doc, pendientes: ICON.bandeja };
   const pendiente = s => `<li class="sb-item"><span class="sb-link is-disabled" aria-disabled="true">${ICONO_SEC[s.id] || ICON.folder}<span>${esc(s.titulo)}</span>
@@ -89,7 +99,7 @@ export function sidebarHtml(S, ctx) {
     if ((s.bloque || 1) !== bloqueAnt) { sep = '<li class="sb-sep" aria-hidden="true"></li>'; bloqueAnt = s.bloque || 1; }
     if (s.admin && !adminVisto) { sep = '<li class="sb-sep" aria-hidden="true"></li><li class="sb-grupo" aria-hidden="true">Administración</li>'; adminVisto = true; }
     const activa = s => { const sel = r.vista === s.id || (r.vista === 'modulo' && r.seccion === s.id); return `<li class="sb-item ${sel ? 'is-active' : ''}"><div class="sb-row"><a class="sb-link" href="#/${s.id}" ${sel ? 'aria-current="page"' : ''}>${ICONO_SEC[s.id] || ICON.folder}<span>${esc(s.titulo)}</span></a></div></li>`; };
-    return sep + (s.id === 'objetivos' ? secObj : s.id === 'proyectos' ? secProy : s.id === 'investigaciones' ? secInv : s.id === 'maquinas' ? secMaq() : s.activa ? activa(s) : pendiente(s));
+    return sep + (s.id === 'objetivos' ? secObj : s.id === 'proyectos' ? secProy : s.id === 'investigaciones' ? secInv : s.id === 'maquinas' ? secMaq() : s.id === 'mantenimiento' ? secMant() : s.activa ? activa(s) : pendiente(s));
   }).join('');
   const L = enlacesArea(), abiertoArea = !!S.menuArea;
   return `<div class="sb-brand-wrap">

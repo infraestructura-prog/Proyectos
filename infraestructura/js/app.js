@@ -24,6 +24,8 @@ import * as SY from './maq-sync.js';
 import * as MVT from './maq-mapa-ventas.js';
 import * as NUBE from './nube.js';
 import * as NUBEUI from './nube-ui.js';
+import * as MT from './mant-datos.js';
+import * as MTV from './mant-vistas.js';
 import { leerRuta, rutaRegistro, rutaMacro, habilitado } from './rutas.js';
 
 const $ = s => document.querySelector(s);
@@ -54,11 +56,13 @@ function cargarEstado() {
   S.repVista = p.repVista === 'tabla' ? 'tabla' : 'tarjetas'; S.repBusca = ''; S.repFiltro = '';
   S.pvVista = ['tabla', 'mapa'].includes(p.pvVista) ? p.pvVista : 'tarjetas'; S.pvEstado = ''; S.pvOper = '';
   S.syncAutor = typeof p.syncAutor === 'string' ? p.syncAutor.slice(0, 80) : '';
+  S.mtVista = p.mtVista === 'tabla' ? 'tabla' : 'tarjetas'; S.mtBusca = ''; S.mtCat = ''; S.mtCond = '';
+  S.mtTBusca = ''; S.mtTEquipo = ''; S.mtTCat = ''; S.mtTPrio = ''; S.mtTResp = ''; S.mtTEtapa = '';
   S.vtVista = ['tabla', 'mapa'].includes(p.vtVista) ? p.vtVista : 'tarjetas'; S.vtBusca = ''; S.vtCiudad = ''; S.vtDoc = ''; S.vtAlerta = '';
   S.opVista = p.opVista === 'tabla' ? 'tabla' : 'tarjetas';
   S.menuArea = false;
 }
-const guardarPrefs = () => almacen.guardarPrefs({ vista: S.vista, abiertos: [...S.abiertos], indice: S.indice, activo: S.activo, sbSec: S.sbSec, soloDestacadas: S.soloDestacadas, maqModo: S.maqModo, maqVista: S.maqVista, maqFiltro: S.maqFiltro, repVista: S.repVista, pvVista: S.pvVista, opVista: S.opVista, vtVista: S.vtVista, syncAutor: S.syncAutor });
+const guardarPrefs = () => almacen.guardarPrefs({ vista: S.vista, abiertos: [...S.abiertos], indice: S.indice, activo: S.activo, sbSec: S.sbSec, soloDestacadas: S.soloDestacadas, maqModo: S.maqModo, maqVista: S.maqVista, maqFiltro: S.maqFiltro, repVista: S.repVista, pvVista: S.pvVista, opVista: S.opVista, vtVista: S.vtVista, syncAutor: S.syncAutor, mtVista: S.mtVista });
 const guardarTareas = () => { if (!almacen.guardarTareas(tareas)) toast('No se pudo guardar en este navegador.'); };
 const guardarInicios = () => { if (!almacen.guardarProyectos(inicios)) toast('No se pudo guardar en este navegador.'); };
 const tareasDe = pid => tareas.filter(t => t.proyecto === pid);
@@ -119,6 +123,15 @@ function render({ foco } = {}) {
         : v === 'operacion' ? OPV.operacionHtml(S)
           : RSV.resumenHtml();
     titulo = `${MQ.VENTANAS.find(x => x.id === v).titulo} · Máquinas de simulación`;
+  }
+  else if (r.vista === 'mantenimiento') {
+    // Mantenimiento: la captura fechada de Odoo se lee al entrar (solo lectura; no hay conexión en vivo).
+    if (MT.T.estado === 'inicial') MT.cargar().then(() => { if (leerRuta().vista === 'mantenimiento') render(); });
+    const v = r.ventana;
+    html = v === 'maquinas' ? MTV.maquinasHtml(S)
+      : v === 'trabajos' ? MTV.trabajosHtml(S)
+        : MTV.resumenMantHtml();
+    titulo = `${MTV.VENTANAS_MANT.find(x => x.id === v).titulo} · Mantenimiento`;
   }
   else if (r.vista === 'pendientes') { html = MV.pendientesHtml(origen, estMig, almacen.respaldo()); titulo = 'Pendientes de clasificación'; }
   else if (r.vista === 'kanban') { html = KM.tableroHtml(ctx, tablero()); titulo = 'Kanban'; }
@@ -786,9 +799,9 @@ function pvFormRetiro(u, despues) {
 }
 /* Dentro de una ficha, los enlaces a otra ficha (máquina ↔ taller) cambian el contenido de la ventana. */
 dlg.addEventListener('click', e => {
-  const b = e.target.closest('[data-act="maq-ficha"], [data-act="pv-taller"], [data-act="vt-ficha"], [data-act="nube-pin"]'); if (!b || !dlg.contains(b)) return;
+  const b = e.target.closest('[data-act="maq-ficha"], [data-act="pv-taller"], [data-act="vt-ficha"], [data-act="nube-pin"], [data-act="mt-ficha"], [data-act="mt-trabajo"], [data-act="mt-rutina"]'); if (!b || !dlg.contains(b)) return;
   e.stopPropagation();
-  if (b.dataset.act === 'nube-pin') { dlg.close(); NUBEUI.abrir(); } else if (b.dataset.act === 'maq-ficha') maqFicha(b.dataset.uid); else if (b.dataset.act === 'vt-ficha') vtFicha(b.dataset.vid); else pvTaller(b.dataset.tid);
+  if (b.dataset.act === 'mt-ficha') mtFicha(b.dataset.eid); else if (b.dataset.act === 'mt-trabajo') mtTrabajo(b.dataset.sid); else if (b.dataset.act === 'mt-rutina') mtRutina(b.dataset.rid); else if (b.dataset.act === 'nube-pin') { dlg.close(); NUBEUI.abrir(); } else if (b.dataset.act === 'maq-ficha') maqFicha(b.dataset.uid); else if (b.dataset.act === 'vt-ficha') vtFicha(b.dataset.vid); else pvTaller(b.dataset.tid);
 });
 
 /* ── Sincronización con la hoja privada compartida ── */
@@ -863,6 +876,64 @@ function vtForm(v) {
     dlgRetorno = null; dlg.close(); render();
     toast(r.sinCambios ? 'Sin cambios.' : `${r.ok === 1 ? 'Cambio guardado' : `${r.ok} cambios guardados`} en el historial.`);
     vtFicha(v.id);
+  });
+}
+
+/* ── Mantenimiento: ficha de la máquina y verificación de su condición ── */
+function mtFicha(id) {
+  const e = MT.equipoPorId(id); if (!e) return;
+  abrirDialogo(dlg, MTV.fichaMaquinaHtml(e), `[data-act="mt-ficha"][data-eid="${CSS.escape(e.id)}"]`);
+  const b = dlg.querySelector('[data-mt="verificar"]');
+  if (b) b.addEventListener('click', () => mtVerificar(e));
+}
+function mtTrabajo(id) {
+  const s = MT.solicitudPorId(id); if (!s) return;
+  abrirDialogo(dlg, MTV.fichaTrabajoHtml(s), `[data-act="mt-trabajo"][data-sid="${CSS.escape(s.id)}"]`);
+  const b = dlg.querySelector('[data-mt="seguimiento"]');
+  if (b) b.addEventListener('click', () => mtSeguimiento(s));
+}
+function mtSeguimiento(s) {
+  abrirDialogo(dlg, MTV.formSeguimientoHtml(s, NUBE.autor()), null);
+  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]');
+  form.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const g = n => String(form.elements[n] ? form.elements[n].value : '').trim();
+    const r = MT.guardarSeguimiento(s, { atiende: g('atiende'), proximaAccion: g('proximaAccion'), bloqueo: g('bloqueo'), estado: g('estado'), fechaPrevista: g('fechaPrevista') }, g('autor'));
+    if (r.error) { msg.innerHTML = `<span class="aviso err">${C.esc(r.error)}</span>`; return; }
+    dlgRetorno = null; dlg.close(); render(); toast(r.sinCambios ? 'Sin cambios.' : 'Seguimiento guardado.');
+    mtTrabajo(s.id);
+  });
+}
+function mtRutina(id) {
+  const x = MTV.rutinaPorId(id); if (!x || !x.r) return;
+  abrirDialogo(dlg, MTV.fichaRutinaHtml(x.e, x.r), `[data-act="mt-rutina"][data-rid="${CSS.escape(id)}"]`);
+  dlg.querySelectorAll('[data-mt="aprobar"], [data-mt="ejecucion"]').forEach(b => b.addEventListener('click', () => mtFormRutina(x.e, x.r, b.dataset.mt)));
+}
+function mtFormRutina(e, r, tipo) {
+  abrirDialogo(dlg, MTV.formRutinaHtml(e, r, tipo, NUBE.autor()), null);
+  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]');
+  form.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const g = n => String(form.elements[n] ? form.elements[n].value : '').trim();
+    const d = { por: g('por'), fecha: g('fecha'), nota: g('nota'), observaciones: g('nota') };
+    const res = tipo === 'aprobar' ? MT.aprobarRutina(r, d) : MT.registrarEjecucion(r, d);
+    if (res.error) { msg.innerHTML = `<span class="aviso err">${C.esc(res.error)}</span>`; return; }
+    dlgRetorno = null; dlg.close(); render(); toast(tipo === 'aprobar' ? 'Rutina aprobada.' : 'Ejecución registrada.');
+    mtRutina(r.id);
+  });
+}
+function mtVerificar(e) {
+  abrirDialogo(dlg, MTV.formVerificacionHtml(e, NUBE.autor()), null);
+  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]');
+  form.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const g = n => String(form.elements[n] ? form.elements[n].value : '').trim();
+    const cond = form.querySelector('input[name="condicion"]:checked');
+    const r = MT.registrarVerificacion(e, { condicion: cond ? cond.value : '', fecha: g('fecha'), responsable: g('responsable'), restricciones: g('restricciones'),
+      observaciones: g('observaciones'), evidencia: g('evidencia'), registradoPor: g('registradoPor') });
+    if (r.error) { msg.innerHTML = `<span class="aviso err">${C.esc(r.error)}</span>`; return; }
+    dlgRetorno = null; dlg.close(); render(); toast(`Verificación guardada: ${r.verificacion.condicion}.`);
+    mtFicha(e.id);
   });
 }
 
@@ -1043,6 +1114,12 @@ document.addEventListener('click', e => {
     case 'vt-ficha': vtFicha(b.dataset.vid); break;
     case 'sync-abrir': syncForm(); break;
     case 'nube-pin': NUBEUI.abrir(); break;
+    case 'mt-vista': S.mtVista = b.dataset.vista; render({ foco: `[data-act="mt-vista"][data-vista="${b.dataset.vista}"]` }); break;
+    case 'mt-limpiar': S.mtBusca = ''; S.mtCat = ''; S.mtCond = ''; render({ foco: '[data-act="mt-busca"]' }); break;
+    case 'mt-ficha': mtFicha(b.dataset.eid); break;
+    case 'mt-trabajo': mtTrabajo(b.dataset.sid); break;
+    case 'mt-rutina': mtRutina(b.dataset.rid); break;
+    case 'mt-t-limpiar': S.mtTBusca = ''; S.mtTEquipo = ''; S.mtTCat = ''; S.mtTPrio = ''; S.mtTResp = ''; S.mtTEtapa = ''; render({ foco: '[data-act="mt-t-busca"]' }); break;
     case 'vt-localizar': vtLocalizar(b.dataset.vid); break;
     case 'vt-ubicacion': { const v = VT.ventaPorId(b.dataset.vid); if (v) vtUbicacion(v); break; }
     case 'vt-mapa-todas': MVT.verTodas(VTV.ventasFiltradas(S)); break;
@@ -1132,6 +1209,8 @@ document.addEventListener('change', e => {
   if (el.dataset.act === 'rep-filtro') { S.repFiltro = el.value; render({ foco: '[data-act="rep-filtro"]' }); }
   if (el.dataset.act === 'pv-estado') { S.pvEstado = el.value; render({ foco: '[data-act="pv-estado"]' }); }
   if (el.dataset.act === 'pv-oper') { S.pvOper = el.value; render({ foco: '[data-act="pv-oper"]' }); }
+  { const m = { 'mt-t-equipo': 'mtTEquipo', 'mt-t-cat': 'mtTCat', 'mt-t-prio': 'mtTPrio', 'mt-t-resp': 'mtTResp', 'mt-t-etapa': 'mtTEtapa' }[el.dataset.act]; if (m) { S[m] = el.value; render({ foco: `[data-act="${el.dataset.act}"]` }); } }
+  if (el.dataset.act === 'mt-cat' || el.dataset.act === 'mt-cond') { S[el.dataset.act === 'mt-cat' ? 'mtCat' : 'mtCond'] = el.value; render({ foco: `[data-act="${el.dataset.act}"]` }); }
   if (['vt-ciudad', 'vt-doc', 'vt-alerta'].includes(el.dataset.act)) { S[{ 'vt-ciudad': 'vtCiudad', 'vt-doc': 'vtDoc', 'vt-alerta': 'vtAlerta' }[el.dataset.act]] = el.value; render({ foco: `[data-act="${el.dataset.act}"]` }); }
   if (el.dataset.act === 'maq-asignar' && el.value) { const er = MD.asignar(el.dataset.kit, el.dataset.pos, el.value); render(); toast(er || 'Unidad asignada al kit.'); }
   if (el.dataset.act === 'solo-destacadas') { S.soloDestacadas = el.checked; render({ foco: '[data-act="solo-destacadas"]' }); }
@@ -1139,6 +1218,16 @@ document.addEventListener('change', e => {
 /* Búsqueda de repuestos: se filtra al escribir, conservando el foco y el cursor. */
 document.addEventListener('input', e => {
   const el = e.target;
+  if (el.dataset.act === 'mt-t-busca') {
+    S.mtTBusca = el.value; const p = el.selectionStart;
+    render({ foco: '[data-act="mt-t-busca"]' });
+    const n = document.querySelector('[data-act="mt-t-busca"]'); if (n) n.setSelectionRange(p, p); return;
+  }
+  if (el.dataset.act === 'mt-busca') {
+    S.mtBusca = el.value; const p = el.selectionStart;
+    render({ foco: '[data-act="mt-busca"]' });
+    const n = document.querySelector('[data-act="mt-busca"]'); if (n) n.setSelectionRange(p, p); return;
+  }
   if (el.dataset.act === 'vt-busca') {
     S.vtBusca = el.value; const p = el.selectionStart;
     render({ foco: '[data-act="vt-busca"]' });
@@ -1234,7 +1323,8 @@ const COLECCIONES_NUBE = [
   ['ventas', 'maq-ventas', 'lista'], ['evidencias', 'maq-evidencias', 'lista'], ['evid-sin-clasificar', 'maq-evid-sin-clasificar', 'lista'],
   ['ventas-importacion', 'maq-ventas-importacion', 'unico'], ['talleres', 'maq-talleres', 'lista'], ['instalaciones', 'maq-instalaciones', 'lista'],
   ['servicios', 'maq-servicios', 'lista'], ['operacion', 'maq-operacion', 'lista'], ['complementos', 'maq-complementos', 'mapa'],
-  ['soportes', 'maq-soportes', 'lista'], ['kits', 'maq-kits', 'lista'], ['kits-sembrados', 'maq-kits-sembrados', 'unico'], ['rep-datos', 'rep-datos', 'mapa']
+  ['soportes', 'maq-soportes', 'lista'], ['kits', 'maq-kits', 'lista'], ['kits-sembrados', 'maq-kits-sembrados', 'unico'], ['rep-datos', 'rep-datos', 'mapa'],
+  ['mant-complementos', 'mant-complementos', 'mapa'], ['mant-trabajos', 'mant-trabajos', 'mapa'], ['mant-preventivos', 'mant-preventivos', 'mapa']
 ].map(([col, k, forma, idDe]) => ({ col, key: PREF + k, forma, idDe }));
 /* Al llegar cambios de otra persona: se recargan los datos en memoria y se repinta sin perder el foco. */
 let repintadoRemoto = null;
@@ -1251,6 +1341,7 @@ function recibirCambiosNube() {
 NUBE.iniciar({ app: 'infra', prefijo: PREF, colecciones: COLECCIONES_NUBE, alRecibir: recibirCambiosNube });
 NUBEUI.montar({ proyectos: 'Inicio de proyecto', tareas: 'Tarea', kanban: 'Kanban general', resultados: 'Resultados', eliminadas: 'Tarea eliminada', ventas: 'Venta',
   evidencias: 'Evidencia', 'evid-sin-clasificar': 'Archivo sin clasificar', 'ventas-importacion': 'Importación', talleres: 'Taller', instalaciones: 'Equipo entregado',
-  servicios: 'Servicio', operacion: 'Equipo en operación', complementos: 'Ficha de máquina', soportes: 'Soporte', kits: 'Kit', 'kits-sembrados': 'Kits propuestos', 'rep-datos': 'Repuesto' });
+  servicios: 'Servicio', operacion: 'Equipo en operación', complementos: 'Ficha de máquina', soportes: 'Soporte', kits: 'Kit', 'kits-sembrados': 'Kits propuestos', 'rep-datos': 'Repuesto',
+  'mant-complementos': 'Verificación de máquina', 'mant-trabajos': 'Seguimiento de mantenimiento', 'mant-preventivos': 'Rutina preventiva' });
 /* Al conectarse la base compartida (o al completarse la carga inicial) se repinta para mostrar el estado correcto. */
 { let previo = ''; NUBE.alCambiar(s => { const k = s.fase + '|' + s.nubeVacia; if (k !== previo) { previo = k; if (leerRuta().vista === 'maquinas') render(); } }); }
