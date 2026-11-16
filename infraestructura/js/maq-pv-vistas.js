@@ -5,6 +5,7 @@ import { esc, plural } from './componentes.js';
 import * as D from './maq-datos.js';
 import * as PV from './maq-postventa.js';
 import { cabecera, estadoLectura, fdt, pend, tipoTxt } from './maq-vistas.js';
+import { ventasHtml } from './maq-ventas-vistas.js';
 
 const fd = s => (/^\d{4}-\d{2}-\d{2}$/.test(s || '') ? s.split('-').reverse().join('/') : '');
 const ubicTaller = t => [t.ciudad, t.municipio, t.estado].filter(Boolean).join(' · ');
@@ -24,7 +25,8 @@ export function postventaHtml(S) {
   const lista = talleresFiltrados(S);
   const maqDesp = desp.filter(x => x.u.tipo !== 'soporte'), sopDesp = desp.filter(x => x.u.tipo === 'soporte');
   const vacio = !ts.length && !desp.length;
-  return `${cabecera('postventa')}${estadoLectura()}
+  return `${cabecera('postventa')}${estadoLectura()}${ventasHtml(S)}
+    <h2 class="vt-h2-talleres">Talleres de clientes e instalaciones</h2>
     <ul class="mq-cifras" aria-label="Postventa">
       ${vacio ? '<li class="mq-cifra-ancha"><b class="mq-nd">—</b><span>Información pendiente de levantar: todavía no hay talleres ni máquinas desplegadas registrados.</span></li>'
         : `<li><b>${maqDesp.length}</b><span>Máquinas desplegadas en talleres</span></li>
@@ -180,19 +182,19 @@ export function formInstalacionHtml(tallerId) {
 }
 
 export function formServicioHtml(s, ctx) {
-  const v = s || { tipo: 'Servicio', fecha: new Date().toISOString().slice(0, 10), estado: 'Abierto', descripcion: '', proximaAccion: '', responsable: '', unidadId: ctx.unidadId || '', tallerId: ctx.tallerId || '' };
+  const v = s || { tipo: 'Servicio', fecha: new Date().toISOString().slice(0, 10), estado: 'Abierto', descripcion: '', proximaAccion: '', responsable: '', unidadId: ctx.unidadId || '', tallerId: ctx.tallerId || '', ventaId: ctx.ventaId || '' };
   const unidadesTaller = v.tallerId ? PV.unidadesEnTaller(v.tallerId).map(x => x.u) : [];
   const opc = v.unidadId && !unidadesTaller.some(u => u.id === v.unidadId) ? [D.unidadPorId(v.unidadId), ...unidadesTaller].filter(Boolean) : unidadesTaller;
   return `<form class="dlg-form" novalidate>
     <div class="dlg-head"><div><p class="dlg-kicker">Servicios e incidencias</p><h2 id="dlg-titulo">${s ? 'Editar registro' : 'Nuevo registro'}</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cancelar">×</button></div>
     <div class="dlg-body">
-      <input type="hidden" name="tallerId" value="${esc(v.tallerId)}">
+      <input type="hidden" name="tallerId" value="${esc(v.tallerId)}"><input type="hidden" name="ventaId" value="${esc(v.ventaId || '')}">
       <div class="fld-row">
         <label class="fld"><span>Tipo</span><select name="tipo">${PV.TIPOS_SERVICIO.map(x => `<option ${x === v.tipo ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
         <label class="fld"><span>Fecha</span><input type="date" name="fecha" value="${esc(v.fecha)}"></label>
         <label class="fld"><span>Estado</span><select name="estado">${PV.ESTADOS_SERVICIO.map(x => `<option ${x === v.estado ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
       </div>
-      <label class="fld"><span>Máquina</span><select name="unidadId"><option value="">${v.tallerId ? 'Todo el taller (sin máquina específica)' : 'Sin máquina'}</option>${opc.map(u => `<option value="${esc(u.id)}" ${u.id === v.unidadId ? 'selected' : ''}>${esc(u.codigo || u.id)}</option>`).join('')}</select></label>
+      <label class="fld"><span>Máquina</span><select name="unidadId"><option value="">${v.tallerId ? 'Todo el taller (sin máquina específica)' : v.ventaId ? 'Sin máquina identificada' : 'Sin máquina'}</option>${opc.map(u => `<option value="${esc(u.id)}" ${u.id === v.unidadId ? 'selected' : ''}>${esc(u.codigo || u.id)}</option>`).join('')}</select></label>
       <label class="fld"><span>Descripción <b class="req">*</b></span><textarea name="descripcion" rows="3" maxlength="2000">${esc(v.descripcion)}</textarea></label>
       <div class="fld-row">
         <label class="fld"><span>Próxima acción</span><input name="proximaAccion" maxlength="600" value="${esc(v.proximaAccion)}" autocomplete="off"></label>

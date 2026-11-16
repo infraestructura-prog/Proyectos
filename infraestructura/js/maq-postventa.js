@@ -84,12 +84,12 @@ export function retirar(unidadId, datos) {
 }
 
 /* ── Servicios, visitas e incidencias ── */
-const normServ = s => ({ id: str(s.id, 40), tipo: TIPOS_SERVICIO.includes(s.tipo) ? s.tipo : 'Servicio', fecha: fecha(s.fecha), unidadId: str(s.unidadId, 60), tallerId: str(s.tallerId, 40),
+const normServ = s => ({ id: str(s.id, 40), tipo: TIPOS_SERVICIO.includes(s.tipo) ? s.tipo : 'Servicio', fecha: fecha(s.fecha), unidadId: str(s.unidadId, 60), tallerId: str(s.tallerId, 40), ventaId: str(s.ventaId, 20),
   estado: ESTADOS_SERVICIO.includes(s.estado) ? s.estado : 'Abierto', descripcion: str(s.descripcion, 2000), proximaAccion: str(s.proximaAccion, 600),
   responsable: str(s.responsable, 120), creado: str(s.creado, 40), historial: (Array.isArray(s.historial) ? s.historial : []).slice(-100) });
 export const servicios = () => { const v = leer(K.servicios); return Array.isArray(v) ? v.map(normServ).filter(s => s.id) : []; };
 export function guardarServicio(datos, id) {
-  if (!datos.unidadId && !datos.tallerId) return { error: 'Relaciona el registro con una máquina o con un taller.' };
+  if (!datos.unidadId && !datos.tallerId && !datos.ventaId) return { error: 'Relaciona el registro con una máquina, un taller o una venta.' };
   if (!str(datos.descripcion)) return { error: 'Describe el servicio, la visita o la incidencia.' };
   const l = servicios(), i = id ? l.findIndex(s => s.id === id) : -1;
   const base = i >= 0 ? l[i] : { id: nuevoId('SV'), creado: ahora(), historial: [] };
@@ -98,7 +98,7 @@ export function guardarServicio(datos, id) {
   if (i >= 0) l[i] = s; else l.push(s);
   escribir(K.servicios, l); return { servicio: s };
 }
-export const serviciosDe = ({ unidadId, tallerId }) => servicios().filter(s => (unidadId && s.unidadId === unidadId) || (tallerId && s.tallerId === tallerId))
+export const serviciosDe = ({ unidadId, tallerId, ventaId }) => servicios().filter(s => (unidadId && s.unidadId === unidadId) || (tallerId && s.tallerId === tallerId) || (ventaId && s.ventaId === ventaId))
   .sort((a, b) => (b.fecha || b.creado).localeCompare(a.fecha || a.creado));
 export const abiertos = l => l.filter(s => s.estado === 'Abierto');
 

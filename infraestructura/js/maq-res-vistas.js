@@ -7,6 +7,7 @@ import * as D from './maq-datos.js';
 import * as RP from './maq-repuestos.js';
 import * as PV from './maq-postventa.js';
 import * as OP from './maq-operacion.js';
+import * as VT from './maq-ventas.js';
 import { cabecera, estadoLectura } from './maq-vistas.js';
 
 const PEND = 'Información pendiente de levantar';
@@ -66,6 +67,34 @@ function alertas(us, kits, talleres, reps) {
   return a;
 }
 
+/* Registros de venta: cifras totales respaldadas por los registros cargados. Lo que esos registros no permiten
+   afirmar se muestra como «Información insuficiente», no como un número. */
+const insuficiente = (t, motivo) => `<li><a class="rs-cifra pend" href="#/maquinas/postventa"><b class="mq-nd">—</b><span>${t}</span><small>Información insuficiente · ${motivo}</small></a></li>`;
+function ventasResumenHtml() {
+  const i = VT.indicadores(), R = '#/maquinas/postventa';
+  if (!i) return `<section class="pj-sec rs-sec" aria-labelledby="rs-vt"><div class="sec-head"><h2 id="rs-vt">Postventa · registros de venta</h2><a class="rg-abrir" href="${R}">Ir a Postventa →</a></div>
+    <ul class="mq-cifras rs-cifras">${pendiente('Registros de venta', R)}</ul></section>`;
+  return `<section class="pj-sec rs-sec" aria-labelledby="rs-vt"><div class="sec-head"><h2 id="rs-vt">Postventa · registros de venta</h2><a class="rg-abrir" href="${R}">Ir a Postventa →</a></div>
+    <p class="nota">Cifras totales (sin filtros). Un registro de venta no equivale a una máquina física única ni a un kit completo.</p>
+    <ul class="mq-cifras rs-cifras">
+      ${cifra(i.ventas, 'Registros de venta cargados', R, i.noImportados ? `${plural(i.noImportados, 'fila no importada', 'filas no importadas')} (no eran ventas)` : '')}
+      ${cifra(i.dupSerial, 'Con identificación de equipo por conciliar', R, `serial duplicado · ${i.sinUnidad} sin vincular a una unidad del inventario`)}
+      ${cifra(i.conEmpresa, 'Con empresa o nombre comercial', R)}
+      ${cifra(i.sinPrecio, 'Sin precio registrado', R)}
+      ${cifra(i.docPendiente, 'Documentación pendiente', R, i.docPorVerificar ? `${i.docPorVerificar} completa según la fuente, por verificar` : '')}
+      ${cifra(i.ubicConfirmada, 'Establecimientos con ubicación confirmada', R)}
+      ${cifra(i.garCalculadas, 'Garantías calculadas', R, i.garConfirmadas < i.garCalculadas ? `desde la fecha de venta · inicio por confirmar en ${i.garCalculadas - i.garConfirmadas}` : '')}
+      ${i.garPorVencer || i.garVencidas ? cifra(i.garPorVencer + i.garVencidas, 'Garantías por vencer o vencidas', R) : ''}
+    </ul>
+    <ul class="mq-cifras rs-cifras rs-insuf" aria-label="Indicadores sin datos suficientes">
+      ${insuficiente('Equipos únicos desplegados', 'hay seriales duplicados y ventas sin unidad vinculada')}
+      ${insuficiente('Kits vendidos', 'no se registró qué componentes se entregaron')}
+      ${insuficiente('Máquinas operativas', '«Con dueño» es una condición comercial, no de funcionamiento')}
+      ${insuficiente('Ingresos', 'ningún registro tiene precio')}
+      ${(n => n ? cifra(n, 'Servicios realizados (registrados en las ventas)', R) : insuficiente('Servicios realizados', 'no hay servicios registrados en las ventas'))(PV.servicios().filter(s => s.ventaId && s.estado === 'Cerrado').length)}
+    </ul></section>`;
+}
+
 export function resumenHtml() {
   const r = datosResumen(), M = D.M;
   if (M.estado === 'cargando' && !M.maquinas.length) return `${cabecera('resumen')}${estadoLectura()}<p class="vacio">Cargando…</p>`;
@@ -85,7 +114,8 @@ export function resumenHtml() {
         ? `${cifra(r.refs, 'Referencias de repuestos', '#/maquinas/stock/repuestos')}${cifra(r.refsSin, 'Referencias sin existencias', '#/maquinas/stock/repuestos')}${r.refsInc ? cifra(r.refsInc, 'Con incidencia o garantía', '#/maquinas/stock/repuestos') : ''}`
         : `<li class="mq-cifra-ancha"><span class="nota">${r.repEstado === 'error' ? 'No se pudieron leer los repuestos.' : 'Cargando repuestos…'}</span></li>`}</ul>
     </section>
-    <section class="pj-sec rs-sec" aria-labelledby="rs-pv"><div class="sec-head"><h2 id="rs-pv">Postventa</h2><a class="rg-abrir" href="#/maquinas/postventa">Ir a Postventa →</a></div>
+    ${ventasResumenHtml()}
+    <section class="pj-sec rs-sec" aria-labelledby="rs-pv"><div class="sec-head"><h2 id="rs-pv">Postventa · talleres e instalaciones</h2><a class="rg-abrir" href="#/maquinas/postventa">Ir a Postventa →</a></div>
       <ul class="mq-cifras rs-cifras">${r.talleres || r.maqDesp
         ? `${cifra(r.maqDesp, 'Máquinas desplegadas en talleres de clientes', '#/maquinas/postventa')}${r.sopDesp ? cifra(r.sopDesp, 'Soportes desplegados', '#/maquinas/postventa') : ''}${cifra(r.talleresAtendidos, 'Talleres atendidos', '#/maquinas/postventa', `${plural(r.talleres, 'taller registrado', 'talleres registrados')}`)}`
         : `${pendiente('Máquinas desplegadas en talleres de clientes', '#/maquinas/postventa')}${pendiente('Talleres atendidos', '#/maquinas/postventa')}`}</ul>

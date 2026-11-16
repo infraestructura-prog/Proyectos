@@ -451,3 +451,25 @@ input[type=date] { color-scheme: dark; }
 .rs-alertas a { color: var(--in-warn); text-decoration: none; }
 .rs-alertas a:hover { text-decoration: underline; }
 .rs-alertas span { color: var(--text-2); font-size: 13.5px; }
+
+/* ── Registros de venta (Postventa) ── */
+.vt-sec .sec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.vt-alcance { margin: 4px 0 10px; }
+.vt-h2-talleres { margin: 28px 0 10px; font-size: 18px; }
+.vt-card.vt-dup { border-top-color: var(--in-warn); }
+.vt-dl { display: grid; gap: 4px; margin: 8px 0; font-size: 13px; }
+.vt-dl > div { display: grid; grid-template-columns: 9.5em 1fr; gap: 6px; }
+.vt-dl dt { color: var(--text-2); }
+.vt-dl dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.vt-alertas { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+.mq-chip.vt-alta { font-weight: 900; border-width: 2px; }
+.vt-txt-alerta { color: var(--in-warn); }
+.vt-tabla tr.vt-dup td:first-child { box-shadow: inset 3px 0 0 var(--in-warn); }
+.vt-ciudades { list-style: none; padding: 0; display: grid; gap: 10px; }
+.vt-evid { list-style: none; padding: 0; display: grid; gap: 8px; }
+.vt-evid li { overflow-wrap: anywhere; }
+.vt-acciones { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.vt-aviso-mapa { margin: 8px 0; }
+.vt-noimp { margin: 6px 0; }
+.rs-insuf { margin-top: 8px; }
+.vt-ficha code, .vt-card code { overflow-wrap: anywhere; }

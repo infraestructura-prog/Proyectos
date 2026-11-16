@@ -18,6 +18,8 @@ import * as MP from './maq-mapa.js';
 import * as OP from './maq-operacion.js';
 import * as OPV from './maq-op-vistas.js';
 import * as RSV from './maq-res-vistas.js';
+import * as VT from './maq-ventas.js';
+import * as VTV from './maq-ventas-vistas.js';
 import { leerRuta, rutaRegistro, rutaMacro, habilitado } from './rutas.js';
 
 const $ = s => document.querySelector(s);
@@ -47,10 +49,11 @@ function cargarEstado() {
   S.maqModo = p.maqModo === 'kits' ? 'kits' : 'individual'; S.maqVista = p.maqVista === 'tabla' ? 'tabla' : 'tarjetas'; S.maqFiltro = typeof p.maqFiltro === 'string' ? p.maqFiltro : '';
   S.repVista = p.repVista === 'tabla' ? 'tabla' : 'tarjetas'; S.repBusca = ''; S.repFiltro = '';
   S.pvVista = ['tabla', 'mapa'].includes(p.pvVista) ? p.pvVista : 'tarjetas'; S.pvEstado = ''; S.pvOper = '';
+  S.vtVista = ['tabla', 'mapa'].includes(p.vtVista) ? p.vtVista : 'tarjetas'; S.vtBusca = ''; S.vtCiudad = ''; S.vtDoc = ''; S.vtAlerta = '';
   S.opVista = p.opVista === 'tabla' ? 'tabla' : 'tarjetas';
   S.menuArea = false;
 }
-const guardarPrefs = () => almacen.guardarPrefs({ vista: S.vista, abiertos: [...S.abiertos], indice: S.indice, activo: S.activo, sbSec: S.sbSec, soloDestacadas: S.soloDestacadas, maqModo: S.maqModo, maqVista: S.maqVista, maqFiltro: S.maqFiltro, repVista: S.repVista, pvVista: S.pvVista, opVista: S.opVista });
+const guardarPrefs = () => almacen.guardarPrefs({ vista: S.vista, abiertos: [...S.abiertos], indice: S.indice, activo: S.activo, sbSec: S.sbSec, soloDestacadas: S.soloDestacadas, maqModo: S.maqModo, maqVista: S.maqVista, maqFiltro: S.maqFiltro, repVista: S.repVista, pvVista: S.pvVista, opVista: S.opVista, vtVista: S.vtVista });
 const guardarTareas = () => { if (!almacen.guardarTareas(tareas)) toast('No se pudo guardar en este navegador.'); };
 const guardarInicios = () => { if (!almacen.guardarProyectos(inicios)) toast('No se pudo guardar en este navegador.'); };
 const tareasDe = pid => tareas.filter(t => t.proyecto === pid);
@@ -92,6 +95,11 @@ function render({ foco } = {}) {
     // La hoja de máquinas se lee al entrar por primera vez (y con «Actualizar»); mientras tanto se muestra el estado.
     if (MD.M.estado === 'inicial') MD.cargarHoja().then(() => { if (leerRuta().vista === 'maquinas') render(); });
     S.maqSub = r.sub;
+    // Registros de venta: carga inicial automática solo en el prototipo local y solo una vez (luego, «Reimportar»).
+    if (VT.esLocal() && !VT.meta() && !S.vtImportando) {
+      S.vtImportando = true;
+      VT.importar().then(() => { if (leerRuta().vista === 'maquinas') render(); }).catch(() => {}).finally(() => { S.vtImportando = false; });
+    }
     // Repuestos se leen al abrir su pestaña o el Resumen (que muestra sus indicadores).
     if (((r.ventana === 'stock' && r.sub === 'repuestos') || r.ventana === 'resumen') && RP.R.estado === 'inicial')
       RP.cargar().then(() => { const x = leerRuta(); if (x.vista === 'maquinas' && (x.sub === 'repuestos' || x.ventana === 'resumen')) render(); });
@@ -130,8 +138,11 @@ function render({ foco } = {}) {
   if (prev) { const el = document.querySelector(prev); if (el) el.focus({ preventScroll: true }); }
   if ((r.vista === 'registro' && r.pagina === 'kanban') || r.vista === 'kanban') bindDrag();
   // Mapa de Postventa: se monta después de pintar (Leaflet necesita el contenedor en la página).
-  const elMapa = document.getElementById('pv-mapa');
-  if (elMapa && r.vista === 'maquinas' && r.ventana === 'postventa') {
+  const elMapa = document.getElementById('pv-mapa'), elMapaVt = document.getElementById('vt-mapa');
+  if (elMapaVt && r.vista === 'maquinas' && r.ventana === 'postventa') {
+    const marcas = VTV.marcadoresVentas(VTV.ventasFiltradas(S));
+    if (marcas.length) MP.montarMapa(elMapaVt, marcas, VTV.popupVentaHtml).catch(err => { elMapaVt.innerHTML = `<p class="aviso err">${C.esc(err.message)}</p>`; });
+  } else if (elMapa && r.vista === 'maquinas' && r.ventana === 'postventa') {
     const marcas = PVV.marcadoresMapa(PVV.talleresFiltrados(S));
     if (marcas.length) MP.montarMapa(elMapa, marcas, PVV.popupTallerHtml).catch(err => { elMapa.innerHTML = `<p class="aviso err">${C.esc(err.message)}</p>`; });
   } else MP.desmontarMapa();
@@ -746,10 +757,10 @@ function pvFormServicio(sid, ctx) {
   form.addEventListener('submit', e => {
     e.preventDefault();
     const g = n => String(form.elements[n] ? form.elements[n].value : '').trim();
-    const r = PV.guardarServicio({ tipo: g('tipo'), fecha: g('fecha'), estado: g('estado'), unidadId: g('unidadId'), tallerId: g('tallerId'), descripcion: g('descripcion'), proximaAccion: g('proximaAccion'), responsable: g('responsable') }, s && s.id);
+    const r = PV.guardarServicio({ tipo: g('tipo'), fecha: g('fecha'), estado: g('estado'), unidadId: g('unidadId'), tallerId: g('tallerId'), ventaId: g('ventaId'), descripcion: g('descripcion'), proximaAccion: g('proximaAccion'), responsable: g('responsable') }, s && s.id);
     if (r.error) { msg.innerHTML = `<span class="aviso err">${C.esc(r.error)}</span>`; return; }
     dlgRetorno = null; dlg.close(); render(); toast('Registro guardado.');
-    if (g('tallerId')) pvTaller(g('tallerId')); else if (g('unidadId')) maqFicha(g('unidadId'));
+    if (g('ventaId')) vtFicha(g('ventaId')); else if (g('tallerId')) pvTaller(g('tallerId')); else if (g('unidadId')) maqFicha(g('unidadId'));
   });
 }
 function pvFormRetiro(u) {
@@ -763,10 +774,38 @@ function pvFormRetiro(u) {
 }
 /* Dentro de una ficha, los enlaces a otra ficha (máquina ↔ taller) cambian el contenido de la ventana. */
 dlg.addEventListener('click', e => {
-  const b = e.target.closest('[data-act="maq-ficha"], [data-act="pv-taller"]'); if (!b || !dlg.contains(b)) return;
+  const b = e.target.closest('[data-act="maq-ficha"], [data-act="pv-taller"], [data-act="vt-ficha"]'); if (!b || !dlg.contains(b)) return;
   e.stopPropagation();
-  if (b.dataset.act === 'maq-ficha') maqFicha(b.dataset.uid); else pvTaller(b.dataset.tid);
+  if (b.dataset.act === 'maq-ficha') maqFicha(b.dataset.uid); else if (b.dataset.act === 'vt-ficha') vtFicha(b.dataset.vid); else pvTaller(b.dataset.tid);
 });
+
+/* ── Registros de venta: ficha, corrección con historial, servicios ligados a la venta ── */
+function vtFicha(id) {
+  const v = VT.ventaPorId(id); if (!v) { toast('El registro ya no existe.'); return; }
+  abrirDialogo(dlg, VTV.fichaVentaHtml(v), `[data-act="vt-ficha"][data-vid="${CSS.escape(id)}"]`);
+  const pie = dlg.querySelector('.dlg-foot'), cuerpo = dlg.querySelector('.dlg-body');
+  const enAccion = e => {
+    const b = e.target.closest('[data-vt]'); if (!b) return;
+    if (b.dataset.vt === 'editar') vtForm(v);
+    else if (b.dataset.vt === 'servicio') pvFormServicio(null, { ventaId: v.id, unidadId: v.datos.unidadId });
+    else if (b.dataset.vt === 'editar-servicio') pvFormServicio(b.dataset.sid, {});
+  };
+  pie.addEventListener('click', enAccion); cuerpo.addEventListener('click', enAccion);
+}
+function vtForm(v) {
+  abrirDialogo(dlg, VTV.formVentaHtml(v), null);
+  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const cambios = {};
+    Object.keys(VT.CAMPOS).forEach(k => { const el = form.elements[k]; if (el) cambios[k] = el.type === 'checkbox' ? el.checked : el.value; });
+    const r = VT.editar(v.id, cambios, form.elements.motivo.value);
+    if (r.error) { msg.innerHTML = `<span class="aviso err">${C.esc(r.error)}</span>`; return; }
+    dlgRetorno = null; dlg.close(); render();
+    toast(r.sinCambios ? 'Sin cambios.' : `${r.ok === 1 ? 'Cambio guardado' : `${r.ok} cambios guardados`} en el historial.`);
+    vtFicha(v.id);
+  });
+}
 
 /* ── Equipos en operación: registrar, editar, inspección y retiro ── */
 function opForm(r) {
@@ -879,6 +918,16 @@ document.addEventListener('click', e => {
     case 'editar-resultado': formResultado(pr); break;
     case 'migrar': ejecutarMigracion(); break;
     case 'pv-vista': S.pvVista = b.dataset.vista; render(); break;
+    case 'vt-vista': S.vtVista = b.dataset.vista; render({ foco: `[data-act="vt-vista"][data-vista="${b.dataset.vista}"]` }); break;
+    case 'vt-ficha': vtFicha(b.dataset.vid); break;
+    case 'vt-limpiar': S.vtBusca = ''; S.vtCiudad = ''; S.vtDoc = ''; S.vtAlerta = ''; render({ foco: '[data-act="vt-busca"]' }); break;
+    case 'vt-importar':
+      VT.importar().then(x => { render(); toast(x.nuevas + x.evidNuevas + x.pendNuevos ? `Importado: ${x.nuevas} ventas y ${x.evidNuevas} evidencias nuevas.` : 'Nada nuevo: no se duplicó ningún registro y tus correcciones se conservan.'); }).catch(err => toast(err.message));
+      break;
+    case 'vt-clasificar': {
+      const er = VT.resolverSinClasificar(b.dataset.eid, b.dataset.accion, b.dataset.vid);
+      render(); toast(er || (b.dataset.accion === 'asociar' ? 'Archivo asociado a la venta.' : 'Marcado como copia; no se asocia.')); break;
+    }
     case 'op-vista': S.opVista = b.dataset.vista; render(); break;
     case 'op-nuevo': opForm(null); break;
     case 'pv-taller': pvTaller(b.dataset.tid); break;
@@ -953,12 +1002,19 @@ document.addEventListener('change', e => {
   if (el.dataset.act === 'rep-filtro') { S.repFiltro = el.value; render({ foco: '[data-act="rep-filtro"]' }); }
   if (el.dataset.act === 'pv-estado') { S.pvEstado = el.value; render({ foco: '[data-act="pv-estado"]' }); }
   if (el.dataset.act === 'pv-oper') { S.pvOper = el.value; render({ foco: '[data-act="pv-oper"]' }); }
+  if (['vt-ciudad', 'vt-doc', 'vt-alerta'].includes(el.dataset.act)) { S[{ 'vt-ciudad': 'vtCiudad', 'vt-doc': 'vtDoc', 'vt-alerta': 'vtAlerta' }[el.dataset.act]] = el.value; render({ foco: `[data-act="${el.dataset.act}"]` }); }
   if (el.dataset.act === 'maq-asignar' && el.value) { const er = MD.asignar(el.dataset.kit, el.dataset.pos, el.value); render(); toast(er || 'Unidad asignada al kit.'); }
   if (el.dataset.act === 'solo-destacadas') { S.soloDestacadas = el.checked; render({ foco: '[data-act="solo-destacadas"]' }); }
 });
 /* Búsqueda de repuestos: se filtra al escribir, conservando el foco y el cursor. */
 document.addEventListener('input', e => {
-  const el = e.target; if (el.dataset.act !== 'rep-busca') return;
+  const el = e.target;
+  if (el.dataset.act === 'vt-busca') {
+    S.vtBusca = el.value; const p = el.selectionStart;
+    render({ foco: '[data-act="vt-busca"]' });
+    const n = document.querySelector('[data-act="vt-busca"]'); if (n) n.setSelectionRange(p, p); return;
+  }
+  if (el.dataset.act !== 'rep-busca') return;
   S.repBusca = el.value; const pos = el.selectionStart;
   render({ foco: '[data-act="rep-busca"]' });
   const n = document.querySelector('[data-act="rep-busca"]'); if (n) n.setSelectionRange(pos, pos);
