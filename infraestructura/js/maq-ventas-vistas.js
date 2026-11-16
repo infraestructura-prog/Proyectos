@@ -65,21 +65,17 @@ export function ventasHtml(S) {
 }
 
 function tarjetasVentas(l) {
-  return `<ul class="mq-grid pv-grid vt-grid">${l.map(v => {
-    const visibles = v.alertas.filter(a => a.nivel !== 'baja'), resto = v.alertas.length - visibles.length;
-    return `<li class="mq-card pv-card vt-card ${v.dup ? 'vt-dup' : ''}"><div class="mq-card-body">
+  // Tarjeta limpia: solo identificación, ciudad, serial, fecha y garantía. Los avisos se ven en la ficha.
+  return `<ul class="mq-grid pv-grid vt-grid">${l.map(v => `<li class="mq-card pv-card vt-card"><div class="mq-card-body">
       <p class="mq-tipo">${esc(v.id)} · Venta ${v.datos.empresa || v.datos.establecimiento ? '· Empresa' : '· Cliente'}</p>
       <h3><button type="button" class="mq-link" data-act="vt-ficha" data-vid="${esc(v.id)}">${esc(v.nombre)}</button></h3>
-      ${v.nombre !== v.datos.dueno && v.datos.dueno ? `<p class="nota">Dueño: ${esc(v.datos.dueno)}</p>` : ''}
       <dl class="vt-dl">
         <div><dt>Ciudad o zona</dt><dd>${esc(lugar(v)) || pend(PENDLEV)}</dd></div>
         <div><dt>Serial consignado</dt><dd><code>${esc(v.origen.serial) || '—'}</code></dd></div>
         <div><dt>Fecha de venta</dt><dd>${fd(v.origen.fechaVenta) || pend('Sin fecha')}</dd></div>
         <div><dt>Garantía</dt><dd>${chipGar(v.garantia)}${v.garantia.fin ? ` <small class="nota">hasta ${fd(v.garantia.fin)}${v.garantia.confirmada ? '' : ' · estimada'}</small>` : ''}</dd></div>
       </dl>
-      <p class="vt-alertas">${visibles.map(chipAlerta).join(' ')}${resto ? ` <span class="nota">+${resto} ${resto === 1 ? 'aviso' : 'avisos'}</span>` : ''}</p>
-      <p><button type="button" class="btn btn-sm" data-act="vt-ficha" data-vid="${esc(v.id)}">Ver ficha</button></p>
-    </div></li>`; }).join('')}</ul>`;
+    </div></li>`).join('')}</ul>`;
 }
 function tablaVentas(l) {
   return `<div class="tabla-wrap"><table class="map-tabla mq-tabla vt-tabla"><thead><tr><th>Registro</th><th>Cliente / empresa</th><th>Ciudad</th><th>Serial consignado</th><th>Fecha de venta</th><th>Pago</th><th>Precio</th><th>Documentación</th><th>Garantía</th><th>Alertas</th></tr></thead><tbody>

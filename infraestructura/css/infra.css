@@ -456,7 +456,9 @@ input[type=date] { color-scheme: dark; }
 .vt-sec .sec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .vt-alcance { margin: 4px 0 10px; }
 .vt-h2-talleres { margin: 28px 0 10px; font-size: 18px; }
-.vt-card.vt-dup { border-top-color: var(--in-warn); }
+.vt-card { position: relative; cursor: pointer; }
+.vt-card h3 .mq-link::after { content: ""; position: absolute; inset: 0; }
+.vt-card:hover { border-color: var(--line-hi); }
 .vt-dl { display: grid; gap: 4px; margin: 8px 0; font-size: 13px; }
 .vt-dl > div { display: grid; grid-template-columns: 9.5em 1fr; gap: 6px; }
 .vt-dl dt { color: var(--text-2); }
