@@ -205,3 +205,9 @@ export function estadoRutina(r) {
   const proxima = sumarFrec(ult.fecha, FRECUENCIAS[r.clave]), hoy = hoyIso();
   return { aprobada: true, ultima: ult, proxima, vencida: proxima < hoy, motivo: '' };
 }
+
+/* ── Fotos (extraídas de Odoo el 16/11/2026, solo lectura; copia reducida en img/maquinas-taller/) ──
+   Son las imágenes cargadas en cada equipo de Odoo; algunas parecen de catálogo. Tres pares de máquinas comparten
+   exactamente la misma imagen (comparación de archivos): probablemente son imágenes de referencia del modelo. */
+const FOTO_COMPARTIDA = { EH01: 'EH02', EH02: 'EH01', EH04: 'EH05', EH05: 'EH04', MV01: 'MV02', MV02: 'MV01' };
+export const foto = e => (e.tieneFoto && e.codigo ? { src: `img/maquinas-taller/${e.codigo}.jpg`, compartidaCon: FOTO_COMPARTIDA[e.codigo] || '' } : null);

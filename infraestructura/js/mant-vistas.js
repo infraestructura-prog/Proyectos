@@ -71,7 +71,7 @@ export function maquinasHtml(S) {
 }
 const abiertaTxt = e => { const s = MT.abiertaPrincipal(e); return s ? `${chipPrio(s)} ${esc(s.asunto)}${s.avisos.length ? ' <span class="mt-aviso-ico" title="Revisar: hay una inconsistencia en Odoo">⚠</span>' : ''}` : '<span class="nota">Ninguno real abierto</span>'; };
 function tarjetasMaq(l) {
-  return `<ul class="mq-grid mt-grid">${l.map(e => `<li class="mq-card mt-card"><div class="mq-card-body">
+  return `<ul class="mq-grid mt-grid">${l.map(e => `<li class="mq-card mt-card">${fotoHtml(e, 'mt-foto')}<div class="mq-card-body">
       <p class="mq-tipo">${esc(e.codigo || 'Sin código')} · ${esc(e.categoria)}</p>
       <h3><button type="button" class="mq-link" data-act="mt-ficha" data-eid="${esc(e.id)}">${esc(e.nombreCorto)}</button></h3>
       <dl class="vt-dl">
@@ -131,7 +131,7 @@ export function fichaMaquinaHtml(e) {
         ${fila('Proveedor', `${val(e.proveedor)}${e.refProveedor ? ` <small class="nota">referencia del proveedor en Odoo: «${esc(e.refProveedor)}»</small>` : ''}`)}
         ${fila('Categoría', esc(e.categoria))}
         ${fila('Ubicación', (() => { const u = MT.ubicacion(e); return u.valor ? `${esc(u.valor)} <small class="nota">${esc(u.fuente)}</small>` : pend(); })())}
-        ${fila('Fotografía', e.tieneFoto ? `Disponible en Odoo · <a href="${esc(MT.urlOdooEquipo(e))}" target="_blank" rel="noopener noreferrer">ver en el registro</a>` : pend('Sin foto en Odoo'))}
+        ${fila('Fotografía', (() => { const ft = MT.foto(e); return ft ? `${fotoHtml(e, 'mt-foto mt-foto-ficha')}<small class="nota">Imagen de Odoo, de referencia: puede no ser la unidad real${ft.compartidaCon ? `. Es la misma imagen que tiene ${esc(ft.compartidaCon)} en Odoo` : ''}.</small>` : pend('Sin foto en Odoo'); })())}
         ${fila('Responsable', `${val(e.responsable, 'Pendiente de definir')}${e.notaResponsable ? `<br><small class="nota">${esc(e.notaResponsable)}</small>` : ''}`)}
         ${e.departamento ? fila('Departamento', esc(e.departamento)) : ''}
         ${e.equipoMantenimiento ? fila('Equipo de mantenimiento', esc(e.equipoMantenimiento)) : ''}
@@ -469,3 +469,5 @@ export function resumenMantHtml() {
       <p class="nota">Las tareas para construir o completar este módulo están en los proyectos de Infraestructura. Los mantenimientos reales no se copian como tarjetas del Kanban.</p>
       <ul class="pv-chips">${rel.map(x => `<li><a href="${rutaRegistro(x)}">${esc(x.nombre)}</a></li>`).join('')}</ul></section>` : ''}`;
 }
+/* Foto de la máquina (copia reducida de la imagen de Odoo). Si no carga, queda el espacio con «Imagen pendiente». */
+const fotoHtml = (e, cls) => { const ft = MT.foto(e); return ft ? `<span class="${cls}"><img src="${esc(ft.src)}" alt="Imagen de ${esc(e.codigo)} ${esc(e.nombreCorto)}" loading="lazy" onerror="this.parentNode.classList.add('sin');this.remove()"></span>` : `<span class="${cls} sin"><small>Sin foto en Odoo</small></span>`; };
