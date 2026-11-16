@@ -106,7 +106,7 @@ export function guardarSoporte(datos, id) {
 }
 export function eliminarSoporte(id) {
   if (kitsActivos().some(k => Object.values(k.posiciones).includes(id))) return false;
-  if (unidades().some(u => u.id === id && u.tallerId)) return false;   // instalado en un taller: se conserva su trayectoria
+  if (unidades().some(u => u.id === id && u.instalada)) return false;   // instalado en un taller: se conserva su trayectoria
   escribir(K.soportes, soportes().filter(s => s.id !== id));
   return true;
 }
@@ -123,7 +123,7 @@ export function unidades() {
   const oper = new Set(operacionActiva().map(x => x.unidadId));
   const efectiva = u => {
     const i = inst[u.id], op = !i && oper.has(u.id);
-    return { ...u, condicionHoja: u.condicion, condicion: i ? 'Vendida' : op ? 'En operación' : u.condicion, tallerId: i ? i.tallerId : '', enOperacion: op,
+    return { ...u, condicionHoja: u.condicion, condicion: i ? 'Vendida' : op ? 'En operación' : u.condicion, tallerId: i ? i.tallerId || '' : '', ventaId: i ? i.ventaId || '' : '', instalada: !!i, enOperacion: op,
       diferenciaHoja: !!i && u.origen === 'hoja' && u.condicion !== 'Vendida' };
   };
   const maqs = M.maquinas.map(u => efectiva({ ...u, marca: '', modelo: '', ubicacion: '', estadoOperativo: '', observaciones: '', historial: [], ...(c[u.id] || {}) }));
@@ -222,7 +222,7 @@ export function desactivarKit(id) {
 }
 
 /* Unidades sueltas (sin kit activo) y estimación separada de kits que podrían armarse con ellas. */
-export function sueltas() { return unidades().filter(u => !kitDeUnidad(u.id) && !u.tallerId && !u.enOperacion); }
+export function sueltas() { return unidades().filter(u => !kitDeUnidad(u.id) && !u.instalada && !u.enOperacion); }
 export function estimacionArmables() {
   const libres = sueltas().filter(u => u.condicion === 'En stock');
   const n = (t, l) => libres.filter(u => u.tipo === t && u.escalera === l).length;

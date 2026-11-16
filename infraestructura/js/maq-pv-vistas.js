@@ -6,6 +6,7 @@ import * as D from './maq-datos.js';
 import * as PV from './maq-postventa.js';
 import { cabecera, estadoLectura, fdt, pend, tipoTxt } from './maq-vistas.js';
 import { ventasHtml } from './maq-ventas-vistas.js';
+import * as V from './maq-ventas.js';
 
 const fd = s => (/^\d{4}-\d{2}-\d{2}$/.test(s || '') ? s.split('-').reverse().join('/') : '');
 const ubicTaller = t => [t.ciudad, t.municipio, t.estado].filter(Boolean).join(' · ');
@@ -20,35 +21,13 @@ export function talleresFiltrados(S) {
 }
 
 export function postventaHtml(S) {
-  const ts = PV.talleres(), desp = PV.desplegadas(), sinT = PV.vendidasSinTaller();
-  const vista = ['tabla', 'mapa'].includes(S.pvVista) ? S.pvVista : 'tarjetas';
-  const lista = talleresFiltrados(S);
-  const maqDesp = desp.filter(x => x.u.tipo !== 'soporte'), sopDesp = desp.filter(x => x.u.tipo === 'soporte');
-  const vacio = !ts.length && !desp.length;
+  // Postventa unificado: todo se organiza por registro de venta (cliente). Los datos del establecimiento,
+  // contactos, ubicación, equipos entregados y servicios están en la ficha de cada venta.
+  const ts = PV.talleres(), sinVenta = PV.vendidasSinTaller();
   return `${cabecera('postventa')}${estadoLectura()}${ventasHtml(S)}
-    <h2 class="vt-h2-talleres">Talleres de clientes e instalaciones</h2>
-    <ul class="mq-cifras" aria-label="Postventa">
-      ${vacio ? '<li class="mq-cifra-ancha"><b class="mq-nd">—</b><span>Información pendiente de levantar: todavía no hay talleres ni máquinas desplegadas registrados.</span></li>'
-        : `<li><b>${maqDesp.length}</b><span>Máquinas desplegadas en talleres</span></li>
-           ${sopDesp.length ? `<li><b>${sopDesp.length}</b><span>Soportes desplegados</span></li>` : ''}
-           <li><b>${ts.length}</b><span>Talleres registrados</span></li>
-           <li><b>${ts.filter(t => !t.coordConfirmadas).length}</b><span>Talleres con ubicación pendiente</span></li>`}
-      ${sinT.length ? `<li><b>${sinT.length}</b><span>Vendidas según la hoja, sin taller registrado</span></li>` : ''}
-    </ul>
-    <div class="mq-barra">
-      <div class="seg" role="group" aria-label="Vista">${[['tarjetas', 'Tarjetas'], ['tabla', 'Tabla'], ['mapa', 'Mapa']].map(([v, t]) => `<button type="button" data-act="pv-vista" data-vista="${v}" aria-pressed="${vista === v}">${t}</button>`).join('')}</div>
-      <label class="mq-filtro"><span class="sr-only">Estado de Venezuela</span><select data-act="pv-estado"><option value="">Todos los estados</option>${PV.ESTADOS_VE.map(e => `<option ${e === (S.pvEstado || '') ? 'selected' : ''}>${esc(e)}</option>`).join('')}</select></label>
-      <label class="mq-filtro"><span class="sr-only">Estado de los equipos</span><select data-act="pv-oper"><option value="">Cualquier estado de equipos</option>${[...D.ESTADOS_OPERATIVOS, 'Por confirmar'].map(e => `<option ${e === (S.pvOper || '') ? 'selected' : ''}>${esc(e)}</option>`).join('')}</select></label>
-      <span class="sp"></span>
-      <button type="button" class="btn btn-sm" data-act="pv-nuevo-taller">+ Agregar taller</button>
-      <button type="button" class="btn btn-sm btn-primary" data-act="pv-instalar" ${ts.length ? '' : 'disabled title="Primero registra un taller"'}>+ Registrar instalación</button>
-    </div>
-    ${!ts.length ? '<section class="pj-sec mq-vacio"><h2>Talleres</h2><p>Información pendiente de levantar. Registra cada taller con «Agregar taller»; aparecerá en el mapa cuando marques sus coordenadas como confirmadas.</p></section>'
-      : !lista.length ? '<p class="vacio">Ningún taller cumple los filtros.</p>'
-        : vista === 'mapa' ? mapaHtml(lista) : vista === 'tabla' ? tablaTalleres(lista) : tarjetasTalleres(lista)}
-    ${desp.length ? `<section class="pj-sec pv-desp" aria-labelledby="pv-desp-t"><h2 id="pv-desp-t">Máquinas desplegadas</h2>${tablaDesplegadas(desp)}</section>` : ''}
-    ${sinT.length ? `<section class="pj-sec" aria-labelledby="pv-sint-t"><h2 id="pv-sint-t">Vendidas sin taller registrado</h2><p class="nota">La hoja las indica como vendidas, pero falta registrar dónde están instaladas.</p>
-      <ul class="pv-chips">${sinT.map(u => `<li><button type="button" class="mq-link" data-act="maq-ficha" data-uid="${esc(u.id)}">${esc(u.codigo)}</button></li>`).join('')}</ul></section>` : ''}`;
+    ${sinVenta.length ? `<details class="mas"><summary>Máquinas vendidas según la hoja sin venta asociada (${sinVenta.length})</summary><p class="nota">La hoja de máquinas las indica como vendidas, pero no están registradas como entregadas en ninguna venta. Ábrela en la ficha de la venta con «+ Equipos entregados».</p>
+      <ul class="pv-chips">${sinVenta.map(u => `<li><button type="button" class="mq-link" data-act="maq-ficha" data-uid="${esc(u.id)}">${esc(u.codigo)}</button></li>`).join('')}</ul></details>` : ''}
+    ${ts.length ? `<details class="mas"><summary>Talleres registrados antes de la unificación (${ts.length})</summary>${tarjetasTalleres(ts)}</details>` : ''}`;
 }
 function tarjetasTalleres(ts) {
   return `<ul class="mq-grid pv-grid">${ts.map(t => {
@@ -183,7 +162,7 @@ export function formInstalacionHtml(tallerId) {
 
 export function formServicioHtml(s, ctx) {
   const v = s || { tipo: 'Servicio', fecha: new Date().toISOString().slice(0, 10), estado: 'Abierto', descripcion: '', proximaAccion: '', responsable: '', unidadId: ctx.unidadId || '', tallerId: ctx.tallerId || '', ventaId: ctx.ventaId || '' };
-  const unidadesTaller = v.tallerId ? PV.unidadesEnTaller(v.tallerId).map(x => x.u) : [];
+  const unidadesTaller = v.tallerId ? PV.unidadesEnTaller(v.tallerId).map(x => x.u) : v.ventaId ? PV.unidadesEnVenta(v.ventaId).map(x => x.u) : [];
   const opc = v.unidadId && !unidadesTaller.some(u => u.id === v.unidadId) ? [D.unidadPorId(v.unidadId), ...unidadesTaller].filter(Boolean) : unidadesTaller;
   return `<form class="dlg-form" novalidate>
     <div class="dlg-head"><div><p class="dlg-kicker">Servicios e incidencias</p><h2 id="dlg-titulo">${s ? 'Editar registro' : 'Nuevo registro'}</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cancelar">×</button></div>
@@ -210,7 +189,7 @@ export function formRetiroHtml(u) {
   const t = PV.tallerPorId(u.tallerId);
   return `<form class="dlg-form" novalidate>
     <div class="dlg-head"><div><p class="dlg-kicker">Postventa</p><h2 id="dlg-titulo">Registrar retiro de ${esc(u.codigo || u.id)}</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cancelar">×</button></div>
-    <div class="dlg-body"><p>La máquina deja de figurar en ${esc(t ? t.nombre : 'el taller')}. La instalación queda en su historial.</p>
+    <div class="dlg-body"><p>La máquina deja de figurar en ${esc(t ? t.nombre : u.ventaId ? `la venta ${u.ventaId}` : 'el cliente')} y vuelve a contar según la hoja. La entrega queda en su historial.</p>
       <label class="fld"><span>Fecha del retiro</span><input type="date" name="fecha" value="${new Date().toISOString().slice(0, 10)}"></label>
       <label class="fld"><span>Motivo</span><input name="motivo" maxlength="400" autocomplete="off" placeholder="Devolución, traslado, error de registro…"></label></div>
     <div class="dlg-foot"><button type="button" class="btn" data-dlg-close>Cancelar</button><button type="submit" class="btn btn-primary">Registrar retiro</button></div>
@@ -223,12 +202,12 @@ export function postventaUnidadHtml(u) {
   const t = act && PV.tallerPorId(act.tallerId);
   return `<h3 class="rp-h">Postventa</h3>
     ${act ? `<dl class="org-dl">
-        <div><dt>Instalada en</dt><dd>${t ? `<button type="button" class="mq-link" data-act="pv-taller" data-tid="${esc(t.id)}">${esc(t.nombre)}</button> <small class="nota">${esc(ubicTaller(t))}</small>` : '—'}</dd></div>
+        <div><dt>Entregada en</dt><dd>${act.ventaId ? `<button type="button" class="mq-link" data-act="vt-ficha" data-vid="${esc(act.ventaId)}">${esc(act.ventaId)} · ${esc((V.ventaPorId(act.ventaId) || {}).nombre || 'venta')}</button>` : t ? `<button type="button" class="mq-link" data-act="pv-taller" data-tid="${esc(t.id)}">${esc(t.nombre)}</button> <small class="nota">${esc(ubicTaller(t))}</small>` : '—'}</dd></div>
         <div><dt>Fecha de venta</dt><dd>${fd(act.fechaVenta) || '<span class="nota">No registrada</span>'}</dd></div>
-        <div><dt>Fecha de instalación</dt><dd>${fd(act.fechaInstalacion) || '<span class="nota">No registrada</span>'}</dd></div>
+        <div><dt>Fecha de entrega o instalación</dt><dd>${fd(act.fechaInstalacion) || '<span class="nota">No registrada</span>'}</dd></div>
         <div><dt>Garantía</dt><dd>${act.garantia ? esc(act.garantia) : '<span class="nota">No documentada</span>'}</dd></div>
       </dl>${u.diferenciaHoja ? '<p class="aviso cond-aviso">La hoja de máquinas todavía la indica «En stock». La aplicación no la modifica: actualiza la condición en la hoja cuando corresponda.</p>' : ''}`
-      : '<p class="nota">No está instalada en ningún taller de cliente.</p>'}
-    ${hist.length ? `<p class="nota">Instalaciones anteriores: ${hist.map(x => `${esc((PV.tallerPorId(x.tallerId) || {}).nombre || 'taller')} (${fd(x.fechaInstalacion) || 'sin fecha'} → retiro ${fd(x.retiro && x.retiro.fecha) || 'sin fecha'})`).join('; ')}.</p>` : ''}
+      : '<p class="nota">No está entregada a ningún cliente.</p>'}
+    ${hist.length ? `<p class="nota">Entregas anteriores: ${hist.map(x => `${esc(x.ventaId ? `venta ${x.ventaId}` : (PV.tallerPorId(x.tallerId) || {}).nombre || 'taller')} (${fd(x.fechaInstalacion) || 'sin fecha'} → retiro ${fd(x.retiro && x.retiro.fecha) || 'sin fecha'})`).join('; ')}.</p>` : ''}
     <h4 class="pv-h4">Servicios e incidencias</h4>${servListaHtml(sv)}`;
 }

@@ -59,7 +59,7 @@ function alertas(us, kits, talleres, reps) {
   const sinCont = talleres.filter(t => !t.contactos.length);
   if (sinCont.length) a.push({ t: `${plural(sinCont.length, 'taller sin contactos', 'talleres sin contactos')}`, d: sinCont.map(t => t.nombre).join(', '), ruta: '#/maquinas/postventa' });
   const sinTaller = PV.vendidasSinTaller();
-  if (sinTaller.length) a.push({ t: `${plural(sinTaller.length, 'máquina vendida sin taller', 'máquinas vendidas sin taller')}`, d: sinTaller.map(u => u.codigo).join(', '), ruta: '#/maquinas/postventa' });
+  if (sinTaller.length) a.push({ t: `${plural(sinTaller.length, 'máquina vendida en la hoja sin venta asociada', 'máquinas vendidas en la hoja sin venta asociada')}`, d: sinTaller.map(u => u.codigo).join(', '), ruta: '#/maquinas/postventa' });
   const difHoja = us.filter(u => u.diferenciaHoja);
   if (difHoja.length) a.push({ t: 'Ventas no reflejadas en la hoja', d: `${difHoja.map(u => u.codigo).join(', ')}: instaladas en un cliente, pero la hoja las indica «En stock».`, ruta: '#/maquinas/postventa' });
   const sinFoto = reps.filter(r => !r.imagen);
@@ -78,7 +78,7 @@ function ventasResumenHtml() {
     <p class="nota">Cifras totales (sin filtros). Un registro de venta no equivale a una máquina física única ni a un kit completo.</p>
     <ul class="mq-cifras rs-cifras">
       ${cifra(i.ventas, 'Registros de venta cargados', R, i.noImportados ? `${plural(i.noImportados, 'fila no importada', 'filas no importadas')} (no eran ventas)` : '')}
-      ${cifra(i.dupSerial, 'Con identificación de equipo por conciliar', R, `serial duplicado · ${i.sinUnidad} sin vincular a una unidad del inventario`)}
+      ${cifra(i.dupSerial, 'Con identificación de equipo por conciliar', R, `serial duplicado · ${i.sinUnidad} sin equipos entregados registrados`)}
       ${cifra(i.conEmpresa, 'Con empresa o nombre comercial', R)}
       ${cifra(i.sinPrecio, 'Sin precio registrado', R)}
       ${cifra(i.docPendiente, 'Documentación pendiente', R, i.docPorVerificar ? `${i.docPorVerificar} completa según la fuente, por verificar` : '')}
@@ -87,7 +87,7 @@ function ventasResumenHtml() {
       ${i.garPorVencer || i.garVencidas ? cifra(i.garPorVencer + i.garVencidas, 'Garantías por vencer o vencidas', R) : ''}
     </ul>
     <ul class="mq-cifras rs-cifras rs-insuf" aria-label="Indicadores sin datos suficientes">
-      ${insuficiente('Equipos únicos desplegados', 'hay seriales duplicados y ventas sin unidad vinculada')}
+      ${i.entregados ? cifra(i.entregados, 'Equipos del inventario entregados', R, `registrados en ${i.ventas - i.sinUnidad} de ${i.ventas} ventas`) : insuficiente('Equipos únicos desplegados', 'hay seriales duplicados y ninguna venta tiene equipos entregados registrados')}
       ${insuficiente('Kits vendidos', 'no se registró qué componentes se entregaron')}
       ${insuficiente('Máquinas operativas', '«Con dueño» es una condición comercial, no de funcionamiento')}
       ${insuficiente('Ingresos', 'ningún registro tiene precio')}
@@ -115,11 +115,6 @@ export function resumenHtml() {
         : `<li class="mq-cifra-ancha"><span class="nota">${r.repEstado === 'error' ? 'No se pudieron leer los repuestos.' : 'Cargando repuestos…'}</span></li>`}</ul>
     </section>
     ${ventasResumenHtml()}
-    <section class="pj-sec rs-sec" aria-labelledby="rs-pv"><div class="sec-head"><h2 id="rs-pv">Postventa · talleres e instalaciones</h2><a class="rg-abrir" href="#/maquinas/postventa">Ir a Postventa →</a></div>
-      <ul class="mq-cifras rs-cifras">${r.talleres || r.maqDesp
-        ? `${cifra(r.maqDesp, 'Máquinas desplegadas en talleres de clientes', '#/maquinas/postventa')}${r.sopDesp ? cifra(r.sopDesp, 'Soportes desplegados', '#/maquinas/postventa') : ''}${cifra(r.talleresAtendidos, 'Talleres atendidos', '#/maquinas/postventa', `${plural(r.talleres, 'taller registrado', 'talleres registrados')}`)}`
-        : `${pendiente('Máquinas desplegadas en talleres de clientes', '#/maquinas/postventa')}${pendiente('Talleres atendidos', '#/maquinas/postventa')}`}</ul>
-    </section>
     <section class="pj-sec rs-sec" aria-labelledby="rs-op"><div class="sec-head"><h2 id="rs-op">Equipos en operación</h2><a class="rg-abrir" href="#/maquinas/operacion">Ir a Equipos en operación →</a></div>
       <ul class="mq-cifras rs-cifras">${r.operacion ? cifra(r.operacion, 'Equipos propios en operación', '#/maquinas/operacion') : pendiente('Equipos propios en operación', '#/maquinas/operacion')}</ul>
     </section>

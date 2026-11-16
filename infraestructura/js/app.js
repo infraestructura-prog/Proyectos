@@ -765,13 +765,13 @@ function pvFormServicio(sid, ctx) {
     if (g('ventaId')) vtFicha(g('ventaId')); else if (g('tallerId')) pvTaller(g('tallerId')); else if (g('unidadId')) maqFicha(g('unidadId'));
   });
 }
-function pvFormRetiro(u) {
+function pvFormRetiro(u, despues) {
   abrirDialogo(dlg, PVV.formRetiroHtml(u), null);
   const form = dlg.querySelector('form');
   form.addEventListener('submit', e => {
     e.preventDefault();
     const er = PV.retirar(u.id, { fecha: form.elements.fecha.value, motivo: form.elements.motivo.value });
-    dlgRetorno = null; dlg.close(); render(); toast(er || 'Retiro registrado; la instalación queda en el historial.');
+    dlgRetorno = null; dlg.close(); render(); toast(er || 'Retiro registrado; la entrega queda en el historial.'); if (despues) despues();
   });
 }
 /* Dentro de una ficha, los enlaces a otra ficha (máquina ↔ taller) cambian el contenido de la ventana. */
@@ -813,18 +813,55 @@ function vtFicha(id) {
   const enAccion = e => {
     const b = e.target.closest('[data-vt]'); if (!b) return;
     if (b.dataset.vt === 'editar') vtForm(v);
-    else if (b.dataset.vt === 'servicio') pvFormServicio(null, { ventaId: v.id, unidadId: v.datos.unidadId });
+    else if (b.dataset.vt === 'servicio') pvFormServicio(null, { ventaId: v.id });
     else if (b.dataset.vt === 'editar-servicio') pvFormServicio(b.dataset.sid, {});
+    else if (b.dataset.vt === 'entregar') vtEntrega(v);
+    else if (b.dataset.vt === 'retirar') { const u = MD.unidadPorId(b.dataset.uid); if (u) pvFormRetiro(u, () => vtFicha(v.id)); }
   };
   pie.addEventListener('click', enAccion); cuerpo.addEventListener('click', enAccion);
 }
+function vtEntrega(v) {
+  abrirDialogo(dlg, VTV.formEntregaHtml(v), null);
+  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]'), kit = form.querySelector('[data-pv-kit]');
+  if (kit) kit.addEventListener('change', () => form.querySelectorAll('input[name="unidad"]').forEach(c => { if (kit.value && c.dataset.kit === kit.value) c.checked = true; }));
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const ids = [...form.querySelectorAll('input[name="unidad"]:checked')].map(c => c.value);
+    form.querySelector('[data-err-unidad]').hidden = ids.length > 0; if (!ids.length) return;
+    const r = PV.registrarInstalacion(ids, { ventaId: v.id, fechaVenta: v.origen.fechaVenta, fechaInstalacion: form.elements.fechaInstalacion.value, observaciones: form.elements.observaciones.value });
+    if (r.error) { msg.innerHTML = `<span class="aviso err">${C.esc(r.error)}</span>`; return; }
+    dlgRetorno = null; dlg.close(); render(); toast(r.registradas === 1 ? 'Equipo registrado como entregado.' : `${r.registradas} equipos registrados como entregados.`);
+    vtFicha(v.id);
+  });
+}
 function vtForm(v) {
   abrirDialogo(dlg, VTV.formVentaHtml(v), null);
-  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]');
+  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]'), cont = form.querySelector('[data-contactos]');
+  const numCoord = x => { const n = Number(String(x).trim().replace(',', '.')); return String(x).trim() === '' ? null : Number.isFinite(n) ? n : NaN; };
+  let mapa = null;
+  MP.miniMapa(form.querySelector('[data-minimapa]'), v.datos.lat ?? NaN, v.datos.lng ?? NaN, (lat, lng) => { form.elements.lat.value = lat; form.elements.lng.value = lng; })
+    .then(m => { mapa = m; }).catch(() => { form.querySelector('[data-minimapa]').innerHTML = '<p class="nota">No se pudo cargar el mapa. Puedes escribir las coordenadas.</p>'; });
+  const alPegar = () => {
+    // Se acepta pegar «10.4806, -66.9036» en la latitud.
+    const m = String(form.elements.lat.value).match(/^\s*(-?\d+(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d+(?:[.,]\d+)?)\s*$/);
+    if (m) { form.elements.lat.value = m[1].replace(',', '.'); form.elements.lng.value = m[2].replace(',', '.'); }
+    const a = numCoord(form.elements.lat.value), b = numCoord(form.elements.lng.value);
+    if (mapa && Number.isFinite(a) && Number.isFinite(b)) mapa.mover(a, b);
+  };
+  form.elements.lat.addEventListener('change', alPegar); form.elements.lng.addEventListener('change', alPegar);
+  form.addEventListener('click', e => {
+    if (e.target.closest('[data-vt-agregar-contacto]')) { cont.insertAdjacentHTML('beforeend', VTV.contactoFilaVentaHtml({})); cont.lastElementChild.querySelector('input').focus(); }
+    const q = e.target.closest('[data-vt-quitar-contacto]'); if (q) q.closest('[data-contacto]').remove();
+  });
+  dlg.addEventListener('close', () => { if (mapa) { mapa.quitar(); mapa = null; } }, { once: true });
   form.addEventListener('submit', e => {
     e.preventDefault();
     const cambios = {};
-    Object.keys(VT.CAMPOS).forEach(k => { const el = form.elements[k]; if (el) cambios[k] = el.type === 'checkbox' ? el.checked : el.value; });
+    Object.keys(VT.CAMPOS).forEach(k => { const el = form.elements[k]; if (el && el.name === k) cambios[k] = el.type === 'checkbox' ? el.checked : el.value; });
+    cambios.contactos = [...cont.querySelectorAll('[data-contacto]')].map(f => ({ nombre: f.querySelector('[name="c-nombre"]').value, cargo: f.querySelector('[name="c-cargo"]').value,
+      telefono: f.querySelector('[name="c-telefono"]').value, correo: f.querySelector('[name="c-correo"]').value }));
+    const lat = numCoord(cambios.lat), lng = numCoord(cambios.lng);
+    if (Number.isNaN(lat) || Number.isNaN(lng)) { msg.innerHTML = '<span class="aviso err">Escribe latitud y longitud como números (por ejemplo, 10.4806 y -66.9036).</span>'; return; }
     const r = VT.editar(v.id, cambios, form.elements.motivo.value);
     if (r.error) { msg.innerHTML = `<span class="aviso err">${C.esc(r.error)}</span>`; return; }
     dlgRetorno = null; dlg.close(); render();

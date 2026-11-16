@@ -328,7 +328,7 @@ export function fichaHtml(u) {
     </div>
     <div class="dlg-foot">
       ${hoja && D.puedeEditarHoja() ? `<button type="button" class="btn btn-ghost" data-ficha="hoja">Editar datos de la hoja</button>` : ''}
-      ${!hoja && !k && !u.tallerId ? `<button type="button" class="btn btn-ghost tk-borrar" data-ficha="borrar">Eliminar soporte</button>` : ''}
+      ${!hoja && !k && !u.instalada ? `<button type="button" class="btn btn-ghost tk-borrar" data-ficha="borrar">Eliminar soporte</button>` : ''}
       <span class="sp"></span>
       <button type="button" class="btn btn-primary" data-ficha="editar">${hoja ? 'Editar datos complementarios' : 'Editar soporte'}</button>
     </div>`;

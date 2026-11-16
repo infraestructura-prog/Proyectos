@@ -23,11 +23,11 @@ export const deUnidad = unidadId => activos().find(x => x.unidadId === unidadId)
 export const historialDe = unidadId => registros().filter(x => x.unidadId === unidadId);
 
 /* Unidades que pueden pasar a operación: existen, no están en otro registro activo ni instaladas en un cliente. */
-export const disponibles = () => D.unidades().filter(u => !u.tallerId && !u.enOperacion);
+export const disponibles = () => D.unidades().filter(u => !u.instalada && !u.enOperacion);
 
 export function registrar(unidadId, datos) {
   const u = D.unidadPorId(unidadId); if (!u) return { error: 'Elige un equipo del inventario.' };
-  if (u.tallerId) return { error: `${u.codigo || u.id} está instalada en un taller de cliente.` };
+  if (u.instalada) return { error: `${u.codigo || u.id} está entregada a un cliente.` };
   if (deUnidad(unidadId)) return { error: `${u.codigo || u.id} ya está registrada en operación.` };
   if (!str(datos.ubicacion)) return { error: 'Indica la ubicación dentro del taller.' };
   const l = registros();

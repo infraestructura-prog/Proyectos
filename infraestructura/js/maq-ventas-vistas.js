@@ -46,8 +46,6 @@ export function ventasHtml(S) {
       <li><b>${lista.length}</b><span>Registros de venta${filtrado ? ' (filtrados)' : ''}</span></li>
       <li><b>${n(v => v.dup)}</b><span>Con serial duplicado por conciliar</span></li>
       <li><b>${n(v => v.datos.docEstado === 'Pendiente')}</b><span>Con documentación pendiente</span></li>
-      <li><b>${n(v => v.datos.precio === null)}</b><span>Sin precio registrado</span></li>
-      <li><b>${n(v => v.garantia.estado !== 'No calculable')}</b><span>Garantías calculadas (desde la fecha de venta)</span></li>
     </ul>
     <div class="mq-barra">
       <div class="seg" role="group" aria-label="Vista de registros">${[['tarjetas', 'Tarjetas'], ['tabla', 'Tabla'], ['mapa', 'Mapa']].map(([x, t]) => `<button type="button" data-act="vt-vista" data-vista="${x}" aria-pressed="${vista === x}">${t}</button>`).join('')}</div>
@@ -134,7 +132,9 @@ export function fichaVentaHtml(v) {
         ${fila('Dueño / cliente', val(d.dueno))}
         ${fila('Empresa (razón social)', val(d.empresa))}
         ${fila('Establecimiento (nombre comercial)', val(d.establecimiento, PENDLEV))}
-        ${fila('Teléfono', telefonoHtml(v))}
+        ${d.red ? fila('Red o marca del taller', esc(d.red)) : ''}
+        ${fila('Teléfono del dueño', telefonoHtml(v))}
+        ${fila('Contactos', d.contactos.length ? `<ul class="pv-contactos">${d.contactos.map(c => `<li><b>${esc(c.nombre || 'Sin nombre')}</b>${c.cargo ? ` · ${esc(c.cargo)}` : ''}${c.telefono ? `<br>${esc(c.telefono)}` : ''}${c.correo ? `<br><a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a>` : ''}</li>`).join('')}</ul>` : pend(SININFO))}
         ${fila('Ciudad o zona', val(d.ciudad, PENDLEV))}
         ${fila('Estado', val(d.estadoVE, PENDLEV))}
         ${fila('Dirección', val(d.direccion, PENDLEV))}
@@ -144,10 +144,12 @@ export function fichaVentaHtml(v) {
       <dl class="org-dl">
         ${fila('Serial consignado', `<code>${esc(o.serial) || '—'}</code>${v.dup ? ` <span class="mq-chip c-falta vt-alta">${esc(V.DUP)}</span>` : d.serialConciliado ? ' <span class="mq-chip c-stock">Conciliado</span>' : ''}`)}
         ${v.dup ? fila('Otros registros con el mismo serial', V.ventas().filter(x => x.id !== v.id && x.origen.serial === o.serial).map(x => `<button type="button" class="mq-link" data-act="vt-ficha" data-vid="${esc(x.id)}">${esc(x.id)} · ${esc(x.nombre)}</button>`).join(', ')) : ''}
-        ${fila('Unidad del inventario', v.unidad ? `<button type="button" class="mq-link" data-act="maq-ficha" data-uid="${esc(v.unidad.id)}">${esc(v.unidad.codigo || v.unidad.id)}</button> <small class="nota">${esc(tipoTxt(v.unidad))}</small>`
-          : `${pend('Pendiente de conciliar')}${coinc.length ? `<br><small class="nota">En el inventario ${coinc.length === 1 ? 'hay una unidad' : `hay ${coinc.length} unidades`} con ese serial (${coinc.map(u => esc(u.codigo || u.id)).join(', ')}). No se vinculan automáticamente.</small>` : ''}`)}
+        ${fila('Equipos entregados', v.entregados.length ? `<ul class="vt-entregados">${v.entregados.map(({ u, inst }) => `<li><button type="button" class="mq-link" data-act="maq-ficha" data-uid="${esc(u.id)}">${esc(u.codigo || u.id)}</button>
+            <small class="nota">${esc(tipoTxt(u))}${u.serial ? ` · serial ${esc(u.serial)}` : ''}${inst.fechaInstalacion ? ` · desde ${fd(inst.fechaInstalacion)}` : ''}</small>
+            <button type="button" class="btn btn-sm btn-ghost" data-vt="retirar" data-uid="${esc(u.id)}">Registrar retiro</button></li>`).join('')}</ul>`
+          : `${pend('Pendiente de conciliar: no se asume un kit completo')}${coinc.length ? `<br><small class="nota">En el inventario ${coinc.length === 1 ? 'hay una unidad' : `hay ${coinc.length} unidades`} con ese serial (${coinc.map(u => esc(u.codigo || u.id)).join(', ')}). No se vinculan automáticamente.</small>` : ''}`)}
+        ${historialEntregas(v)}
         ${d.conciliacionNota ? fila('Nota de conciliación', `<span class="pre">${esc(d.conciliacionNota)}</span>`) : ''}
-        ${fila('Composición entregada', pend(`${SININFO}: no se asume un kit completo`))}
         ${fila('Condición comercial', `${esc(o.condicionComercial || '—')} <small class="nota">(no indica instalación ni funcionamiento)</small>`)}
         ${fila('Fecha de venta', fd(o.fechaVenta) || pend('Sin fecha'))}
         ${fila('Forma de pago', val(d.formaPago))}
@@ -190,33 +192,65 @@ export function fichaVentaHtml(v) {
       <details class="mas"><summary>Historial de cambios (${cambios.length})</summary>${cambios.length || v.historial.length ? `<ol class="hist">${[...v.historial].reverse().map(h => `<li><span class="nota">${esc(fdt(h.fecha))}</span> ${h.campo
         ? `<b>${esc(V.CAMPOS[h.campo] || h.campo)}</b>: ${esc(fmt(h.antes))} → ${esc(fmt(h.despues))}${h.motivo ? ` <small class="nota">(${esc(h.motivo)})</small>` : ''}` : esc(h.nota)}</li>`).join('')}</ol>` : '<p class="vacio">Sin cambios.</p>'}</details>
     </div>
-    <div class="dlg-foot"><button type="button" class="btn btn-ghost" data-vt="servicio">+ Servicio o incidencia</button><span class="sp"></span>
+    <div class="dlg-foot"><button type="button" class="btn btn-ghost" data-vt="servicio">+ Servicio o incidencia</button><button type="button" class="btn btn-ghost" data-vt="entregar">+ Equipos entregados</button><span class="sp"></span>
       <button type="button" class="btn btn-primary" data-vt="editar">Corregir o completar datos</button></div>`;
 }
-const fmt = x => (x === null || x === undefined || x === '' ? 'vacío' : x === true ? 'sí' : x === false ? 'no' : String(x));
+const fmt = x => (x === null || x === undefined || x === '' ? 'vacío' : x === true ? 'sí' : x === false ? 'no'
+  : Array.isArray(x) ? (x.length ? x.map(c => c.nombre || c.telefono || c.correo || '').join(', ') : 'ninguno') : String(x));
+const historialEntregas = v => { const h = PV.historialDeVenta(v.id); return h.length ? fila('Entregas anteriores', h.map(x => `${esc((D.unidadPorId(x.unidadId) || {}).codigo || x.unidadId)} (retirada ${fd(x.retiro && x.retiro.fecha) || 'sin fecha'}${x.retiro && x.retiro.motivo ? `: ${esc(x.retiro.motivo)}` : ''})`).join('; ')) : ''; };
+
+/* ── Registrar equipos del inventario entregados en esta venta (salen de Stock y conservan su ficha) ── */
+export function formEntregaHtml(v) {
+  const libres = PV.instalables().sort((a, b) => String(a.codigo).localeCompare(String(b.codigo), 'es', { numeric: true }));
+  const kitsLibres = D.kitsActivos().filter(k => Object.values(k.posiciones).some(id => id && libres.some(u => u.id === id)));
+  return `<form class="dlg-form" novalidate>
+    <div class="dlg-head"><div><p class="dlg-kicker">${esc(v.id)} · ${esc(v.nombre)}</p><h2 id="dlg-titulo">Registrar equipos entregados</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cancelar">×</button></div>
+    <div class="dlg-body">
+      <p class="nota">Marca las unidades del inventario que recibió este cliente. Dejan de contar en Stock y conservan su ficha, su kit y su historial. Serial consignado en la venta: <code>${esc(v.origen.serial) || '—'}</code>.</p>
+      ${kitsLibres.length ? `<label class="fld"><span>Marcar las unidades de un kit (opcional)</span><select data-pv-kit><option value="">—</option>${kitsLibres.map(k => `<option value="${esc(k.id)}">Kit ${esc(k.codigo)} (${D.evaluarKit(k).asignadas} de 4 unidades)</option>`).join('')}</select></label>` : ''}
+      <fieldset class="fld"><legend>Unidades entregadas <b class="req">*</b></legend>
+        <div class="pv-unidades">${libres.map(u => `<label class="check"><input type="checkbox" name="unidad" value="${esc(u.id)}" data-kit="${esc((D.kitDeUnidad(u.id) || {}).id || '')}"> ${esc(u.codigo || u.id)} <small class="nota">${esc(tipoTxt(u))}${u.serial ? ` · ${esc(u.serial)}` : ''}${u.serial && v.origen.serial && u.serial.toUpperCase() === v.origen.serial.toUpperCase() ? ' · <b>coincide con el serial de la venta</b>' : ''}</small></label>`).join('') || '<p class="vacio">No hay unidades disponibles en el inventario.</p>'}</div>
+        <small class="err" data-err-unidad hidden>Marca al menos una unidad.</small></fieldset>
+      <label class="fld"><span>Fecha de entrega o instalación</span><input type="date" name="fechaInstalacion"></label>
+      <label class="fld"><span>Observaciones</span><textarea name="observaciones" rows="2" maxlength="1000"></textarea></label>
+      <p class="mq-form-msg" data-msg></p>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn" data-dlg-close>Cancelar</button><button type="submit" class="btn btn-primary">Registrar</button></div>
+  </form>`;
+}
+const contactoFila = (c = {}) => `<fieldset class="pv-contacto" data-contacto><legend class="sr-only">Contacto</legend>
+  <input name="c-nombre" maxlength="120" value="${esc(c.nombre || '')}" placeholder="Nombre" autocomplete="off" aria-label="Nombre del contacto">
+  <input name="c-cargo" maxlength="120" value="${esc(c.cargo || '')}" placeholder="Cargo" autocomplete="off" aria-label="Cargo">
+  <input name="c-telefono" maxlength="60" value="${esc(c.telefono || '')}" placeholder="Teléfono" autocomplete="off" inputmode="tel" aria-label="Teléfono">
+  <input name="c-correo" maxlength="160" value="${esc(c.correo || '')}" placeholder="Correo" autocomplete="off" type="email" aria-label="Correo">
+  <button type="button" class="icon-btn sm" data-vt-quitar-contacto aria-label="Quitar contacto">×</button></fieldset>`;
+export const contactoFilaVentaHtml = contactoFila;
 
 /* ── Formulario de corrección (cada cambio queda en el historial con su motivo) ── */
 export function formVentaHtml(v) {
   const d = v.datos;
   const inp = (n, t, extra = '') => `<label class="fld"><span>${t}</span><input name="${n}" value="${esc(d[n] === null ? '' : String(d[n]))}" autocomplete="off" ${extra}></label>`;
   const chk = (n, t) => `<label class="check"><input type="checkbox" name="${n}" ${d[n] ? 'checked' : ''}> ${t}</label>`;
-  const unidades = D.unidades().filter(u => u.tipo !== 'soporte').sort((a, b) => String(a.codigo).localeCompare(String(b.codigo), 'es', { numeric: true }));
   return `<form class="dlg-form" novalidate>
     <div class="dlg-head"><div><p class="dlg-kicker">${esc(v.id)} · corregir o completar</p><h2 id="dlg-titulo">${esc(v.nombre)}</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cancelar">×</button></div>
     <div class="dlg-body">
       <p class="nota">El dato original de la fuente se conserva aparte. Deja vacío lo que no sepas: no se rellenará con supuestos.</p>
       <fieldset class="fld"><legend>Cliente y establecimiento</legend>
         <div class="fld-row">${inp('dueno', 'Dueño / cliente', 'maxlength="160"')}${inp('empresa', 'Empresa (razón social)', 'maxlength="160"')}</div>
-        <div class="fld-row">${inp('establecimiento', 'Establecimiento (nombre comercial)', 'maxlength="160"')}${inp('telefono', 'Teléfono', 'maxlength="60" inputmode="tel"')}</div>
+        <div class="fld-row">${inp('establecimiento', 'Establecimiento (nombre comercial)', 'maxlength="160"')}${inp('red', 'Red o marca del taller', 'maxlength="160" placeholder="Solo si pertenece a una red o franquicia"')}</div>
+        ${inp('telefono', 'Teléfono del dueño', 'maxlength="60" inputmode="tel"')}
         ${chk('telefonoVerificado', 'Teléfono verificado con el cliente')}
+        <fieldset class="fld"><legend>Contactos del establecimiento</legend><div data-contactos>${(d.contactos.length ? d.contactos : [{}]).map(c => contactoFila(c)).join('')}</div>
+          <button type="button" class="btn btn-sm" data-vt-agregar-contacto>+ Agregar contacto</button></fieldset>
         <div class="fld-row">${inp('ciudad', 'Ciudad o zona', 'maxlength="120"')}
           <label class="fld"><span>Estado</span><select name="estadoVE"><option value="">Sin definir</option>${PV.ESTADOS_VE.map(e => `<option ${e === d.estadoVE ? 'selected' : ''}>${esc(e)}</option>`).join('')}</select></label></div>
         ${inp('direccion', 'Dirección', 'maxlength="300"')}
-        <div class="fld-row">${inp('lat', 'Latitud', 'inputmode="decimal" placeholder="Solo si está verificada"')}${inp('lng', 'Longitud', 'inputmode="decimal"')}</div>
+        <p class="hint">Acércate en el mapa hasta ver la calle y haz clic en la entrada del establecimiento, o pega sus coordenadas (por ejemplo, copiadas de Google Maps). No uses el centro de la ciudad.</p>
+        <div class="pv-minimapa" data-minimapa></div>
+        <div class="fld-row">${inp('lat', 'Latitud', 'inputmode="decimal" placeholder="10.4806"')}${inp('lng', 'Longitud', 'inputmode="decimal" placeholder="-66.9036"')}</div>
         ${chk('ubicacionConfirmada', 'Ubicación exacta confirmada (no el centro de la ciudad)')}
       </fieldset>
       <fieldset class="fld"><legend>Equipo y venta</legend>
-        <label class="fld"><span>Unidad del inventario vinculada</span><select name="unidadId"><option value="">Sin vincular (pendiente de conciliar)</option>${unidades.map(u => `<option value="${esc(u.id)}" ${u.id === d.unidadId ? 'selected' : ''}>${esc(u.codigo || u.id)}${u.serial ? ` · ${esc(u.serial)}` : ''}</option>`).join('')}</select></label>
         ${chk('serialConciliado', 'Serial conciliado (se resolvió la duplicidad o se confirmó el equipo)')}
         <label class="fld"><span>Nota de conciliación</span><textarea name="conciliacionNota" rows="2" maxlength="1000">${esc(d.conciliacionNota)}</textarea></label>
         <div class="fld-row">

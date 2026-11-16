@@ -6,6 +6,7 @@
    · Cada corrección queda en el historial de la venta (campo, valor anterior, valor nuevo, motivo).
    · Una venta NO equivale a una máquina física única ni a un kit completo: el equipo se vincula aparte, por conciliar. */
 import * as D from './maq-datos.js';
+import * as PV from './maq-postventa.js';
 
 const PREFIJO = 'ccs-infraestructura-v2:';
 export const K = { ventas: PREFIJO + 'maq-ventas', evidencias: PREFIJO + 'maq-evidencias', sinClasificar: PREFIJO + 'maq-evid-sin-clasificar', meta: PREFIJO + 'maq-ventas-importacion' };
@@ -24,7 +25,7 @@ export const DUP = 'Serial duplicado: pendiente de conciliación';
 
 /* Campos editables y su etiqueta (para el historial). */
 export const CAMPOS = {
-  dueno: 'Dueño / cliente', empresa: 'Empresa (razón social)', establecimiento: 'Establecimiento (nombre comercial)', ciudad: 'Ciudad o zona',
+  dueno: 'Dueño / cliente', empresa: 'Empresa (razón social)', establecimiento: 'Establecimiento (nombre comercial)', red: 'Red o marca del taller', contactos: 'Contactos', ciudad: 'Ciudad o zona',
   estadoVE: 'Estado', direccion: 'Dirección', lat: 'Latitud', lng: 'Longitud', ubicacionConfirmada: 'Ubicación confirmada',
   telefono: 'Teléfono', telefonoVerificado: 'Teléfono verificado', formaPago: 'Forma de pago', vendedor: 'Vendedor',
   precio: 'Precio', moneda: 'Moneda', garantiaMeses: 'Garantía (meses)', inicioGarantia: 'Inicio de garantía', inicioGarantiaConfirmado: 'Inicio de garantía confirmado',
@@ -36,7 +37,7 @@ export const CAMPOS = {
 function datosDesdeOrigen(o) {
   const d = o.documentacion || {};
   return {
-    dueno: str(o.dueno, 160), empresa: str(o.empresa, 160), establecimiento: '', ciudad: str(o.ciudad, 120), estadoVE: '', direccion: '',
+    dueno: str(o.dueno, 160), empresa: str(o.empresa, 160), establecimiento: '', red: '', contactos: [], ciudad: str(o.ciudad, 120), estadoVE: '', direccion: '',
     lat: null, lng: null, ubicacionConfirmada: false, telefono: str(o.telefono, 60), telefonoVerificado: false,
     formaPago: str(o.formaPago, 40), vendedor: str(o.vendedor, 120), precio: num(o.precio), moneda: '',
     garantiaMeses: num(o.garantiaMeses), inicioGarantia: '', inicioGarantiaConfirmado: false,
@@ -114,7 +115,7 @@ export function ventas() {
   const cuenta = {}; l.forEach(r => { const s = r.origen.serial; if (s) cuenta[s] = (cuenta[s] || 0) + 1; });
   return l.map(r => {
     const dup = r.origen.serial && cuenta[r.origen.serial] > 1 && !r.datos.serialConciliado;
-    const g = garantia(r), unidad = r.datos.unidadId ? D.unidadPorId(r.datos.unidadId) : null;
+    const g = garantia(r), entregados = PV.unidadesEnVenta(r.id);
     const alertas = [];
     if (dup) alertas.push({ t: DUP, nivel: 'alta' });
     if (!r.origen.serial) alertas.push({ t: 'Sin serial consignado', nivel: 'alta' });
@@ -126,7 +127,7 @@ export function ventas() {
     if (g.estado === 'Por vencer' || g.estado === 'Vencida') alertas.push({ t: `Garantía ${g.estado.toLowerCase()}`, nivel: 'alta' });
     else if (g.estado === 'No calculable') alertas.push({ t: 'Garantía no calculable', nivel: 'media' });
     else if (!g.confirmada) alertas.push({ t: 'Inicio de garantía pendiente de confirmar', nivel: 'baja' });
-    return { ...r, dup, garantia: g, unidad, alertas, nombre: r.datos.establecimiento || r.datos.empresa || r.datos.dueno || r.id };
+    return { ...r, datos: { red: '', contactos: [], ...r.datos }, dup, garantia: g, entregados, alertas, nombre: r.datos.establecimiento || r.datos.empresa || r.datos.dueno || r.id };
   }).sort((a, b) => a.id.localeCompare(b.id));
 }
 export const ventaPorId = id => ventas().find(v => v.id === id);
@@ -136,23 +137,26 @@ export const coincidenciasInventario = v => (v.origen.serial ? D.unidades().filt
 /* ── Edición con trazabilidad ── */
 export function editar(id, cambios, motivo) {
   const l = registros(), r = l.find(x => x.id === id); if (!r) return { error: 'La venta no existe.' };
-  const n = { ...r.datos };
+  const actual = { red: '', contactos: [], ...r.datos }, n = { ...actual };
   for (const [k, v] of Object.entries(cambios)) {
     if (!(k in CAMPOS)) continue;
-    n[k] = ['lat', 'lng', 'precio', 'garantiaMeses'].includes(k) ? num(v)
+    n[k] = k === 'contactos' ? (Array.isArray(v) ? v : []).map(c => ({ nombre: str(c.nombre, 120), cargo: str(c.cargo, 120), telefono: str(c.telefono, 60), correo: str(c.correo, 160) })).filter(c => c.nombre || c.telefono || c.correo).slice(0, 20)
+      : ['lat', 'lng', 'precio', 'garantiaMeses'].includes(k) ? num(v)
       : ['ubicacionConfirmada', 'telefonoVerificado', 'inicioGarantiaConfirmado', 'serialConciliado'].includes(k) ? !!v
         : k === 'inicioGarantia' ? fecha(v) : k === 'docEstado' ? (ESTADOS_DOC.includes(v) ? v : r.datos.docEstado) : str(v, k === 'notas' || k === 'docNota' || k === 'conciliacionNota' ? 1000 : 200);
   }
   if (n.garantiaMeses !== null && (n.garantiaMeses <= 0 || n.garantiaMeses > 120)) return { error: 'La garantía debe estar entre 1 y 120 meses.' };
   if (n.precio !== null && n.precio < 0) return { error: 'El precio no puede ser negativo.' };
   if (n.ubicacionConfirmada && (n.lat === null || n.lng === null)) return { error: 'Para confirmar la ubicación escribe latitud y longitud del establecimiento.' };
+  if ((n.lat === null) !== (n.lng === null)) return { error: 'Escribe latitud y longitud, o deja las dos vacías.' };
+  if (n.lat !== null && !PV.dentroDeVenezuela(n.lat, n.lng)) return { error: 'Esas coordenadas quedan fuera de Venezuela. Revisa el orden (latitud primero) y el signo de la longitud.' };
   if (n.inicioGarantiaConfirmado && !n.inicioGarantia) return { error: 'Indica la fecha de inicio de garantía para marcarla como confirmada.' };
   if (n.unidadId && !D.unidadPorId(n.unidadId)) return { error: 'La unidad elegida no existe en el inventario.' };
   if (n.unidadId && registros().some(x => x.id !== id && x.datos.unidadId === n.unidadId)) return { error: 'Esa unidad ya está vinculada a otra venta.' };
-  const dif = Object.keys(CAMPOS).filter(k => JSON.stringify(n[k]) !== JSON.stringify(r.datos[k]));
+  const dif = Object.keys(CAMPOS).filter(k => JSON.stringify(n[k]) !== JSON.stringify(actual[k]));
   if (!dif.length) return { sinCambios: true };
   const m = str(motivo, 400);
-  dif.forEach(k => r.historial.push({ fecha: ahora(), campo: k, antes: r.datos[k], despues: n[k], motivo: m }));
+  dif.forEach(k => r.historial.push({ fecha: ahora(), campo: k, antes: actual[k], despues: n[k], motivo: m }));
   r.datos = n; escribir(K.ventas, l); return { ok: dif.length };
 }
 
@@ -179,7 +183,8 @@ export function indicadores() {
   return {
     ventas: vs.length,
     dupSerial: vs.filter(v => v.dup).length,
-    sinUnidad: vs.filter(v => !v.unidad).length,
+    sinUnidad: vs.filter(v => !v.entregados.length).length,
+    entregados: vs.reduce((s, v) => s + v.entregados.length, 0),
     conEmpresa: vs.filter(v => v.datos.empresa || v.datos.establecimiento).length,
     sinPrecio: vs.filter(v => v.datos.precio === null).length,
     docPendiente: vs.filter(v => v.datos.docEstado === 'Pendiente').length,

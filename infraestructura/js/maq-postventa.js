@@ -51,29 +51,33 @@ export function eliminarTaller(id) {
 }
 
 /* ── Instalaciones (trayectoria de cada unidad fuera de stock) ── */
-const normInst = x => ({ id: str(x.id, 40), unidadId: str(x.unidadId, 60), tallerId: str(x.tallerId, 40), fechaVenta: fecha(x.fechaVenta), fechaInstalacion: fecha(x.fechaInstalacion),
+const normInst = x => ({ id: str(x.id, 40), unidadId: str(x.unidadId, 60), tallerId: str(x.tallerId, 40), ventaId: str(x.ventaId, 20), fechaVenta: fecha(x.fechaVenta), fechaInstalacion: fecha(x.fechaInstalacion),
   garantia: str(x.garantia, 300), activa: x.activa !== false, retiro: x.retiro && typeof x.retiro === 'object' ? { fecha: fecha(x.retiro.fecha), motivo: str(x.retiro.motivo, 400) } : null,
   observaciones: str(x.observaciones, 1000), creado: str(x.creado, 40) });
 export const instalaciones = () => { const v = leer(K.instalaciones); return Array.isArray(v) ? v.map(normInst).filter(x => x.id && x.unidadId) : []; };
 export const instalacionActiva = unidadId => instalaciones().find(x => x.activa && x.unidadId === unidadId) || null;
 export const historialInstalaciones = unidadId => instalaciones().filter(x => x.unidadId === unidadId);
 
-/* Registra la instalación de una o varias unidades en un taller. Devuelve { error } o { registradas }. */
+/* Registra la entrega/instalación de una o varias unidades a una venta (ventaId) o a un taller (tallerId).
+   Devuelve { error } o { registradas }. */
 export function registrarInstalacion(unidadIds, datos) {
-  const t = tallerPorId(datos.tallerId); if (!t) return { error: 'Elige el taller.' };
+  const t = datos.tallerId ? tallerPorId(datos.tallerId) : null, ventaId = str(datos.ventaId, 20);
+  if (!t && !ventaId) return { error: 'Elige la venta o el taller.' };
   const ids = [...new Set(unidadIds.filter(Boolean))]; if (!ids.length) return { error: 'Elige al menos una unidad.' };
   for (const id of ids) {
     const u = D.unidadPorId(id); if (!u) return { error: `La unidad ${id} no existe.` };
-    const act = instalacionActiva(id); if (act) return { error: `${u.codigo || u.id} ya está instalada en ${(tallerPorId(act.tallerId) || {}).nombre || 'otro taller'}.` };
+    const act = instalacionActiva(id); if (act) return { error: `${u.codigo || u.id} ya está entregada${act.ventaId ? ` en la venta ${act.ventaId}` : ` en ${(tallerPorId(act.tallerId) || {}).nombre || 'otro lugar'}`}.` };
     if (u.enOperacion) return { error: `${u.codigo || u.id} está en operación en nuestro taller. Retírala de operación primero.` };
   }
   const l = instalaciones();
-  ids.forEach(id => l.push(normInst({ id: nuevoId('IN'), unidadId: id, tallerId: t.id, fechaVenta: datos.fechaVenta, fechaInstalacion: datos.fechaInstalacion,
+  ids.forEach(id => l.push(normInst({ id: nuevoId('IN'), unidadId: id, tallerId: t ? t.id : '', ventaId, fechaVenta: datos.fechaVenta, fechaInstalacion: datos.fechaInstalacion,
     garantia: datos.garantia, observaciones: datos.observaciones, activa: true, creado: ahora() })));
   escribir(K.instalaciones, l);
-  const tl = talleres(), ti = tl.findIndex(x => x.id === t.id);
-  tl[ti].historial.push({ fecha: ahora(), tipo: 'instalacion', nota: `Instalación registrada: ${ids.map(id => (D.unidadPorId(id) || {}).codigo || id).join(', ')}.` });
-  escribir(K.talleres, tl);
+  if (t) {
+    const tl = talleres(), ti = tl.findIndex(x => x.id === t.id);
+    tl[ti].historial.push({ fecha: ahora(), tipo: 'instalacion', nota: `Instalación registrada: ${ids.map(id => (D.unidadPorId(id) || {}).codigo || id).join(', ')}.` });
+    escribir(K.talleres, tl);
+  }
   return { registradas: ids.length };
 }
 /* Retiro: la instalación queda cerrada (no se borra) y la unidad vuelve a contar según la hoja. */
@@ -108,3 +112,5 @@ export const desplegadas = () => instalaciones().filter(x => x.activa).map(x => 
 // Vendidas según la hoja, pero sin instalación registrada en la aplicación: falta saber dónde están.
 export const vendidasSinTaller = () => D.unidades().filter(u => u.condicionHoja === 'Vendida' && !instalacionActiva(u.id));
 export const instalables = () => D.unidades().filter(u => !instalacionActiva(u.id) && !u.enOperacion);
+export const unidadesEnVenta = ventaId => instalaciones().filter(x => x.activa && x.ventaId === ventaId).map(x => ({ inst: x, u: D.unidadPorId(x.unidadId) })).filter(x => x.u);
+export const historialDeVenta = ventaId => instalaciones().filter(x => !x.activa && x.ventaId === ventaId);
