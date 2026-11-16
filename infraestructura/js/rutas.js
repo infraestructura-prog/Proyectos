@@ -9,7 +9,8 @@
      #/investigaciones/<slug>/resultados  Resultados: conclusión, hallazgos y fuentes
      #/kanban                             Kanban general: una tarjeta por macroobjetivo
      #/pendientes                         Pendientes de clasificación (administración): migración, correspondencia y conflictos
-     #/maquinas/<pestaña>                 Máquinas de simulación (módulo publicado, solo lectura): vendidas, stock, referencia
+     #/maquinas                           Máquinas de simulación · Resumen
+     #/maquinas/postventa · /stock · /stock/repuestos · /operacion   Ventanas del módulo
    Los proyectos condicionados usan la ruta de proyectos. */
 import { HABILITADOS } from './datos.js';
 
@@ -24,7 +25,12 @@ export function leerRuta() {
   if (seg[0] === 'investigaciones') return { vista: 'investigaciones', seccion: 'investigaciones' };
   if (seg[0] === 'kanban') return { vista: 'kanban' };
   if (seg[0] === 'pendientes') return { vista: 'pendientes' };
-  if (seg[0] === 'maquinas') return { vista: 'modulo', seccion: 'maquinas', sub: seg[1] || '' };
+  if (seg[0] === 'maquinas') {
+    // Máquinas de simulación: Resumen · Postventa · Stock (equipos / repuestos) · Equipos en operación.
+    // Rutas antiguas del módulo anterior: vendidas → Postventa; referencia → Resumen.
+    const v = { vendidas: 'postventa', referencia: 'resumen' }[seg[1]] || seg[1] || 'resumen';
+    return { vista: 'maquinas', seccion: 'maquinas', ventana: ['resumen', 'postventa', 'stock', 'operacion'].includes(v) ? v : 'resumen', sub: seg[2] || '' };
+  }
   return { vista: 'objetivos', macro: p.get('macro') || '' };
 }
 export const habilitado = r => HABILITADOS.has(r.id);

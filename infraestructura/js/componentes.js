@@ -68,6 +68,17 @@ export function sidebarHtml(S, ctx) {
   };
   const secProy = secLista('proyectos', 'Proyectos', ICON.folder, x => x.tipo !== 'investigacion');
   const secInv = secLista('investigaciones', 'Investigaciones', ICON.lupa, x => x.tipo === 'investigacion');
+  // Máquinas de simulación: sus cuatro ventanas (Resumen · Postventa · Stock · Equipos en operación).
+  const VENT_MAQ = [['resumen', 'Resumen', '#/maquinas'], ['postventa', 'Postventa', '#/maquinas/postventa'], ['stock', 'Stock', '#/maquinas/stock'], ['operacion', 'Equipos en operación', '#/maquinas/operacion']];
+  const secMaq = () => {
+    const abierta = S.sbSec.maquinas !== false, enSec = r.vista === 'maquinas';
+    return `<li class="sb-item ${enSec ? 'is-active' : ''}">
+      <div class="sb-row"><a class="sb-link" href="#/maquinas" ${enSec && r.ventana === 'resumen' ? 'aria-current="page"' : ''}>${ICON.engranaje}<span>Máquinas de simulación</span></a>
+        <button type="button" class="sb-disclose" data-act="toggle-seccion" data-sec="maquinas" aria-expanded="${abierta}" aria-controls="sb-maquinas" aria-label="${abierta ? 'Ocultar' : 'Mostrar'} las ventanas de Máquinas de simulación">${ICON.chev}</button></div>
+      <ul id="sb-maquinas" class="sb-indice sb-proys" ${abierta ? '' : 'hidden'}>
+        ${VENT_MAQ.map(([id, t, h]) => { const sel = enSec && r.ventana === id; return `<li class="sb-proy ${sel ? 'is-sel' : ''}"><a class="sb-idx sb-proy-link" href="${h}" ${sel ? 'aria-current="page"' : ''}><span>${t}</span></a></li>`; }).join('')}
+      </ul></li>`;
+  };
   // Secciones pendientes: visibles y claramente identificadas, sin enlace.
   const ICONO_SEC = { investigaciones: ICON.lupa, kanban: ICON.tablero, maquinas: ICON.engranaje, documentacion: ICON.doc, pendientes: ICON.bandeja };
   const pendiente = s => `<li class="sb-item"><span class="sb-link is-disabled" aria-disabled="true">${ICONO_SEC[s.id] || ICON.folder}<span>${esc(s.titulo)}</span>
@@ -78,7 +89,7 @@ export function sidebarHtml(S, ctx) {
     if ((s.bloque || 1) !== bloqueAnt) { sep = '<li class="sb-sep" aria-hidden="true"></li>'; bloqueAnt = s.bloque || 1; }
     if (s.admin && !adminVisto) { sep = '<li class="sb-sep" aria-hidden="true"></li><li class="sb-grupo" aria-hidden="true">Administración</li>'; adminVisto = true; }
     const activa = s => { const sel = r.vista === s.id || (r.vista === 'modulo' && r.seccion === s.id); return `<li class="sb-item ${sel ? 'is-active' : ''}"><div class="sb-row"><a class="sb-link" href="#/${s.id}" ${sel ? 'aria-current="page"' : ''}>${ICONO_SEC[s.id] || ICON.folder}<span>${esc(s.titulo)}</span></a></div></li>`; };
-    return sep + (s.id === 'objetivos' ? secObj : s.id === 'proyectos' ? secProy : s.id === 'investigaciones' ? secInv : s.activa ? activa(s) : pendiente(s));
+    return sep + (s.id === 'objetivos' ? secObj : s.id === 'proyectos' ? secProy : s.id === 'investigaciones' ? secInv : s.id === 'maquinas' ? secMaq() : s.activa ? activa(s) : pendiente(s));
   }).join('');
   const L = enlacesArea(), abiertoArea = !!S.menuArea;
   return `<div class="sb-brand-wrap">

@@ -9,6 +9,15 @@ import * as P from './proyecto.js';
 import * as KM from './kanban-macro.js';
 import * as MG from './migracion.js';
 import * as MV from './migracion-vista.js';
+import * as MD from './maq-datos.js';
+import * as MQ from './maq-vistas.js';
+import * as RP from './maq-repuestos.js';
+import * as PV from './maq-postventa.js';
+import * as PVV from './maq-pv-vistas.js';
+import * as MP from './maq-mapa.js';
+import * as OP from './maq-operacion.js';
+import * as OPV from './maq-op-vistas.js';
+import * as RSV from './maq-res-vistas.js';
 import { leerRuta, rutaRegistro, rutaMacro, habilitado } from './rutas.js';
 
 const $ = s => document.querySelector(s);
@@ -34,9 +43,14 @@ function cargarEstado() {
   S.activo = macroIds.has(p.activo) ? p.activo : null;
   S.sbSec = p.sbSec && typeof p.sbSec === 'object' && !Array.isArray(p.sbSec) ? Object.fromEntries(Object.entries(p.sbSec).filter(([, v]) => typeof v === 'boolean')) : {};
   S.soloDestacadas = !!p.soloDestacadas;
+  // Máquinas de simulación: modo (individual / kits), vista (tarjetas / tabla) y filtro por tipo.
+  S.maqModo = p.maqModo === 'kits' ? 'kits' : 'individual'; S.maqVista = p.maqVista === 'tabla' ? 'tabla' : 'tarjetas'; S.maqFiltro = typeof p.maqFiltro === 'string' ? p.maqFiltro : '';
+  S.repVista = p.repVista === 'tabla' ? 'tabla' : 'tarjetas'; S.repBusca = ''; S.repFiltro = '';
+  S.pvVista = ['tabla', 'mapa'].includes(p.pvVista) ? p.pvVista : 'tarjetas'; S.pvEstado = ''; S.pvOper = '';
+  S.opVista = p.opVista === 'tabla' ? 'tabla' : 'tarjetas';
   S.menuArea = false;
 }
-const guardarPrefs = () => almacen.guardarPrefs({ vista: S.vista, abiertos: [...S.abiertos], indice: S.indice, activo: S.activo, sbSec: S.sbSec, soloDestacadas: S.soloDestacadas });
+const guardarPrefs = () => almacen.guardarPrefs({ vista: S.vista, abiertos: [...S.abiertos], indice: S.indice, activo: S.activo, sbSec: S.sbSec, soloDestacadas: S.soloDestacadas, maqModo: S.maqModo, maqVista: S.maqVista, maqFiltro: S.maqFiltro, repVista: S.repVista, pvVista: S.pvVista, opVista: S.opVista });
 const guardarTareas = () => { if (!almacen.guardarTareas(tareas)) toast('No se pudo guardar en este navegador.'); };
 const guardarInicios = () => { if (!almacen.guardarProyectos(inicios)) toast('No se pudo guardar en este navegador.'); };
 const tareasDe = pid => tareas.filter(t => t.proyecto === pid);
@@ -74,6 +88,20 @@ function render({ foco } = {}) {
     } else { html = C.registroPaginaHtml(reg); titulo = reg.nombre; }
   } else if (r.vista === 'proyectos') { html = C.proyectosHtml(); titulo = 'Proyectos'; }
   else if (r.vista === 'investigaciones') { html = C.proyectosHtml(true); titulo = 'Investigaciones'; }
+  else if (r.vista === 'maquinas') {
+    // La hoja de máquinas se lee al entrar por primera vez (y con «Actualizar»); mientras tanto se muestra el estado.
+    if (MD.M.estado === 'inicial') MD.cargarHoja().then(() => { if (leerRuta().vista === 'maquinas') render(); });
+    S.maqSub = r.sub;
+    // Repuestos se leen al abrir su pestaña o el Resumen (que muestra sus indicadores).
+    if (((r.ventana === 'stock' && r.sub === 'repuestos') || r.ventana === 'resumen') && RP.R.estado === 'inicial')
+      RP.cargar().then(() => { const x = leerRuta(); if (x.vista === 'maquinas' && (x.sub === 'repuestos' || x.ventana === 'resumen')) render(); });
+    const v = r.ventana;
+    html = v === 'stock' ? MQ.stockHtml(S)
+      : v === 'postventa' ? PVV.postventaHtml(S)
+        : v === 'operacion' ? OPV.operacionHtml(S)
+          : RSV.resumenHtml();
+    titulo = `${MQ.VENTANAS.find(x => x.id === v).titulo} · Máquinas de simulación`;
+  }
   else if (r.vista === 'pendientes') { html = MV.pendientesHtml(origen, estMig, almacen.respaldo()); titulo = 'Pendientes de clasificación'; }
   else if (r.vista === 'kanban') { html = KM.tableroHtml(ctx, tablero()); titulo = 'Kanban'; }
   else if (r.vista === 'modulo') {
@@ -101,6 +129,12 @@ function render({ foco } = {}) {
   ctx.nuevo = null;
   if (prev) { const el = document.querySelector(prev); if (el) el.focus({ preventScroll: true }); }
   if ((r.vista === 'registro' && r.pagina === 'kanban') || r.vista === 'kanban') bindDrag();
+  // Mapa de Postventa: se monta después de pintar (Leaflet necesita el contenedor en la página).
+  const elMapa = document.getElementById('pv-mapa');
+  if (elMapa && r.vista === 'maquinas' && r.ventana === 'postventa') {
+    const marcas = PVV.marcadoresMapa(PVV.talleresFiltrados(S));
+    if (marcas.length) MP.montarMapa(elMapa, marcas, PVV.popupTallerHtml).catch(err => { elMapa.innerHTML = `<p class="aviso err">${C.esc(err.message)}</p>`; });
+  } else MP.desmontarMapa();
   guardarPrefs();
 }
 
@@ -109,7 +143,7 @@ function alCambiarRuta() {
   cerrarMenu(false); cerrarResultados();
   [dlg, dlg2, panel].forEach(d => { if (d.open) d.close(); });
   const r = leerRuta();
-  if (r.seccion === 'proyectos' || r.seccion === 'investigaciones') S.sbSec[r.seccion] = true;
+  if (r.seccion === 'proyectos' || r.seccion === 'investigaciones' || r.seccion === 'maquinas') S.sbSec[r.seccion] = true;
   render({ foco: null });
   if (r.vista === 'objetivos' && r.macro) {
     history.replaceState(null, '', '#/objetivos');
@@ -555,6 +589,270 @@ function descargarRespaldo() {
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
+/* ── Máquinas de simulación: fichas, formularios y kits ── */
+function maqFicha(id) {
+  const u = MD.unidadPorId(id); if (!u) return;
+  abrirDialogo(dlg, MQ.fichaHtml(u), `[data-act="maq-ficha"][data-uid="${CSS.escape(id)}"]`);
+  // Postventa de la unidad: instalación, trayectoria y servicios (la ficha es la misma dentro y fuera de stock).
+  const op = OP.deUnidad(u.id);
+  dlg.querySelector('.dlg-body').insertAdjacentHTML('beforeend', OPV.operacionUnidadHtml(u) + PVV.postventaUnidadHtml(u));
+  dlg.querySelector('.dlg-foot').insertAdjacentHTML('afterbegin', `<button type="button" class="btn btn-ghost" data-ficha="servicio">+ Servicio o incidencia</button>${u.tallerId ? '<button type="button" class="btn btn-ghost" data-ficha="retiro">Registrar retiro</button>' : ''}
+    ${op ? '<button type="button" class="btn btn-ghost" data-ficha="op-inspeccion">+ Inspección</button><button type="button" class="btn btn-ghost" data-ficha="op-editar">Editar operación</button><button type="button" class="btn btn-ghost" data-ficha="op-fin">Retirar de operación</button>' : ''}`);
+  dlg.querySelector('.dlg-body').addEventListener('click', e => { const b = e.target.closest('[data-pv="editar-servicio"]'); if (b) pvFormServicio(b.dataset.sid, {}); });
+  dlg.querySelector('.dlg-foot').addEventListener('click', e => {
+    const b = e.target.closest('[data-ficha]'); if (!b) return;
+    if (b.dataset.ficha === 'servicio') pvFormServicio(null, { unidadId: u.id, tallerId: u.tallerId });
+    if (b.dataset.ficha === 'retiro') pvFormRetiro(u);
+    if (b.dataset.ficha === 'op-editar') opForm(op);
+    if (b.dataset.ficha === 'op-inspeccion') opInspeccion(op, u);
+    if (b.dataset.ficha === 'op-fin') opFin(op, u);
+    if (b.dataset.ficha === 'editar') maqFormComplemento(u);
+    if (b.dataset.ficha === 'hoja') maqFormHoja(u);
+    if (b.dataset.ficha === 'borrar') {
+      dlgRetorno = null; dlg.close();
+      confirmar('Eliminar soporte', `<p>Se eliminará el soporte «${C.esc(u.codigo || u.id)}». No pertenece a ningún kit.</p>`, 'Eliminar', () => {
+        if (MD.eliminarSoporte(u.id)) { render(); toast('Soporte eliminado.'); } else toast('No se puede eliminar: el soporte está en un kit.');
+      });
+    }
+  });
+}
+function maqFormComplemento(u0) {
+  const soporte = !u0 || u0.tipo === 'soporte', u = u0 || {};
+  abrirDialogo(dlg, MQ.formComplementoHtml(u, soporte), soporte && !u0 ? '[data-act="maq-nuevo-soporte"]' : null);
+  const form = dlg.querySelector('form');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const g = n => String(form.elements[n] ? form.elements[n].value : '').trim();
+    const errCodigo = t => { const er = form.elements.codigo.parentElement.querySelector('.err'); er.textContent = t; er.hidden = false; form.elements.codigo.focus(); };
+    if (soporte && !g('codigo')) { errCodigo('Escribe el código interno del soporte.'); return; }
+    const datos = { codigo: g('codigo'), serial: g('serial'), marca: g('marca'), modelo: g('modelo'), ubicacion: g('ubicacion'), estadoOperativo: g('estadoOperativo'), condicion: g('condicion'), observaciones: g('observaciones') };
+    if (soporte) {
+      if (MD.soportes().some(s => s.codigo.toUpperCase() === datos.codigo.toUpperCase() && s.id !== u.id)) { errCodigo('Ya existe un soporte con ese código interno.'); return; }
+      MD.guardarSoporte(datos, u.id);
+    } else MD.guardarComplemento(u.id, datos, 'Datos complementarios editados (marca, modelo, ubicación, estado operativo u observaciones).');
+    dlgRetorno = null; dlg.close(); render(); toast(soporte && !u0 ? 'Soporte agregado.' : 'Datos guardados.');
+  });
+}
+function maqFormHoja(u) {
+  abrirDialogo(dlg, MQ.formHojaHtml(u), u ? null : '[data-act="maq-nueva-maquina"]');
+  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]');
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const g = n => String(form.elements[n] && form.elements[n].value !== undefined ? form.elements[n].value : '').trim();
+    const radio = n => (form.querySelector(`input[name="${n}"]:checked`) || {}).value || '';
+    const errs = { codificacion: !g('codificacion'), categoria: !radio('categoria'), escalera: !radio('escalera'), clave: !!form.elements.clave && !g('clave') };
+    Object.entries(errs).forEach(([k, bad]) => {
+      const el = form.querySelector(`[name="${k}"]`); const er = el && el.closest('.fld').querySelector('.err'); if (er) er.hidden = !bad;
+    });
+    if (Object.values(errs).some(Boolean)) return;
+    if (g('imagen') && !/^https:\/\//.test(g('imagen'))) { msg.innerHTML = '<p class="aviso err">El enlace de la imagen debe empezar por https://</p>'; return; }
+    const cod = MD.codeKey(g('codificacion'));
+    if (MD.M.maquinas.some(x => MD.codeKey(x.codigo) === cod && (!u || x.id !== u.id))) { msg.innerHTML = '<p class="aviso err">Ya existe una máquina con esa codificación.</p>'; return; }
+    if (g('serial') && MD.M.maquinas.some(x => x.serial && x.serial.toUpperCase() === g('serial').toUpperCase() && (!u || x.id !== u.id))) { msg.innerHTML = '<p class="aviso err">Ya existe una máquina con ese serial.</p>'; return; }
+    const datos = { codificacion: g('codificacion'), categoria: radio('categoria'), serial: g('serial'), escalera: radio('escalera'), condicion: radio('condicion') || 'En stock', imagen: g('imagen') };
+    const btn = form.querySelector('[type=submit]'); btn.disabled = true; btn.textContent = 'Guardando…'; msg.innerHTML = '';
+    try {
+      if (u) await MD.editarEnHoja(u, datos, g('clave')); else await MD.agregarEnHoja(datos, g('clave'));
+      if (u && MD.idDeCodigo(datos.codificacion) !== u.id) MD.renombrarUnidad(u.id, MD.idDeCodigo(datos.codificacion));
+      dlgRetorno = null; dlg.close(); toast(u ? 'Cambios guardados en la hoja.' : 'Máquina agregada a la hoja.');
+      await MD.cargarHoja(); render();
+    } catch (err) {
+      btn.disabled = false; btn.textContent = 'Guardar en la hoja';
+      msg.innerHTML = `<p class="aviso err">${C.esc(err.code === 'CONFLICT' ? 'Esta máquina cambió en la hoja mientras la editabas. Pulsa «Actualizar» y vuelve a intentarlo.' : err.message)}</p>`;
+    }
+  });
+}
+/* ── Postventa: talleres, instalaciones, servicios y retiro ── */
+function pvTaller(id) {
+  const t = PV.tallerPorId(id); if (!t) return;
+  abrirDialogo(dlg, PVV.fichaTallerHtml(t), `[data-act="pv-taller"][data-tid="${CSS.escape(id)}"]`);
+  // Los oyentes van en el contenido de esta ficha (se reemplaza al abrir otra), no en la ventana: así no se acumulan.
+  const accion = e => {
+    const b = e.target.closest('[data-pv]'); if (!b) return;
+    if (b.dataset.pv === 'editar') pvFormTaller(t);
+    if (b.dataset.pv === 'instalar') pvFormInstalacion(t.id);
+    if (b.dataset.pv === 'servicio') pvFormServicio(null, { tallerId: t.id });
+    if (b.dataset.pv === 'editar-servicio') pvFormServicio(b.dataset.sid, {});
+  };
+  dlg.querySelector('.dlg-body').addEventListener('click', accion);
+  dlg.querySelector('.dlg-foot').addEventListener('click', accion);
+}
+let miniMapa = null;
+function pvFormTaller(t) {
+  abrirDialogo(dlg, PVV.formTallerHtml(t), t ? null : '[data-act="pv-nuevo-taller"]');
+  const form = dlg.querySelector('form'), cont = form.querySelector('[data-contactos]'), errC = form.querySelector('[data-err-coord]');
+  const numCoord = v => { const n = Number(String(v).trim().replace(',', '.')); return String(v).trim() === '' ? null : Number.isFinite(n) ? n : NaN; };
+  // Mapa del formulario: un clic marca las coordenadas; escribir o pegar coordenadas mueve el marcador.
+  MP.miniMapa(form.querySelector('[data-minimapa]'), t ? t.lat : NaN, t ? t.lng : NaN, (lat, lng, zoom) => {
+    form.elements.lat.value = lat; form.elements.lng.value = lng;
+    errC.hidden = zoom >= 15; errC.textContent = zoom >= 15 ? '' : 'Acércate más (hasta ver la calle) para marcar la ubicación exacta.';
+  }).then(m => { miniMapa = m; }).catch(() => { form.querySelector('[data-minimapa]').innerHTML = '<p class="nota">No se pudo cargar el mapa. Puedes escribir las coordenadas.</p>'; });
+  const alPegar = () => {
+    // Se acepta pegar «10.4806, -66.9036» en la latitud.
+    const m = String(form.elements.lat.value).match(/^\s*(-?\d+(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d+(?:[.,]\d+)?)\s*$/);
+    if (m) { form.elements.lat.value = m[1].replace(',', '.'); form.elements.lng.value = m[2].replace(',', '.'); }
+    const a = numCoord(form.elements.lat.value), b = numCoord(form.elements.lng.value);
+    if (miniMapa && Number.isFinite(a) && Number.isFinite(b)) miniMapa.mover(a, b);
+  };
+  form.elements.lat.addEventListener('change', alPegar); form.elements.lng.addEventListener('change', alPegar);
+  form.addEventListener('click', e => {
+    if (e.target.closest('[data-pv-agregar-contacto]')) { cont.insertAdjacentHTML('beforeend', PVV.contactoFilaHtml({}, cont.children.length)); cont.lastElementChild.querySelector('input').focus(); }
+    const q = e.target.closest('[data-pv-quitar-contacto]'); if (q) q.closest('[data-contacto]').remove();
+    if (e.target.closest('[data-pv-borrar]')) {
+      dlgRetorno = null; dlg.close();
+      confirmar('Eliminar taller', `<p>Se eliminará «${C.esc(t.nombre)}».</p>`, 'Eliminar', () => { const er = PV.eliminarTaller(t.id); render(); toast(er || 'Taller eliminado.'); });
+    }
+  });
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const g = n => String(form.elements[n].value || '').trim();
+    const errN = form.elements.nombre.parentElement.querySelector('.err'); errN.hidden = !!g('nombre'); if (!g('nombre')) { form.elements.nombre.focus(); return; }
+    const lat = numCoord(g('lat')), lng = numCoord(g('lng')), conf = form.elements.coordConfirmadas.checked;
+    const errCoord = t2 => { errC.textContent = t2; errC.hidden = false; form.elements.lat.focus(); };
+    if (Number.isNaN(lat) || Number.isNaN(lng) || (lat === null) !== (lng === null)) { errCoord('Escribe latitud y longitud como números (por ejemplo, 10.4806 y -66.9036).'); return; }
+    if (lat !== null && !PV.dentroDeVenezuela(lat, lng)) { errCoord('Esas coordenadas quedan fuera de Venezuela. Revisa el orden (latitud primero) y el signo de la longitud.'); return; }
+    if (conf && lat === null) { errCoord('Para marcar las coordenadas como confirmadas, primero indícalas.'); return; }
+    const contactos = [...cont.querySelectorAll('[data-contacto]')].map(f => ({ nombre: f.querySelector('[name="c-nombre"]').value, cargo: f.querySelector('[name="c-cargo"]').value,
+      telefono: f.querySelector('[name="c-telefono"]').value, correo: f.querySelector('[name="c-correo"]').value }));
+    const nuevo = PV.guardarTaller({ nombre: g('nombre'), red: g('red'), estado: g('estado'), municipio: g('municipio'), ciudad: g('ciudad'), direccion: g('direccion'),
+      lat, lng, coordConfirmadas: conf, contactos, observaciones: g('observaciones') }, t && t.id);
+    if (miniMapa) { miniMapa.quitar(); miniMapa = null; }
+    dlgRetorno = null; dlg.close(); render(); toast(t ? 'Taller guardado.' : 'Taller agregado.');
+    if (!t) pvTaller(nuevo.id);
+  });
+  dlg.addEventListener('close', () => { if (miniMapa) { miniMapa.quitar(); miniMapa = null; } }, { once: true });
+}
+function pvFormInstalacion(tallerId) {
+  abrirDialogo(dlg, PVV.formInstalacionHtml(tallerId), tallerId ? null : '[data-act="pv-instalar"]');
+  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]');
+  const kit = form.querySelector('[data-pv-kit]');
+  if (kit) kit.addEventListener('change', () => form.querySelectorAll('input[name="unidad"]').forEach(c => { if (kit.value && c.dataset.kit === kit.value) c.checked = true; }));
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const g = n => String(form.elements[n] ? form.elements[n].value : '').trim();
+    const ids = [...form.querySelectorAll('input[name="unidad"]:checked')].map(c => c.value);
+    form.elements.tallerId.parentElement.querySelector('.err').hidden = !!g('tallerId');
+    form.querySelector('[data-err-unidad]').hidden = ids.length > 0;
+    if (!g('tallerId') || !ids.length) return;
+    const r = PV.registrarInstalacion(ids, { tallerId: g('tallerId'), fechaVenta: g('fechaVenta'), fechaInstalacion: g('fechaInstalacion'), garantia: g('garantia'), observaciones: g('observaciones') });
+    if (r.error) { msg.innerHTML = `<span class="aviso err">${C.esc(r.error)}</span>`; return; }
+    dlgRetorno = null; dlg.close(); render(); toast(`${r.registradas === 1 ? 'Instalación registrada' : `${r.registradas} unidades registradas`} en el taller.`);
+  });
+}
+function pvFormServicio(sid, ctx) {
+  const s = sid ? PV.servicios().find(x => x.id === sid) : null;
+  abrirDialogo(dlg, PVV.formServicioHtml(s, s ? {} : ctx), null);
+  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const g = n => String(form.elements[n] ? form.elements[n].value : '').trim();
+    const r = PV.guardarServicio({ tipo: g('tipo'), fecha: g('fecha'), estado: g('estado'), unidadId: g('unidadId'), tallerId: g('tallerId'), descripcion: g('descripcion'), proximaAccion: g('proximaAccion'), responsable: g('responsable') }, s && s.id);
+    if (r.error) { msg.innerHTML = `<span class="aviso err">${C.esc(r.error)}</span>`; return; }
+    dlgRetorno = null; dlg.close(); render(); toast('Registro guardado.');
+    if (g('tallerId')) pvTaller(g('tallerId')); else if (g('unidadId')) maqFicha(g('unidadId'));
+  });
+}
+function pvFormRetiro(u) {
+  abrirDialogo(dlg, PVV.formRetiroHtml(u), null);
+  const form = dlg.querySelector('form');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const er = PV.retirar(u.id, { fecha: form.elements.fecha.value, motivo: form.elements.motivo.value });
+    dlgRetorno = null; dlg.close(); render(); toast(er || 'Retiro registrado; la instalación queda en el historial.');
+  });
+}
+/* Dentro de una ficha, los enlaces a otra ficha (máquina ↔ taller) cambian el contenido de la ventana. */
+dlg.addEventListener('click', e => {
+  const b = e.target.closest('[data-act="maq-ficha"], [data-act="pv-taller"]'); if (!b || !dlg.contains(b)) return;
+  e.stopPropagation();
+  if (b.dataset.act === 'maq-ficha') maqFicha(b.dataset.uid); else pvTaller(b.dataset.tid);
+});
+
+/* ── Equipos en operación: registrar, editar, inspección y retiro ── */
+function opForm(r) {
+  abrirDialogo(dlg, OPV.formOperacionHtml(r), r ? null : '[data-act="op-nuevo"]');
+  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const g = n => String(form.elements[n] ? form.elements[n].value : '').trim();
+    const datos = { ubicacion: g('ubicacion'), responsable: g('responsable'), desde: g('desde'), proximaAccion: g('proximaAccion'), fichaTecnica: g('fichaTecnica') };
+    const er = r ? OP.editar(r.id, datos) : (OP.registrar(g('unidadId'), datos).error || '');
+    if (er) { msg.innerHTML = `<span class="aviso err">${C.esc(er)}</span>`; return; }
+    const uid = r ? r.unidadId : g('unidadId');
+    dlgRetorno = null; dlg.close(); render(); toast(r ? 'Datos de operación guardados.' : 'Equipo registrado en operación.');
+    maqFicha(uid);
+  });
+}
+function opInspeccion(r, u) {
+  abrirDialogo(dlg, OPV.formInspeccionHtml(r, u), null);
+  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const er = OP.inspeccion(r.id, form.elements.fecha.value, form.elements.nota.value.trim());
+    if (er) { msg.innerHTML = `<span class="aviso err">${C.esc(er)}</span>`; return; }
+    dlgRetorno = null; dlg.close(); render(); toast('Inspección registrada.'); maqFicha(u.id);
+  });
+}
+function opFin(r, u) {
+  abrirDialogo(dlg, OPV.formFinOperacionHtml(u), null);
+  const form = dlg.querySelector('form');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const er = OP.retirar(r.id, form.elements.fecha.value, form.elements.motivo.value);
+    dlgRetorno = null; dlg.close(); render(); toast(er || 'Equipo retirado de operación; queda en su historial.');
+  });
+}
+
+/* ── Repuestos: ficha, existencia (modificable con historial) y datos complementarios ── */
+function repFicha(id) {
+  const r = RP.repuestoPorId(id); if (!r) return;
+  abrirDialogo(dlg, MQ.fichaRepuestoHtml(r), `[data-act="rep-ficha"][data-rid="${CSS.escape(id)}"]`);
+  dlg.querySelector('.dlg-foot').addEventListener('click', e => {
+    const b = e.target.closest('[data-ficha]'); if (!b) return;
+    if (b.dataset.ficha === 'existencia') repExistencia(id);
+    if (b.dataset.ficha === 'datos') repDatos(id);
+  });
+}
+function repExistencia(id) {
+  const r = RP.repuestoPorId(id); if (!r) return;
+  abrirDialogo(dlg, MQ.formExistenciaHtml(r), `[data-act="rep-existencia"][data-rid="${CSS.escape(id)}"]`);
+  const form = dlg.querySelector('form');
+  form.elements.existencia.select();
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const v = form.elements.existencia.value.trim(), n = Number(v);
+    const er = form.elements.existencia.parentElement.querySelector('.err');
+    const msg = v === '' ? 'Escribe la nueva existencia.' : RP.ajustarExistencia(id, n, form.elements.motivo.value);
+    if (msg) { er.textContent = msg; er.hidden = false; form.elements.existencia.focus(); return; }
+    dlgRetorno = null; dlg.close(); render(); toast(`Existencia actualizada: ${r.descEs || r.ref} → ${n}.`);
+  });
+}
+function repDatos(id) {
+  const r = RP.repuestoPorId(id); if (!r) return;
+  abrirDialogo(dlg, MQ.formRepuestoHtml(r), null);
+  const form = dlg.querySelector('form');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const g = n => String(form.elements[n].value || '').trim();
+    const er = form.elements.imagen.parentElement.querySelector('.err');
+    er.hidden = !g('imagen') || /^https:\/\//.test(g('imagen')); if (!er.hidden) { form.elements.imagen.focus(); return; }
+    RP.guardarDatos(id, { ubicacion: g('ubicacion'), unidad: g('unidad'), compatibilidad: g('compatibilidad'), imagen: g('imagen'), observaciones: g('observaciones') });
+    dlgRetorno = null; dlg.close(); render(); toast('Datos de la referencia guardados.');
+  });
+}
+
+function maqFormKit() {
+  abrirDialogo(dlg, MQ.formKitHtml(), '[data-act="maq-nuevo-kit"]');
+  const form = dlg.querySelector('form');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const r = MD.crearKit(form.elements.codigo.value, form.elements.observaciones.value.trim());
+    const er = form.elements.codigo.parentElement.querySelector('.err');
+    if (r.error) { er.textContent = r.error; er.hidden = false; form.elements.codigo.focus(); return; }
+    dlgRetorno = null; dlg.close(); render(); toast(`Kit ${r.kit.codigo} creado. Asígnale sus unidades.`);
+  });
+}
+
 /* ── Clics ── */
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b || dlg.contains(b) || dlg2.contains(b) || panel.contains(b)) return;
@@ -580,6 +878,36 @@ document.addEventListener('click', e => {
     case 'abrir-mk': abrirPanel(b.dataset.mk); break;
     case 'editar-resultado': formResultado(pr); break;
     case 'migrar': ejecutarMigracion(); break;
+    case 'pv-vista': S.pvVista = b.dataset.vista; render(); break;
+    case 'op-vista': S.opVista = b.dataset.vista; render(); break;
+    case 'op-nuevo': opForm(null); break;
+    case 'pv-taller': pvTaller(b.dataset.tid); break;
+    case 'pv-nuevo-taller': pvFormTaller(null); break;
+    case 'pv-instalar': pvFormInstalacion(''); break;
+    case 'rep-actualizar':
+      RP.cargar().then(() => { render(); toast(RP.R.desdeCache || RP.R.estado === 'error' ? 'No se pudo actualizar.' : 'Actualizado.'); });
+      render(); break;
+    case 'rep-vista': S.repVista = b.dataset.vista; render(); break;
+    case 'rep-ficha': repFicha(b.dataset.rid); break;
+    case 'rep-existencia': repExistencia(b.dataset.rid); break;
+    case 'maq-actualizar':
+      MD.cargarHoja().then(() => { render(); toast(MD.M.desdeCache || MD.M.estado === 'error' ? 'No se pudo actualizar.' : 'Actualizado.'); });
+      render(); break;
+    case 'maq-modo': S.maqModo = b.dataset.modo; render(); break;
+    case 'maq-vista': S.maqVista = b.dataset.vista; render(); break;
+    case 'maq-ficha': maqFicha(b.dataset.uid); break;
+    case 'maq-nuevo-soporte': maqFormComplemento(null); break;
+    case 'maq-nueva-maquina': maqFormHoja(null); break;
+    case 'maq-nuevo-kit': maqFormKit(); break;
+    case 'maq-ver-kit':
+      S.maqModo = 'kits';
+      if (leerRuta().ventana !== 'stock') location.hash = '#/maquinas/stock'; else render();
+      setTimeout(() => irA(document.getElementById('kit-' + b.dataset.kit), { block: 'center' }), 80);
+      break;
+    case 'maq-quitar': { const er = MD.asignar(b.dataset.kit, b.dataset.pos, ''); render(); toast(er || 'Unidad quitada del kit; queda suelta.'); break; }
+    case 'maq-desactivar-kit':
+      confirmar('Desactivar kit', '<p>El kit se conserva con su historial y sus unidades quedan sueltas, disponibles para otro kit.</p>', 'Desactivar', () => { MD.desactivarKit(b.dataset.kit); render(); toast('Kit desactivado.'); });
+      break;
     case 'descargar-respaldo': descargarRespaldo(); break;
     case 'deshacer-migracion':
       confirmar('Deshacer la migración', `<p>Se restauran los datos locales (proyectos, tareas, Kanban general y resultados) tal como estaban antes de la primera migración${almacen.respaldo() ? ` (${C.esc(new Date(almacen.respaldo().fecha).toLocaleString('es'))})` : ''}. Los cambios hechos después se pierden; descarga antes el respaldo si lo necesitas.</p><p>No afecta al Kanban anterior ni al dashboard publicado.</p>`, 'Deshacer', () => {
@@ -621,7 +949,19 @@ document.addEventListener('change', e => {
   const el = e.target; if (dlg.contains(el) || dlg2.contains(el) || panel.contains(el)) return;
   if (el.dataset.act === 'estado') moverTarea(el.dataset.tk, el.value);
   if (el.dataset.act === 'estado-mk') moverMacro(el.dataset.mk, el.value);
+  if (el.dataset.act === 'maq-filtro-tipo') { S.maqFiltro = el.value; render({ foco: '[data-act="maq-filtro-tipo"]' }); }
+  if (el.dataset.act === 'rep-filtro') { S.repFiltro = el.value; render({ foco: '[data-act="rep-filtro"]' }); }
+  if (el.dataset.act === 'pv-estado') { S.pvEstado = el.value; render({ foco: '[data-act="pv-estado"]' }); }
+  if (el.dataset.act === 'pv-oper') { S.pvOper = el.value; render({ foco: '[data-act="pv-oper"]' }); }
+  if (el.dataset.act === 'maq-asignar' && el.value) { const er = MD.asignar(el.dataset.kit, el.dataset.pos, el.value); render(); toast(er || 'Unidad asignada al kit.'); }
   if (el.dataset.act === 'solo-destacadas') { S.soloDestacadas = el.checked; render({ foco: '[data-act="solo-destacadas"]' }); }
+});
+/* Búsqueda de repuestos: se filtra al escribir, conservando el foco y el cursor. */
+document.addEventListener('input', e => {
+  const el = e.target; if (el.dataset.act !== 'rep-busca') return;
+  S.repBusca = el.value; const pos = el.selectionStart;
+  render({ foco: '[data-act="rep-busca"]' });
+  const n = document.querySelector('[data-act="rep-busca"]'); if (n) n.setSelectionRange(pos, pos);
 });
 
 /* ── Búsqueda: macroobjetivos, registros y actividades (tareas guardadas en los proyectos habilitados) ── */
