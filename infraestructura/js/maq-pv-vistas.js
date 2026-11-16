@@ -7,6 +7,7 @@ import * as PV from './maq-postventa.js';
 import { cabecera, estadoLectura, fdt, pend, tipoTxt } from './maq-vistas.js';
 import { ventasHtml } from './maq-ventas-vistas.js';
 import * as V from './maq-ventas.js';
+import { OCULTO, telefonosVisibles } from './nube.js';
 
 const fd = s => (/^\d{4}-\d{2}-\d{2}$/.test(s || '') ? s.split('-').reverse().join('/') : '');
 const ubicTaller = t => [t.ciudad, t.municipio, t.estado].filter(Boolean).join(' · ');
@@ -85,7 +86,7 @@ export function fichaTallerHtml(t) {
       </dl>
       <h3 class="rp-h">Contactos</h3>
       ${t.contactos.length ? `<ul class="pv-contactos">${t.contactos.map(c => `<li><b>${esc(c.nombre || 'Sin nombre')}</b>${c.cargo ? ` · ${esc(c.cargo)}` : ''}
-        ${c.telefono ? `<br><a href="tel:${esc(c.telefono.replace(/[^\d+]/g, ''))}">${esc(c.telefono)}</a>` : ''}${c.correo ? `<br><a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a>` : ''}</li>`).join('')}</ul>` : '<p class="vacio">Sin contactos registrados.</p>'}
+        ${c.telefono ? (c.telefono === OCULTO || !telefonosVisibles() ? '<br><span class="nota">Teléfono protegido (requiere PIN)</span>' : `<br><a href="tel:${esc(c.telefono.replace(/[^\d+]/g, ''))}">${esc(c.telefono)}</a>`) : ''}${c.correo ? `<br><a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a>` : ''}</li>`).join('')}</ul>` : '<p class="vacio">Sin contactos registrados.</p>'}
       <h3 class="rp-h">Máquinas instaladas</h3>
       ${us.length ? `<ul class="pv-chips">${us.map(({ u, inst }) => `<li><button type="button" class="mq-link" data-act="maq-ficha" data-uid="${esc(u.id)}">${esc(u.codigo || u.id)}</button> <small class="nota">${esc(tipoTxt(u))}${inst.fechaInstalacion ? ` · desde ${fd(inst.fechaInstalacion)}` : ''}</small></li>`).join('')}</ul>` : '<p class="vacio">Ninguna máquina registrada en este taller.</p>'}
       <h3 class="rp-h">Visitas, servicios e incidencias</h3>

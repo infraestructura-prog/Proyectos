@@ -158,8 +158,11 @@ export async function importar() {
   for (const o of c.ventas || []) {
     const id = str(o.id, 20); if (!/^VT-\d{3}$/.test(id)) continue;
     const orig = normOrigen(o), i = l.findIndex(x => x.id === id);
-    if (i < 0) { l.push({ id, origen: orig, datos: datosDesdeOrigen(orig), importado: ahora(), historial: [{ fecha: ahora(), nota: `Importada desde el registro de ventas (fila ${orig.filaOrigen}).` }] }); res.nuevas++; }
-    else if (JSON.stringify(l[i].origen) !== JSON.stringify(orig)) { l[i].origen = orig; l[i].historial.push({ fecha: ahora(), nota: 'Dato original actualizado al reimportar. Las ediciones se conservan.' }); res.actualizadas++; }
+    if (i < 0) { l.push({ id, origen: orig, datos: datosDesdeOrigen(orig), importado: ahora(), historial: [{ fecha: ahora(), nota: `Importada desde el registro de ventas (fila ${orig.filaOrigen}).` }] }); res.nuevas++; continue; }
+    // Reparación: si el teléfono quedó reemplazado por la marca de protegido («•••»), se recupera del archivo de origen.
+    if (i >= 0 && l[i].datos && l[i].datos.telefono === '•••' && orig.telefono) { l[i].datos.telefono = orig.telefono; res.reparadas = (res.reparadas || 0) + 1; }
+    if (i >= 0 && JSON.stringify(l[i].origen) !== JSON.stringify(orig) && JSON.stringify(l[i].origen).includes('•••')) { l[i].origen = orig; continue; }
+    else if (i >= 0 && JSON.stringify(l[i].origen) !== JSON.stringify(orig)) { l[i].origen = orig; l[i].historial.push({ fecha: ahora(), nota: 'Dato original actualizado al reimportar. Las ediciones se conservan.' }); res.actualizadas++; }
   }
   escribir(K.ventas, l);
   // Evidencias: por identificador del archivo de origen; nunca se duplican ni se pisa la descripción editada.

@@ -6,6 +6,7 @@ import { AREA } from './datos.js';
 import * as D from './maq-datos.js';
 import * as RP from './maq-repuestos.js';
 import * as SY from './maq-sync.js';
+import * as NUBE from './nube.js';
 
 export const VENTANAS = [
   { id: 'resumen', titulo: 'Resumen', ruta: '#/maquinas' },
@@ -50,6 +51,8 @@ export function estadoLectura() {
 /* Barra de información compartida: última sincronización, cambios pendientes de enviar y acceso al diálogo. */
 export function syncHtml() {
   if (!SY.disponible()) return '';
+  // Con la base compartida activa, la hoja privada queda solo como respaldo: el botón se ve hasta la carga inicial.
+  { const n = NUBE.estado(); if (NUBE.configurada() && n.fase === 'listo' && !n.nubeVacia) return ''; }
   const m = SY.meta(), n = SY.pendientes().length, na = SY.noAplicados().length;
   const txt = !m ? 'Información compartida: todavía no sincronizaste este navegador. Los datos de clientes solo se ven con la clave.'
     : `Información compartida · última sincronización ${fdt(m.fecha)}`;

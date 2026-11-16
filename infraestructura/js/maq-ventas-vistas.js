@@ -6,6 +6,7 @@ import * as D from './maq-datos.js';
 import * as PV from './maq-postventa.js';
 import * as V from './maq-ventas.js';
 import { fdt, pend, tipoTxt } from './maq-vistas.js';
+import { OCULTO, telefonosVisibles } from './nube.js';
 
 const fd = s => (/^\d{4}-\d{2}-\d{2}$/.test(s || '') ? s.split('-').reverse().join('/') : '');
 const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -151,6 +152,7 @@ const fila = (dt, dd) => `<div><dt>${dt}</dt><dd>${dd}</dd></div>`;
 const val = (x, t = SININFO) => (x === null || x === undefined || x === '' ? pend(t) : esc(String(x)));
 function telefonoHtml(v) {
   const t = v.datos.telefono; if (!t) return pend(SININFO);
+  if (t === OCULTO || !telefonosVisibles()) return '<span class="nota">Protegido</span> <button type="button" class="btn btn-sm btn-ghost" data-act="nube-pin">Ver con el PIN</button>';
   const dig = t.replace(/\D/g, '');
   const notas = [];
   if (!v.datos.telefonoVerificado) notas.push('Por verificar');
@@ -173,7 +175,7 @@ export function fichaVentaHtml(v) {
         ${fila('Establecimiento (nombre comercial)', val(d.establecimiento, PENDLEV))}
         ${d.red ? fila('Red o marca del taller', esc(d.red)) : ''}
         ${fila('Teléfono del dueño', telefonoHtml(v))}
-        ${fila('Contactos', d.contactos.length ? `<ul class="pv-contactos">${d.contactos.map(c => `<li><b>${esc(c.nombre || 'Sin nombre')}</b>${c.cargo ? ` · ${esc(c.cargo)}` : ''}${c.telefono ? `<br>${esc(c.telefono)}` : ''}${c.correo ? `<br><a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a>` : ''}</li>`).join('')}</ul>` : pend(SININFO))}
+        ${fila('Contactos', d.contactos.length ? `<ul class="pv-contactos">${d.contactos.map(c => `<li><b>${esc(c.nombre || 'Sin nombre')}</b>${c.cargo ? ` · ${esc(c.cargo)}` : ''}${c.telefono ? `<br>${c.telefono === OCULTO || !telefonosVisibles() ? '<span class="nota">Teléfono protegido (requiere PIN)</span>' : esc(c.telefono)}` : ''}${c.correo ? `<br><a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a>` : ''}</li>`).join('')}</ul>` : pend(SININFO))}
         ${fila('Ciudad o zona', val(d.ciudad, PENDLEV))}
         ${ubicacionFilas(v)}
       </dl>
@@ -222,12 +224,12 @@ export function fichaVentaHtml(v) {
         <button type="button" class="btn btn-sm btn-ghost" data-vt="editar-servicio" data-sid="${esc(s.id)}">Editar</button></li>`).join('')}</ul>` : `<p class="vacio">${SININFO}.</p>`}
       ${d.notas ? `<h3 class="rp-h">Notas internas</h3><p class="pre">${esc(d.notas)}</p>` : ''}
       <details class="mas"><summary>Datos originales de la fuente</summary><dl class="org-dl vt-orig">
-        ${fila('Dueño', esc(o.dueno) || '—')}${fila('Empresa', esc(o.empresa) || '—')}${fila('Teléfono', esc(o.telefono) || '—')}${fila('Ciudad', esc(o.ciudad) || '—')}
+        ${fila('Dueño', esc(o.dueno) || '—')}${fila('Empresa', esc(o.empresa) || '—')}${fila('Teléfono', telefonosVisibles() ? (esc(o.telefono) || '—') : 'Protegido')}${fila('Ciudad', esc(o.ciudad) || '—')}
         ${fila('Forma de pago', esc(o.formaPago) || '—')}${fila('Vendedor', esc(o.vendedor) || '—')}${fila('Precio', o.precio === null ? 'vacío' : esc(String(o.precio)))}
         ${fila('Garantía', o.garantiaMeses ? `${o.garantiaMeses} meses` : 'vacío')}${o.alertaOrigen ? fila('Alerta en la fuente', esc(o.alertaOrigen)) : ''}
       </dl><p class="nota">La fecha de fin de garantía y los días restantes guardados en la fuente no se copian: se calculan aquí.</p></details>
       <details class="mas"><summary>Historial de cambios (${cambios.length})</summary>${cambios.length || v.historial.length ? `<ol class="hist">${[...v.historial].reverse().map(h => `<li><span class="nota">${esc(fdt(h.fecha))}</span> ${h.campo
-        ? `<b>${esc(V.CAMPOS[h.campo] || h.campo)}</b>: ${esc(fmt(h.antes))} → ${esc(fmt(h.despues))}${h.motivo ? ` <small class="nota">(${esc(h.motivo)})</small>` : ''}` : esc(h.nota)}</li>`).join('')}</ol>` : '<p class="vacio">Sin cambios.</p>'}</details>
+        ? `<b>${esc(V.CAMPOS[h.campo] || h.campo)}</b>: ${(['telefono', 'contactos'].includes(h.campo) && !telefonosVisibles()) ? '(protegido)' : `${esc(fmt(h.antes))} → ${esc(fmt(h.despues))}`}${h.motivo ? ` <small class="nota">(${esc(h.motivo)})</small>` : ''}` : esc(h.nota)}</li>`).join('')}</ol>` : '<p class="vacio">Sin cambios.</p>'}</details>
     </div>
     <div class="dlg-foot"><button type="button" class="btn btn-ghost" data-vt="servicio">+ Servicio o incidencia</button><button type="button" class="btn btn-ghost" data-vt="entregar">+ Equipos entregados</button><span class="sp"></span>
       <button type="button" class="btn btn-primary" data-vt="editar">Corregir o completar datos</button></div>`;

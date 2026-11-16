@@ -9,6 +9,8 @@ import * as P from './proyecto.js';
 import * as KM from './kanban-macro.js';
 import { leerRuta, rutaProyecto, rutaMacro, rutaObjetivo } from './rutas.js';
 import { FUENTES, RESULTADOS } from './resultados.js';
+import * as NUBE from './nube.js';
+import * as NUBEUI from './nube-ui.js';
 
 /* Resultados de investigación: cada archivo fuente se lee una vez (copia local) y se vuelve a pintar al llegar. */
 const cacheFuentes = {};
@@ -533,3 +535,22 @@ function ajustarMarco() {
   f.style.height = Math.max(420, window.innerHeight - f.getBoundingClientRect().top - window.scrollY) + 'px';
 }
 window.addEventListener('resize', ajustarMarco);
+
+/* ── Guardado compartido (Supabase): envía solos los cambios y recibe los de los demás ── */
+const PREF = 'ccs-manufactura-v1:';
+const COLECCIONES_NUBE = [
+  ['proyectos', 'proyectos', 'lista'], ['tareas', 'tareas', 'lista'], ['kanban', 'kanban-macroobjetivos', 'mapa'],
+  ['eliminadas', 'tareas-eliminadas', 'lista', x => x && x.tarea && x.tarea.id]
+].map(([col, k, forma, idDe]) => ({ col, key: PREF + k, forma, idDe }));
+let repintadoRemoto = null;
+function recibirCambiosNube() {
+  proyectos = almacen.proyectos(); tareas = almacen.tareas(); tableroMem = null;
+  clearTimeout(repintadoRemoto);
+  repintadoRemoto = setTimeout(() => {
+    const a = document.activeElement;
+    if (a && $('#contenido') && $('#contenido').contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) { a.addEventListener('blur', recibirCambiosNube, { once: true }); return; }
+    render();
+  }, 250);
+}
+NUBE.iniciar({ app: 'manu', prefijo: PREF, colecciones: COLECCIONES_NUBE, alRecibir: recibirCambiosNube });
+NUBEUI.montar({ proyectos: 'Proyecto', tareas: 'Tarea', kanban: 'Kanban general', eliminadas: 'Tarea eliminada' });
