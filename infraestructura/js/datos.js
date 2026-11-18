@@ -53,7 +53,10 @@ export const MACROOBJETIVOS = [
   { id: 'mi-maquinas', numero: '08', titulo: 'Gestionar el inventario y la postventa de máquinas de simulación', corto: 'Máquinas de simulación',
     registros: ['pi-inventario-maquinas', 'pi-postventa'],
     notas: ['Inventario y postventa se enlazan con el mismo identificador de activo del censo y del historial técnico, sin copias independientes del mismo equipo.'] },
-  { id: 'mi-gestion', numero: '09', titulo: 'Organizar la gestión de Infraestructura', corto: 'Gestión de Infraestructura', registros: ['pi-dashboard'] }
+  { id: 'mi-gestion', numero: '09', titulo: 'Organizar la gestión de Infraestructura', corto: 'Gestión de Infraestructura', registros: ['pi-dashboard'] },
+  { id: 'mi-extintores', numero: '10', titulo: 'Implementar extintores en todos los locales', corto: 'Extintores',
+    registros: ['pi-extintores'],
+    notas: ['Por ahora no se realizan compras ni se comprometen gastos: primero se revisan las opciones con la gerencia.'] }
 ];
 
 /* tipo: proyecto | investigacion | tarea-directa | condicionado.  condicion: texto de la condición de inicio (solo condicionados).
@@ -109,7 +112,12 @@ export const REGISTROS = {
     actividades: [a('Recuperar y cargar clientes, talleres y equipos vendidos.', true), a('Relacionar cada venta con el equipo correspondiente.'), a('Registrar ubicación, comentarios e intervenciones posteriores.'), a('Identificar información faltante.')] },
 
   'pi-dashboard': { tipo: 'proyecto', slug: 'reorganizacion-dashboard', nombre: 'Reorganización del dashboard', macro: 'mi-gestion',
-    actividades: [a('Estructurar esta cascada de objetivos y proyectos.', true), a('Diseñar el sidebar y presentar la arquitectura.', true), a('Integrar Seguimiento, calendario, Kanban y filtros.'), a('Definir fuentes de datos, accesos y responsables técnicos.'), a('Preparar la demostración y coordinar apoyo.', true)] }
+    actividades: [a('Estructurar esta cascada de objetivos y proyectos.', true), a('Diseñar el sidebar y presentar la arquitectura.', true), a('Integrar Seguimiento, calendario, Kanban y filtros.'), a('Definir fuentes de datos, accesos y responsables técnicos.'), a('Preparar la demostración y coordinar apoyo.', true)] },
+
+  'pi-extintores': { tipo: 'proyecto', slug: 'implementacion-extintores', nombre: 'Implementación de extintores', macro: 'mi-extintores',
+    actividades: [a('Inspeccionar todos los locales e identificar cuáles carecen de extintores.', true),
+      a('Investigar opciones del mercado, priorizando sistemas automáticos y extintores portátiles según corresponda a cada local (no necesariamente un mismo equipo reúne ambas características).', true),
+      a('Presentar las opciones a la gerencia para revisarlas antes de cualquier compra o gasto.')] }
 };
 Object.entries(REGISTROS).forEach(([id, r]) => { r.id = id; r.relaciones = r.relaciones || []; });
 
@@ -118,7 +126,8 @@ Object.entries(REGISTROS).forEach(([id, r]) => { r.id = id; r.relaciones = r.rel
 export const BLOQUES_ETAPA3 = [
   { id: 'bloque-1', titulo: 'Proyecto ordinario y proyecto condicionado', registros: ['pi-canales', 'pc-mejora-termica'] },
   { id: 'bloque-2', titulo: 'Goteras, almacén y puentes', registros: ['pc-correccion-filtraciones', 'pi-mueble-alfombras', 'pi-reparaciones-puentes'] },
-  { id: 'bloque-3', titulo: 'Activos, mantenimiento predictivo, máquinas y gestión', registros: ['pi-censo', 'pi-fichas-mantenimiento', 'pc-piloto-predictivo', 'pi-inventario-maquinas', 'pi-postventa', 'pi-dashboard'] }
+  { id: 'bloque-3', titulo: 'Activos, mantenimiento predictivo, máquinas y gestión', registros: ['pi-censo', 'pi-fichas-mantenimiento', 'pc-piloto-predictivo', 'pi-inventario-maquinas', 'pi-postventa', 'pi-dashboard'] },
+  { id: 'bloque-4', titulo: 'Extintores en los locales', registros: ['pi-extintores'] }
 ];
 /* Etapa 4: las investigaciones tienen Inicio (con su lista de tareas, sin Kanban) y Resultados. */
 export const INVESTIGACIONES_ETAPA4 = ['ii-alternativas-termicas', 'ii-causas-goteras', 'ii-instrumentacion'];
