@@ -75,7 +75,7 @@ export async function cargarHoja() {
     else M.estado = 'error';
     M.error = e;
   }
-  sembrarKits();
+  sembrarKits(); sembrarSoportes();
   return M;
 }
 
@@ -139,7 +139,7 @@ export const POSICIONES = [
   { id: 's1', titulo: 'Soporte 1', tipo: 'soporte' },
   { id: 's2', titulo: 'Soporte 2', tipo: 'soporte' }
 ];
-const normKit = k => ({ id: str(k.id, 40), codigo: str(k.codigo, 40), activo: k.activo !== false, origen: str(k.origen, 300), observaciones: str(k.observaciones, 2000),
+const normKit = k => ({ id: str(k.id, 40), codigo: str(k.codigo, 40), activo: k.activo !== false, soportesSembrados: !!k.soportesSembrados, origen: str(k.origen, 300), observaciones: str(k.observaciones, 2000),
   posiciones: Object.fromEntries(POSICIONES.map(p => [p.id, str((k.posiciones || {})[p.id], 60)])),
   creado: str(k.creado, 40), historial: (Array.isArray(k.historial) ? k.historial : []).slice(-200) });
 export const kits = () => { const v = leer(K.kits); return Array.isArray(v) ? v.map(normKit).filter(k => k.id) : []; };
@@ -166,6 +166,36 @@ function sembrarKits() {
   guardarKits(l); escribir(K.sembrado, { fecha: ahora() });
 }
 export const opuestas = (a, b) => ['Derecha', 'Izquierda'].includes(a.escalera) && ['Derecha', 'Izquierda'].includes(b.escalera) && a.escalera !== b.escalera;
+
+/* Soportes de los kits (indicación de Cristian, 18/11/2026): cada kit tiene sus dos soportes, sin chapa ni escaleras.
+   Se registran UNA vez por kit con código corto «<letra> - SP - DER» y «<letra> - SP - IZQ». El lado solo sirve para
+   distinguir un soporte del otro: no indica una posición fija. Se usa la marca soportesSembrados del propio kit para
+   no recrearlos si luego se quitan o eliminan. */
+function sembrarSoportes() {
+  if (M.estado !== 'listo') return;
+  const l = kits(); if (!l.some(k => k.activo && !k.soportesSembrados)) return;
+  const sops = soportes(), codigos = new Set(sops.map(s => codeKey(s.codigo)));
+  l.forEach(k => {
+    if (!k.activo || k.soportesSembrados || !/^[A-Z]$/.test(k.codigo)) return;
+    const cc = M.maquinas.find(u => u.id === k.posiciones.cc);
+    const cond = cc && cc.condicion === 'Vendida' ? 'Vendida' : 'En stock';
+    [['s1', 'DER'], ['s2', 'IZQ']].forEach(([pos, lado]) => {
+      if (k.posiciones[pos]) return;
+      const codigo = `${k.codigo} - SP - ${lado}`, id = `SP-${k.codigo}-${lado}`;
+      if (sops.some(s => s.id === id)) { if (!l.some(o => o.activo && Object.values(o.posiciones).includes(id))) k.posiciones[pos] = id; return; }
+      if (codigos.has(codeKey(codigo))) return;
+      sops.push({ id, creado: ahora(), origen: 'aplicacion', tipo: 'soporte', codigo, serial: '', marca: '', modelo: '', ubicacion: '',
+        condicion: cond, estadoOperativo: '', imagen: '',
+        observaciones: 'Soporte sin chapa ni escaleras. El lado del código solo distingue un soporte del otro; no indica una posición fija.',
+        historial: [{ fecha: ahora(), nota: `Soporte registrado para el kit ${k.codigo} (código corto indicado por Cristian el 18/11/2026).` }] });
+      codigos.add(codeKey(codigo));
+      k.posiciones[pos] = id;
+    });
+    k.soportesSembrados = true;
+    k.historial = [...k.historial, { fecha: ahora(), nota: `Soportes asignados: ${k.codigo} - SP - DER y ${k.codigo} - SP - IZQ.` }].slice(-200);
+  });
+  escribir(K.soportes, sops); guardarKits(l);
+}
 
 /* Evaluación de un kit: completo solo si sus cuatro posiciones tienen unidades existentes del tipo correcto. */
 export function evaluarKit(k) {
