@@ -20,6 +20,7 @@ export const SECCIONES = [
     descripcion: 'Máquinas vendidas y en stock, leídas de Google Sheets. Agregar o editar guarda directamente en la hoja (requiere sesión de Google y la clave de edición).' },
   { id: 'mantenimiento', titulo: 'Mantenimiento', bloque: 2, activa: true,
     descripcion: 'Máquinas del taller y sus mantenimientos, desde una captura fechada de Odoo (solo lectura).' },
+  { id: 'presupuestos', titulo: 'Presupuestos', bloque: 2, activa: true, descripcion: 'Presupuestos de intervenciones y servicios del taller.' },
   { id: 'documentacion', titulo: 'Documentación', bloque: 2 },
   { id: 'pendientes', titulo: 'Pendientes de clasificación', admin: true, activa: true }
 ];

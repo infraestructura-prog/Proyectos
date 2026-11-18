@@ -26,6 +26,8 @@ import * as NUBE from './nube.js';
 import * as NUBEUI from './nube-ui.js';
 import * as MT from './mant-datos.js';
 import * as MTV from './mant-vistas.js';
+import * as PR from './pres-datos.js';
+import * as PRV from './pres-vistas.js';
 import { leerRuta, rutaRegistro, rutaMacro, habilitado } from './rutas.js';
 
 const $ = s => document.querySelector(s);
@@ -95,7 +97,7 @@ function render({ foco } = {}) {
       const pag = r.pagina || 'inicio';
       html = pag === 'kanban' ? P.kanbanHtml(reg, inicios[reg.id], tareasDe(reg.id), S)
         : pag === 'resultados' ? P.resultadosHtml(reg, inicios[reg.id], resultados[reg.id])
-          : P.inicioHtml(reg, inicios[reg.id], tareasDe(reg.id), resultados) + MV.origenesHtml(reg.id, MG.origenesDe(reg.id, origen));
+          : P.inicioHtml(reg, inicios[reg.id], tareasDe(reg.id), resultados) + PRV.enlaceProyectoHtml(reg.id) + MV.origenesHtml(reg.id, MG.origenesDe(reg.id, origen));
       titulo = `${pag === 'kanban' ? 'Kanban' : pag === 'resultados' ? 'Resultados' : 'Inicio'} · ${reg.nombre}`;
     } else { html = C.registroPaginaHtml(reg); titulo = reg.nombre; }
   } else if (r.vista === 'proyectos') { html = C.proyectosHtml(); titulo = 'Proyectos'; }
@@ -123,6 +125,13 @@ function render({ foco } = {}) {
         : v === 'operacion' ? OPV.operacionHtml(S)
           : RSV.resumenHtml();
     titulo = `${MQ.VENTANAS.find(x => x.id === v).titulo} · Máquinas de simulación`;
+  }
+  else if (r.vista === 'presupuestos') {
+    // Presupuestos (versión local): el primer registro se crea una sola vez; recargar no duplica ni sobrescribe.
+    PR.asegurarSemilla();
+    const pr = r.id ? PR.porId(r.id) : null;
+    html = r.id ? PRV.fichaHtml(r.id) : PRV.listadoHtml();
+    titulo = pr ? `${pr.titulo} · Presupuestos` : 'Presupuestos';
   }
   else if (r.vista === 'mantenimiento') {
     // Mantenimiento: la captura fechada de Odoo se lee al entrar (solo lectura; no hay conexión en vivo).
@@ -879,6 +888,60 @@ function vtForm(v) {
   });
 }
 
+/* ── Presupuestos: edición (con vista previa del total) y registro de aprobación ── */
+function prLeerForm(form) {
+  const v = n => String(form.elements[n] ? form.elements[n].value : '');
+  const filas = sel => [...form.querySelectorAll(sel)];
+  return {
+    titulo: v('titulo'), descripcion: v('descripcion'), estado: v('estado'), fechaAntecedente: v('fechaAntecedente'), vigencia: v('vigencia'),
+    partidas: filas('[data-partida]').map(f => ({ id: f.dataset.id, concepto: f.querySelector('[name="concepto"]').value, cantidad: f.querySelector('[name="cantidad"]').value,
+      precioUnitario: f.querySelector('[name="precioUnitario"]').value, importe: f.querySelector('[name="importe"]').value })),
+    modalidades: Object.fromEntries(filas('[data-mod]').map(f => [f.dataset.mod, { nombre: f.querySelector('[name="mod-nombre"]').value, manoObra: f.querySelector('[name="mod-mano"]').value, nota: f.querySelector('[name="mod-nota"]').value }])),
+    alcance: v('alcance'), alcanceNota: v('alcanceNota'), pendientes: v('pendientes'), materiales: v('materiales'), materialesNota: v('materialesNota'), condicionesPago: v('condicionesPago'),
+    documentos: filas('[data-doc]').map(f => ({ id: f.dataset.id, tipo: f.querySelector('[name="tipo"]').value, referencia: f.querySelector('[name="referencia"]').value, enlace: f.querySelector('[name="enlace"]').value })),
+    observaciones: v('observaciones')
+  };
+}
+function prEditar(id) {
+  const pr = PR.porId(id); if (!pr) return;
+  abrirDialogo(dlg, PRV.formEditarHtml(pr, NUBE.autor()), `[data-act="pr-editar"][data-pid="${CSS.escape(id)}"]`);
+  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]'), prev = form.querySelector('[data-preview]');
+  // Vista previa: recalcula los totales desde las partidas mientras se escribe (sin guardar).
+  const previa = () => {
+    const d = prLeerForm(form), num = x => { const s = String(x || '').trim(); if (!s) return null; const n = Number(s.replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.')); return Number.isFinite(n) ? n : NaN; };
+    const prov = { ...pr, partidas: d.partidas.filter(p => p.concepto.trim()).map(p => ({ cantidad: num(p.cantidad), precioUnitario: num(p.precioUnitario), importe: num(p.cantidad) !== null ? null : num(p.importe) })),
+      modalidades: pr.modalidades.map(m => ({ ...m, manoObra: num((d.modalidades[m.id] || {}).manoObra) })) };
+    if (prov.partidas.some(p => [p.cantidad, p.precioUnitario, p.importe].some(Number.isNaN)) || prov.modalidades.some(m => Number.isNaN(m.manoObra))) { prev.textContent = 'Revisa los números: hay un valor que no se entiende.'; return; }
+    const c = PR.calcular(prov), f = n => (n === null ? 'pendiente' : `${pr.moneda} ${n.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+    prev.innerHTML = `Materiales y flete: <b>${f(c.subtotal)}</b>${c.faltan ? ' (parcial)' : ''} · ${c.modalidades.map(m => `Total «${C.esc(m.nombre)}»: <b>${f(m.total)}</b>`).join(' · ')}`;
+  };
+  form.addEventListener('input', previa); previa();
+  form.addEventListener('click', e => {
+    if (e.target.closest('[data-pr-agregar-partida]')) { form.querySelector('[data-partidas]').insertAdjacentHTML('beforeend', PRV.filaPartidaHtml()); form.querySelector('[data-partidas]').lastElementChild.querySelector('input').focus(); }
+    if (e.target.closest('[data-pr-agregar-doc]')) { form.querySelector('[data-docs]').insertAdjacentHTML('beforeend', PRV.filaDocHtml()); form.querySelector('[data-docs]').lastElementChild.querySelector('input').focus(); }
+    const q = e.target.closest('[data-pr-quitar]'); if (q) { q.closest('fieldset').remove(); previa(); }
+  });
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const r = PR.guardar(id, prLeerForm(form), form.elements.autor.value, form.elements.motivo.value);
+    if (r.error) { msg.innerHTML = `<span class="aviso err">${C.esc(r.error)}</span>`; return; }
+    dlgRetorno = null; dlg.close(); render();
+    toast(r.sinCambios ? 'Sin cambios.' : r.reabierto ? 'Guardado. Hubo un cambio económico: la aprobación anterior ya no aplica y vuelve a «Por revisar».' : 'Presupuesto actualizado; la versión anterior quedó guardada.');
+  });
+}
+function prAprobar(id) {
+  const pr = PR.porId(id); if (!pr) return;
+  abrirDialogo(dlg, PRV.formAprobarHtml(pr, NUBE.autor()), `[data-act="pr-aprobar"][data-pid="${CSS.escape(id)}"]`);
+  const form = dlg.querySelector('form'), msg = form.querySelector('[data-msg]');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const m = form.querySelector('input[name="modalidad"]:checked');
+    const r = PR.aprobar(id, { por: form.elements.por.value, fecha: form.elements.fecha.value, modalidadId: m ? m.value : '', nota: form.elements.nota.value }, form.elements.autor.value);
+    if (r.error) { msg.innerHTML = `<span class="aviso err">${C.esc(r.error)}</span>`; return; }
+    dlgRetorno = null; dlg.close(); render(); toast('Aprobación registrada. No cambia el estado del proyecto.');
+  });
+}
+
 /* ── Mantenimiento: ficha de la máquina y verificación de su condición ── */
 function mtFicha(id) {
   const e = MT.equipoPorId(id); if (!e) return;
@@ -1141,6 +1204,8 @@ document.addEventListener('click', e => {
     case 'mt-trabajo': mtTrabajo(b.dataset.sid); break;
     case 'mt-rutina': mtRutina(b.dataset.rid); break;
     case 'mt-orden': mtOrden(b.dataset.oid); break;
+    case 'pr-editar': prEditar(b.dataset.pid); break;
+    case 'pr-aprobar': prAprobar(b.dataset.pid); break;
     case 'mt-orden-nuevo': mtFormOrden(null, b.dataset.eid || S.mtTEquipo || ''); break;
     case 'mt-gestionar': mtGestionar(b.dataset.sid); break;
     case 'mt-t-limpiar': S.mtTBusca = ''; S.mtTEquipo = ''; S.mtTCat = ''; S.mtTPrio = ''; S.mtTResp = ''; S.mtTEtapa = ''; render({ foco: '[data-act="mt-t-busca"]' }); break;
@@ -1336,6 +1401,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.menuArea
 
 /* ── Inicio ── */
 cargarEstado();
+PR.asegurarSemilla();
 if (!location.hash) history.replaceState(null, '', '#/objetivos');
 alCambiarRuta();
 
@@ -1348,7 +1414,7 @@ const COLECCIONES_NUBE = [
   ['ventas-importacion', 'maq-ventas-importacion', 'unico'], ['talleres', 'maq-talleres', 'lista'], ['instalaciones', 'maq-instalaciones', 'lista'],
   ['servicios', 'maq-servicios', 'lista'], ['operacion', 'maq-operacion', 'lista'], ['complementos', 'maq-complementos', 'mapa'],
   ['soportes', 'maq-soportes', 'lista'], ['kits', 'maq-kits', 'lista'], ['kits-sembrados', 'maq-kits-sembrados', 'unico'], ['rep-datos', 'rep-datos', 'mapa'],
-  ['mant-complementos', 'mant-complementos', 'mapa'], ['mant-trabajos', 'mant-trabajos', 'mapa'], ['mant-preventivos', 'mant-preventivos', 'mapa'], ['mant-ordenes', 'mant-ordenes', 'mapa']
+  ['mant-complementos', 'mant-complementos', 'mapa'], ['mant-trabajos', 'mant-trabajos', 'mapa'], ['mant-preventivos', 'mant-preventivos', 'mapa'], ['mant-ordenes', 'mant-ordenes', 'mapa'], ['presupuestos', 'presupuestos', 'mapa']
 ].map(([col, k, forma, idDe]) => ({ col, key: PREF + k, forma, idDe }));
 /* Al llegar cambios de otra persona: se recargan los datos en memoria y se repinta sin perder el foco. */
 let repintadoRemoto = null;
@@ -1366,6 +1432,6 @@ NUBE.iniciar({ app: 'infra', prefijo: PREF, colecciones: COLECCIONES_NUBE, alRec
 NUBEUI.montar({ proyectos: 'Inicio de proyecto', tareas: 'Tarea', kanban: 'Kanban general', resultados: 'Resultados', eliminadas: 'Tarea eliminada', ventas: 'Venta',
   evidencias: 'Evidencia', 'evid-sin-clasificar': 'Archivo sin clasificar', 'ventas-importacion': 'Importación', talleres: 'Taller', instalaciones: 'Equipo entregado',
   servicios: 'Servicio', operacion: 'Equipo en operación', complementos: 'Ficha de máquina', soportes: 'Soporte', kits: 'Kit', 'kits-sembrados': 'Kits propuestos', 'rep-datos': 'Repuesto',
-  'mant-complementos': 'Verificación de máquina', 'mant-trabajos': 'Seguimiento de mantenimiento', 'mant-preventivos': 'Rutina preventiva', 'mant-ordenes': 'Trabajo de mantenimiento' });
+  'mant-complementos': 'Verificación de máquina', 'mant-trabajos': 'Seguimiento de mantenimiento', 'mant-preventivos': 'Rutina preventiva', 'mant-ordenes': 'Trabajo de mantenimiento', presupuestos: 'Presupuesto' });
 /* Al conectarse la base compartida (o al completarse la carga inicial) se repinta para mostrar el estado correcto. */
 { let previo = ''; NUBE.alCambiar(s => { const k = s.fase + '|' + s.nubeVacia; if (k !== previo) { previo = k; if (leerRuta().vista === 'maquinas') render(); } }); }

@@ -12,6 +12,7 @@
      #/maquinas                           Máquinas de simulación · Resumen
      #/maquinas/postventa · /stock · /stock/repuestos · /operacion   Ventanas del módulo
      #/mantenimiento · /mantenimiento/maquinas · /mantenimiento/trabajos   Mantenimiento (Odoo, captura fechada)
+     #/presupuestos · /presupuestos/<id>   Presupuestos (listado y ficha)
    Los proyectos condicionados usan la ruta de proyectos. */
 import { HABILITADOS } from './datos.js';
 
@@ -32,6 +33,7 @@ export function leerRuta() {
     const v = { vendidas: 'postventa', referencia: 'resumen' }[seg[1]] || seg[1] || 'resumen';
     return { vista: 'maquinas', seccion: 'maquinas', ventana: ['resumen', 'postventa', 'stock', 'operacion'].includes(v) ? v : 'resumen', sub: seg[2] || '' };
   }
+  if (seg[0] === 'presupuestos') return { vista: 'presupuestos', seccion: 'presupuestos', id: seg[1] || '' };
   if (seg[0] === 'mantenimiento') {
     // Mantenimiento: Resumen · Máquinas del taller · Mantenimientos.
     const v = seg[1] || 'resumen';

@@ -12,6 +12,7 @@ const destacadas = r => r.actividades.filter(x => x.destacada).length;
 const svg = (d, w = 18) => `<svg viewBox="0 0 24 24" width="${w}" height="${w}" aria-hidden="true">${d}</svg>`;
 const st = 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
 export const ICON = {
+  recibo: svg(`<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" ${st}/><path d="M9 8h6M9 12h6M9 16h3" ${st}/>`),
   chev: svg(`<path d="M9 6l6 6-6 6" ${st} stroke-width="2.2"/>`, 20),
   target: svg(`<circle cx="12" cy="12" r="8" ${st}/><circle cx="12" cy="12" r="3.5" ${st}/>`),
   folder: svg(`<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" ${st}/>`),
@@ -90,7 +91,7 @@ export function sidebarHtml(S, ctx) {
       </ul></li>`;
   };
   // Secciones pendientes: visibles y claramente identificadas, sin enlace.
-  const ICONO_SEC = { investigaciones: ICON.lupa, kanban: ICON.tablero, maquinas: ICON.engranaje, documentacion: ICON.doc, pendientes: ICON.bandeja };
+  const ICONO_SEC = { presupuestos: ICON.recibo, investigaciones: ICON.lupa, kanban: ICON.tablero, maquinas: ICON.engranaje, documentacion: ICON.doc, pendientes: ICON.bandeja };
   const pendiente = s => `<li class="sb-item"><span class="sb-link is-disabled" aria-disabled="true">${ICONO_SEC[s.id] || ICON.folder}<span>${esc(s.titulo)}</span>
       <span class="sb-soon">${s.etapa ? `Etapa ${s.etapa}` : 'Pendiente'}</span></span></li>`;
   let bloqueAnt = 1, adminVisto = false;
