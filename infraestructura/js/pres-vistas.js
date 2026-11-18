@@ -39,7 +39,7 @@ export function fichaHtml(id) {
   const pr = PR.porId(id);
   if (!pr) return `${cab('No encontrado')}<p class="vacio">El presupuesto no existe. <a href="#/presupuestos">Volver a Presupuestos</a></p>`;
   const c = PR.calcular(pr), m = c.principal, alt = c.modalidades.filter(x => !x.principal), proy = proyecto(pr), a = pr.aprobacion;
-  const docsPend = pr.documentos.filter(d => !d.enlace).length;
+  const ev = PR.evidencias(pr.id);
   return `${cab(pr.titulo)}
     <p><a class="pr-volver" href="#/presupuestos">← Volver a Presupuestos</a></p>
     <header class="pj-head ficha-head pr-head"><p class="pg-kicker">Presupuesto ${pr.proyectoId && proy ? `· ${esc(proy.nombre)}` : ''}</p>
@@ -52,6 +52,7 @@ export function fichaHtml(id) {
     ${a ? `<p class="pr-aviso pr-aviso-ok">Aprobado el ${esc(fd(a.fecha))} por ${esc(a.por)} · modalidad «${esc(a.modalidadNombre)}» · ${usd(a.total, pr.moneda)}. La aprobación no significa que la obra se ejecutó ni que se pagó.</p>` : ''}
     ${pr.pendientes.length ? '<p class="pr-aviso">Pendiente de validar materiales y condiciones finales.</p>' : ''}
 
+    <div class="${ev ? 'pr-cuerpo' : ''}"><div class="pr-princ">
     <section class="pr-total" aria-labelledby="pr-t"><h2 id="pr-t">Costo estimado</h2>
       <p class="pr-total-num">${m ? usd(m.total, pr.moneda) : '<span class="mq-pend">Importe pendiente</span>'}</p>
       ${m && !m.completo ? `<p class="pr-aviso">Total incompleto: ${plural(c.faltan, 'partida sin importe', 'partidas sin importe')}. No se cuentan como cero.</p>` : ''}
@@ -88,19 +89,17 @@ export function fichaHtml(id) {
     <details class="pr-det"><summary>Materiales y especificaciones</summary>
       ${pr.materiales.length ? `<ul>${pr.materiales.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="vacio">Sin lista de materiales.</p>'}
       ${pr.materialesNota ? `<p class="nota">${esc(pr.materialesNota)}</p>` : ''}</details>
-    <details class="pr-det"><summary>Condiciones de pago</summary>
-      <p>${pr.condicionesPago ? esc(pr.condicionesPago) : '<span class="mq-pend">Pendientes de confirmar</span>'}</p>
-      <dl class="pr-desglose"><div><dt>Fecha del antecedente</dt><dd>${fd(pr.fechaAntecedente) || '—'}</dd></div><div><dt>Vigencia de precios y condiciones</dt><dd>${esc(pr.vigencia) || '<span class="mq-pend">Pendiente de confirmar</span>'}</dd></div></dl></details>
-    <details class="pr-det"><summary>Cotizaciones y documentos${docsPend ? ` (${docsPend} pendientes)` : ''}</summary>
-      <ul class="pr-docs">${pr.documentos.map(d => `<li><b>${esc(d.tipo)}</b>${d.referencia ? ` · ${esc(d.referencia)}` : ''}<br>${d.enlace ? `<a href="${esc(d.enlace)}" target="_blank" rel="noopener noreferrer">Abrir documento</a>` : '<span class="mq-pend">Documento pendiente de incorporar</span>'}</li>`).join('')}</ul></details>
 
     ${pr.observaciones ? `<section class="pj-sec pr-sec"><h2>Observaciones</h2><p class="pre">${esc(pr.observaciones)}</p></section>` : ''}
     ${proy ? `<p class="nota pr-proy">Proyecto relacionado: <a href="${rutaRegistro(proy)}">${esc(proy.nombre)}</a> (Mejorar el taller). La aprobación del presupuesto no cambia el estado del proyecto.</p>` : ''}
-    <details class="pr-det"><summary>Historial y versiones anteriores (${(pr.versiones || []).length})</summary>
-      <ol class="hist">${(pr.historial || []).slice().reverse().map(h => `<li><span class="nota">${esc(fdt(h.fecha))}</span>${h.autor ? ` · ${esc(h.autor)}` : ''}: ${esc(h.nota)}</li>`).join('')}</ol>
-      ${(pr.versiones || []).length ? `<p class="nota">Versiones guardadas antes de cada edición: ${pr.versiones.slice().reverse().map(v => `${esc(fdt(v.fecha))} (total ${v.total === null ? 'pendiente' : `${esc(pr.moneda)} ${fmt(v.total)}`})`).join('; ')}.</p>` : ''}
-      ${(pr.aprobacionesAnteriores || []).length ? `<p class="nota">Aprobaciones anteriores que ya no aplican: ${pr.aprobacionesAnteriores.map(x => `${esc(fd(x.fecha))} por ${esc(x.por)} (${esc(x.motivo)})`).join('; ')}.</p>` : ''}
-    </details>
+    </div>
+    ${ev ? `<aside class="pj-sec pr-sec pr-lateral" aria-labelledby="pr-ev"><h2 id="pr-ev">Evidencia del estado actual</h2>
+      <p class="nota">Fotos y videos del ${esc(fd(ev.fecha))}. Toca una foto para verla en grande.</p>
+      <ul class="pr-evid">${ev.archivos.map(x => x.tipo === 'video'
+        ? `<li><video controls preload="none" playsinline poster="${esc(x.portada || '')}" src="${esc(x.src)}" aria-label="${esc(x.texto)}"></video></li>`
+        : `<li><a href="${esc(x.src)}" target="_blank" rel="noopener"><img src="${esc(x.src)}" alt="${esc(x.texto)}" loading="lazy"></a></li>`).join('')}</ul>
+    </aside>` : ''}
+    </div>
     <p class="nota pr-local">Los cambios se guardan para todo el equipo (piden el PIN y tu nombre).</p>`;
 }
 

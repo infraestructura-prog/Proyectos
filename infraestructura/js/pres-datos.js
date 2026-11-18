@@ -20,6 +20,18 @@ const nid = p => p + '-' + Date.now().toString(36).toUpperCase() + Math.random()
 
 /* ── Primer registro: reparación de las canales (se crea una sola vez) ── */
 export const ID_CANALES = 'PRE-CANALES-2026';
+/* Evidencia fotográfica (archivos publicados con la página). 18/11/2026 · Cristian envió 3 fotos y 2 videos del estado de las canales. */
+const EV = 'img/presupuestos/canales/';
+export const EVIDENCIAS = {
+  [ID_CANALES]: { fecha: '2026-11-18', archivos: [
+    { tipo: 'foto', src: EV + 'foto-1.webp', texto: 'Tramos de canal desmontados en el piso' },
+    { tipo: 'foto', src: EV + 'foto-2.webp', texto: 'Canal y estructura vistas desde abajo' },
+    { tipo: 'foto', src: EV + 'foto-3.webp', texto: 'Vista general del techado y la canal' },
+    { tipo: 'video', src: EV + 'video-1.mp4', portada: EV + 'video-1.jpg', texto: 'Video 1 · recorrido bajo la canal' },
+    { tipo: 'video', src: EV + 'video-2.mp4', portada: EV + 'video-2.jpg', texto: 'Video 2 · detalle del borde de la canal' }
+  ] }
+};
+export const evidencias = id => EVIDENCIAS[id] || null;
 function semilla() {
   return {
     id: ID_CANALES, titulo: 'Reparación de las canales del taller',

@@ -34,42 +34,11 @@ export function datosResumen() {
     operacion: oper.length,
     incidenciasAbiertas: serv.filter(s => s.estado === 'Abierto' && s.tipo === 'Incidencia').length,
     serviciosPendientes: serv.filter(s => s.estado === 'Abierto' && s.tipo !== 'Incidencia').length,
-    hayServicios: serv.length > 0,
-    alertas: alertas(us, kits, talleres, reps)
+    hayServicios: serv.length > 0
   };
 }
 
-/* Alertas de información incompleta (seriales, composición de kits, contactos y ubicaciones), con acceso directo. */
-function alertas(us, kits, talleres, reps) {
-  const a = [];
-  const maqSinSerial = us.filter(u => u.origen === 'hoja' && !u.serial);
-  if (maqSinSerial.length) a.push({ t: `${plural(maqSinSerial.length, 'máquina sin serial', 'máquinas sin serial')}`, d: maqSinSerial.map(u => u.codigo).join(', '), ruta: '#/maquinas/stock' });
-  if (!us.some(u => u.tipo === 'soporte')) a.push({ t: 'Soportes sin censar', d: 'Ningún soporte registrado: los kits no pueden completarse.', ruta: '#/maquinas/stock' });
-  const inc = kits.filter(x => !x.e.completo);
-  if (inc.length) a.push({ t: `${plural(inc.length, 'kit incompleto', 'kits incompletos')}`, d: inc.map(x => `${x.k.codigo} (${x.e.asignadas}/4)`).join(', '), ruta: '#/maquinas/stock' });
-  const avisosKit = kits.filter(x => x.e.avisos.length);
-  if (avisosKit.length) a.push({ t: 'Kits con problemas de composición', d: avisosKit.map(x => `${x.k.codigo}: ${x.e.avisos[0]}`).join(' · '), ruta: '#/maquinas/stock' });
-  const genericas = us.filter(u => u.origen === 'hoja' && u.imagen);
-  const urls = new Set(genericas.map(u => u.imagen));
-  if (genericas.length > 1 && urls.size < genericas.length) a.push({ t: 'Fotos genéricas', d: `${genericas.length} máquinas comparten ${plural(urls.size, 'foto', 'fotos')}; no son fotos de cada unidad.`, ruta: '#/maquinas/stock' });
-  const sinUbic = us.filter(u => u.condicion === 'En stock' && !u.ubicacion);
-  if (sinUbic.length) a.push({ t: `${plural(sinUbic.length, 'unidad en stock sin ubicación', 'unidades en stock sin ubicación')}`, d: 'Indica dónde está cada una (almacén, estante…).', ruta: '#/maquinas/stock' });
-  const sinCoord = talleres.filter(t => !t.coordConfirmadas);
-  if (sinCoord.length) a.push({ t: `${plural(sinCoord.length, 'taller con ubicación pendiente', 'talleres con ubicación pendiente')}`, d: sinCoord.map(t => t.nombre).join(', '), ruta: '#/maquinas/postventa' });
-  const sinCont = talleres.filter(t => !t.contactos.length);
-  if (sinCont.length) a.push({ t: `${plural(sinCont.length, 'taller sin contactos', 'talleres sin contactos')}`, d: sinCont.map(t => t.nombre).join(', '), ruta: '#/maquinas/postventa' });
-  const sinTaller = PV.vendidasSinTaller();
-  if (sinTaller.length) a.push({ t: `${plural(sinTaller.length, 'máquina vendida en la hoja sin venta asociada', 'máquinas vendidas en la hoja sin venta asociada')}`, d: sinTaller.map(u => u.codigo).join(', '), ruta: '#/maquinas/postventa' });
-  const difHoja = us.filter(u => u.diferenciaHoja);
-  if (difHoja.length) a.push({ t: 'Ventas no reflejadas en la hoja', d: `${difHoja.map(u => u.codigo).join(', ')}: instaladas en un cliente, pero la hoja las indica «En stock».`, ruta: '#/maquinas/postventa' });
-  const sinFoto = reps.filter(r => !r.imagen);
-  if (reps.length && sinFoto.length) a.push({ t: `${plural(sinFoto.length, 'repuesto sin foto', 'repuestos sin foto')}`, d: 'Espacio reservado a la espera de las imágenes.', ruta: '#/maquinas/stock/repuestos' });
-  return a;
-}
-
-/* Registros de venta: cifras totales respaldadas por los registros cargados. Lo que esos registros no permiten
-   afirmar se muestra como «Información insuficiente», no como un número. */
-const insuficiente = (t, motivo) => `<li><a class="rs-cifra pend" href="#/maquinas/postventa"><b class="mq-nd">—</b><span>${t}</span><small>Información insuficiente · ${motivo}</small></a></li>`;
+/* Registros de venta: cifras totales respaldadas por los registros cargados. */
 function ventasResumenHtml() {
   const i = VT.indicadores(), R = '#/maquinas/postventa';
   if (!i) return `<section class="pj-sec rs-sec" aria-labelledby="rs-vt"><div class="sec-head"><h2 id="rs-vt">Postventa · registros de venta</h2><a class="rg-abrir" href="${R}">Ir a Postventa →</a></div>
@@ -85,20 +54,15 @@ function ventasResumenHtml() {
       ${cifra(i.ubicConfirmada, 'Establecimientos con ubicación confirmada', R)}
       ${cifra(i.garCalculadas, 'Garantías calculadas', R, i.garConfirmadas < i.garCalculadas ? `desde la fecha de venta · inicio por confirmar en ${i.garCalculadas - i.garConfirmadas}` : '')}
       ${i.garPorVencer || i.garVencidas ? cifra(i.garPorVencer + i.garVencidas, 'Garantías por vencer o vencidas', R) : ''}
-    </ul>
-    <ul class="mq-cifras rs-cifras rs-insuf" aria-label="Indicadores sin datos suficientes">
-      ${i.entregados ? cifra(i.entregados, 'Equipos del inventario entregados', R, `registrados en ${i.ventas - i.sinUnidad} de ${i.ventas} ventas`) : insuficiente('Equipos únicos desplegados', 'hay seriales duplicados y ninguna venta tiene equipos entregados registrados')}
-      ${insuficiente('Kits vendidos', 'no se registró qué componentes se entregaron')}
-      ${insuficiente('Máquinas operativas', '«Con dueño» es una condición comercial, no de funcionamiento')}
-      ${insuficiente('Ingresos', 'ningún registro tiene precio')}
-      ${(n => n ? cifra(n, 'Servicios realizados (registrados en las ventas)', R) : insuficiente('Servicios realizados', 'no hay servicios registrados en las ventas'))(PV.servicios().filter(s => s.ventaId && s.estado === 'Cerrado').length)}
+      ${i.entregados ? cifra(i.entregados, 'Equipos del inventario entregados', R, `registrados en ${i.ventas - i.sinUnidad} de ${i.ventas} ventas`) : ''}
+      ${(n => n ? cifra(n, 'Servicios realizados (registrados en las ventas)', R) : '')(PV.servicios().filter(s => s.ventaId && s.estado === 'Cerrado').length)}
     </ul></section>`;
 }
 
 export function resumenHtml() {
   const r = datosResumen(), M = D.M;
   if (M.estado === 'cargando' && !M.maquinas.length) return `${cabecera('resumen')}${estadoLectura()}<p class="vacio">Cargando…</p>`;
-  return `${cabecera('resumen')}${estadoLectura()}
+  return `${cabecera('resumen')}${estadoLectura()}<div class="rs-grid">
     <section class="pj-sec rs-sec" aria-labelledby="rs-stock"><div class="sec-head"><h2 id="rs-stock">Stock · equipos y kits</h2><a class="rg-abrir" href="#/maquinas/stock">Ir a Stock →</a></div>
       <ul class="mq-cifras rs-cifras">
         ${cifra(r.cc, 'Máquinas con chapa en stock', '#/maquinas/stock')}
@@ -119,8 +83,5 @@ export function resumenHtml() {
       <ul class="mq-cifras rs-cifras">${r.operacion ? cifra(r.operacion, 'Equipos propios en operación', '#/maquinas/operacion') : pendiente('Equipos propios en operación', '#/maquinas/operacion')}</ul>
     </section>
     ${r.hayServicios ? `<section class="pj-sec rs-sec" aria-labelledby="rs-sv"><h2 id="rs-sv">Servicios e incidencias</h2>
-      <ul class="mq-cifras rs-cifras">${cifra(r.incidenciasAbiertas, 'Incidencias abiertas', '#/maquinas/postventa')}${cifra(r.serviciosPendientes, 'Servicios y visitas pendientes', '#/maquinas/postventa')}</ul></section>` : ''}
-    <section class="pj-sec rs-sec" aria-labelledby="rs-al"><h2 id="rs-al">Información incompleta</h2>
-      ${r.alertas.length ? `<ul class="rs-alertas">${r.alertas.map(x => `<li><a href="${x.ruta}"><b>${esc(x.t)}</b></a><span>${esc(x.d)}</span></li>`).join('')}</ul>` : '<p class="vacio">No hay alertas.</p>'}
-    </section>`;
+      <ul class="mq-cifras rs-cifras">${cifra(r.incidenciasAbiertas, 'Incidencias abiertas', '#/maquinas/postventa')}${cifra(r.serviciosPendientes, 'Servicios y visitas pendientes', '#/maquinas/postventa')}</ul></section>` : ''}</div>`;
 }
