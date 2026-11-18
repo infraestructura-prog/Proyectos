@@ -61,10 +61,10 @@ function cargarEstado() {
   S.mtVista = p.mtVista === 'tabla' ? 'tabla' : 'tarjetas'; S.mtBusca = ''; S.mtCat = ''; S.mtCond = '';
   S.mtTBusca = ''; S.mtTEquipo = ''; S.mtTCat = ''; S.mtTPrio = ''; S.mtTResp = ''; S.mtTEtapa = '';
   S.vtVista = ['tabla', 'mapa'].includes(p.vtVista) ? p.vtVista : 'tarjetas'; S.vtBusca = ''; S.vtCiudad = ''; S.vtDoc = ''; S.vtAlerta = '';
-  S.opVista = p.opVista === 'tabla' ? 'tabla' : 'tarjetas';
+  S.opVista = p.opVista === 'tabla' ? 'tabla' : 'tarjetas'; S.opModo = p.opModo === 'kits' ? 'kits' : 'individual'; S.opFiltro = typeof p.opFiltro === 'string' ? p.opFiltro : '';
   S.menuArea = false;
 }
-const guardarPrefs = () => almacen.guardarPrefs({ vista: S.vista, abiertos: [...S.abiertos], indice: S.indice, activo: S.activo, sbSec: S.sbSec, soloDestacadas: S.soloDestacadas, maqModo: S.maqModo, maqVista: S.maqVista, maqFiltro: S.maqFiltro, repVista: S.repVista, pvVista: S.pvVista, opVista: S.opVista, vtVista: S.vtVista, syncAutor: S.syncAutor, mtVista: S.mtVista });
+const guardarPrefs = () => almacen.guardarPrefs({ vista: S.vista, abiertos: [...S.abiertos], indice: S.indice, activo: S.activo, sbSec: S.sbSec, soloDestacadas: S.soloDestacadas, maqModo: S.maqModo, maqVista: S.maqVista, maqFiltro: S.maqFiltro, repVista: S.repVista, pvVista: S.pvVista, opVista: S.opVista, opModo: S.opModo, opFiltro: S.opFiltro, vtVista: S.vtVista, syncAutor: S.syncAutor, mtVista: S.mtVista });
 const guardarTareas = () => { if (!almacen.guardarTareas(tareas)) toast('No se pudo guardar en este navegador.'); };
 const guardarInicios = () => { if (!almacen.guardarProyectos(inicios)) toast('No se pudo guardar en este navegador.'); };
 const tareasDe = pid => tareas.filter(t => t.proyecto === pid);
@@ -1225,6 +1225,7 @@ document.addEventListener('click', e => {
       render(); toast(er || (b.dataset.accion === 'asociar' ? 'Archivo asociado a la venta.' : 'Marcado como copia; no se asocia.')); break;
     }
     case 'op-vista': S.opVista = b.dataset.vista; render(); break;
+    case 'op-modo': S.opModo = b.dataset.modo; render(); break;
     case 'op-nuevo': opForm(null); break;
     case 'pv-taller': pvTaller(b.dataset.tid); break;
     case 'pv-nuevo-taller': pvFormTaller(null); break;
@@ -1295,6 +1296,7 @@ document.addEventListener('change', e => {
   if (el.dataset.act === 'estado') moverTarea(el.dataset.tk, el.value);
   if (el.dataset.act === 'estado-mk') moverMacro(el.dataset.mk, el.value);
   if (el.dataset.act === 'maq-filtro-tipo') { S.maqFiltro = el.value; render({ foco: '[data-act="maq-filtro-tipo"]' }); }
+  if (el.dataset.act === 'op-filtro-tipo') { S.opFiltro = el.value; render({ foco: '[data-act="op-filtro-tipo"]' }); }
   if (el.dataset.act === 'rep-filtro') { S.repFiltro = el.value; render({ foco: '[data-act="rep-filtro"]' }); }
   if (el.dataset.act === 'pv-estado') { S.pvEstado = el.value; render({ foco: '[data-act="pv-estado"]' }); }
   if (el.dataset.act === 'pv-oper') { S.pvOper = el.value; render({ foco: '[data-act="pv-oper"]' }); }

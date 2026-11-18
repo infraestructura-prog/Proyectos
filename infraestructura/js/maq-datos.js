@@ -11,6 +11,7 @@ import { MAQUINAS as CFG } from '../assets/js/config.js';
 import { readPublicSheet } from '../assets/js/sheets-public.js';
 
 const PREFIJO = 'ccs-infraestructura-v2:';
+export const IMG_SOPORTE = 'img/soportes/soporte.webp';
 const K = {
   cache: PREFIJO + 'maq-hoja-cache',            // última lectura correcta de la hoja (respaldo y uso sin conexión)
   complementos: PREFIJO + 'maq-complementos',   // { [idUnidad]: datos complementarios de una máquina de la hoja }
@@ -75,7 +76,7 @@ export async function cargarHoja() {
     else M.estado = 'error';
     M.error = e;
   }
-  sembrarKits(); sembrarSoportes();
+  sembrarKits();   // sembrarSoportes() ya cumplió (18/11/2026): se desactiva porque, en un navegador nuevo, podía crear soportes duplicados antes de recibir los datos compartidos.
   return M;
 }
 
@@ -127,7 +128,8 @@ export function unidades() {
       diferenciaHoja: !!i && u.origen === 'hoja' && u.condicion !== 'Vendida' };
   };
   const maqs = M.maquinas.map(u => efectiva({ ...u, marca: '', modelo: '', ubicacion: '', estadoOperativo: '', observaciones: '', historial: [], ...(c[u.id] || {}) }));
-  return [...maqs, ...soportes().map(efectiva)];
+  // Foto de referencia para todos los soportes (indicada por Cristian el 18/11/2026).
+  return [...maqs, ...soportes().map(s => efectiva({ ...s, imagen: s.imagen || IMG_SOPORTE }))];
 }
 export const unidadPorId = id => unidades().find(u => u.id === id);
 export const TIPOS_UNIDAD = { 'maquina-cc': 'Máquina con chapa', 'maquina-sc': 'Máquina sin chapa', maquina: 'Máquina (categoría sin definir)', soporte: 'Soporte' };

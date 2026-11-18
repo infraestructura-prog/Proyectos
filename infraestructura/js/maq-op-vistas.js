@@ -3,14 +3,19 @@ import { esc, plural } from './componentes.js';
 import * as D from './maq-datos.js';
 import * as OP from './maq-operacion.js';
 import * as PV from './maq-postventa.js';
-import { cabecera, estadoLectura, fdt, pend, tipoTxt } from './maq-vistas.js';
+import { cabecera, estadoLectura, fdt, pend, tipoTxt, kitsListaHtml } from './maq-vistas.js';
 
 const fd = s => (/^\d{4}-\d{2}-\d{2}$/.test(s || '') ? s.split('-').reverse().join('/') : '');
 const filas = () => OP.activos().map(r => ({ r, u: D.unidadPorId(r.unidadId) })).filter(x => x.u)
   .sort((a, b) => String(a.u.codigo || a.u.id).localeCompare(String(b.u.codigo || b.u.id), 'es', { numeric: true }));
 
 export function operacionHtml(S) {
-  const l = filas(), vista = S.opVista === 'tabla' ? 'tabla' : 'tarjetas';
+  const todas = filas(), vista = S.opVista === 'tabla' ? 'tabla' : 'tarjetas', modo = S.opModo === 'kits' ? 'kits' : 'individual', filtro = S.opFiltro || '';
+  const l = todas;
+  // Mismos filtros que Stock: por tipo de unidad o solo las que no están en un kit.
+  const lf = todas.filter(({ u }) => !filtro || (filtro === 'sueltas' ? !D.kitDeUnidad(u.id) : u.tipo === filtro));
+  // Kits con al menos una unidad en operación (la composición se gestiona en Stock).
+  const kitsOp = D.kitsActivos().filter(k => Object.values(k.posiciones).some(id => id && OP.deUnidad(id)));
   const conInc = l.filter(x => PV.abiertos(PV.serviciosDe({ unidadId: x.u.id })).length).length;
   const sinInsp = l.filter(x => !x.r.ultimaInspeccion).length;
   return `${cabecera('operacion')}${estadoLectura()}
@@ -23,18 +28,23 @@ export function operacionHtml(S) {
            <li><b>${sinInsp}</b><span>Sin inspección registrada</span></li>`}
     </ul>
     <div class="mq-barra">
+      <div class="seg" role="group" aria-label="Modo"><button type="button" data-act="op-modo" data-modo="individual" aria-pressed="${modo === 'individual'}">Individual</button><button type="button" data-act="op-modo" data-modo="kits" aria-pressed="${modo === 'kits'}">Kits</button></div>
       <div class="seg" role="group" aria-label="Vista"><button type="button" data-act="op-vista" data-vista="tarjetas" aria-pressed="${vista === 'tarjetas'}">Tarjetas</button><button type="button" data-act="op-vista" data-vista="tabla" aria-pressed="${vista === 'tabla'}">Tabla</button></div>
+      ${modo === 'individual' ? `<label class="mq-filtro"><span class="sr-only">Tipo de unidad</span><select data-act="op-filtro-tipo">
+          ${[['', 'Todos los tipos'], ['maquina-cc', 'Máquinas con chapa'], ['maquina-sc', 'Máquinas sin chapa'], ['soporte', 'Soportes'], ['sueltas', 'Solo unidades sueltas']].map(([v, t]) => `<option value="${v}" ${filtro === v ? 'selected' : ''}>${t}</option>`).join('')}</select></label>` : ''}
       <span class="sp"></span>
       <button type="button" class="btn btn-sm btn-primary" data-act="op-nuevo">+ Registrar equipo en operación</button>
     </div>
     ${!l.length ? '<section class="pj-sec mq-vacio"><h2>Equipos en operación</h2><p>Información pendiente de levantar. Usa «Registrar equipo en operación» y elige la unidad del inventario que se usa en el taller.</p></section>'
+      : modo === 'kits' ? (kitsOp.length ? kitsListaHtml(kitsOp, vista, false) : '<p class="vacio">Ningún kit tiene unidades en operación.</p>')
+      : !lf.length ? '<p class="vacio">No hay equipos en operación con este filtro.</p>'
       : vista === 'tabla' ? `<div class="tabla-wrap"><table class="map-tabla mq-tabla"><thead><tr><th>Equipo</th><th>Tipo</th><th>Kit</th><th>Ubicación en el taller</th><th>Responsable</th><th>Estado operativo</th><th>Última inspección</th><th>Próxima acción</th><th>Pendientes</th></tr></thead><tbody>
-        ${l.map(({ r, u }) => { const k = D.kitDeUnidad(u.id), ab = PV.abiertos(PV.serviciosDe({ unidadId: u.id })).length; return `<tr>
+        ${lf.map(({ r, u }) => { const k = D.kitDeUnidad(u.id), ab = PV.abiertos(PV.serviciosDe({ unidadId: u.id })).length; return `<tr>
           <td><button type="button" class="mq-link" data-act="maq-ficha" data-uid="${esc(u.id)}"><b>${esc(u.codigo || u.id)}</b></button>${u.serial ? `<br><small class="nota">${esc(u.serial)}</small>` : ''}</td>
           <td>${esc(tipoTxt(u))}</td><td>${k ? esc(k.codigo) : '—'}</td><td>${esc(r.ubicacion)}</td><td>${r.responsable ? esc(r.responsable) : pend('Sin asignar')}</td>
           <td>${u.estadoOperativo ? esc(u.estadoOperativo) : pend('Por confirmar')}</td><td>${fd(r.ultimaInspeccion) || pend('Sin registro')}</td><td>${r.proximaAccion ? esc(r.proximaAccion) : '—'}</td>
           <td>${ab ? `<span class="mq-chip c-falta">${ab}</span>` : '—'}</td></tr>`; }).join('')}</tbody></table></div>`
-        : `<ul class="mq-grid op-grid">${l.map(({ r, u }) => { const ab = PV.abiertos(PV.serviciosDe({ unidadId: u.id })).length; return `<li class="mq-card op-card"><div class="mq-card-body">
+        : `<ul class="mq-grid op-grid">${lf.map(({ r, u }) => { const ab = PV.abiertos(PV.serviciosDe({ unidadId: u.id })).length; return `<li class="mq-card op-card"><div class="mq-card-body">
           <p class="mq-tipo">${esc(tipoTxt(u))}</p><h3><button type="button" class="mq-link" data-act="maq-ficha" data-uid="${esc(u.id)}">${esc(u.codigo || u.id)}</button></h3>
           <dl class="mq-dl"><div><dt>Ubicación</dt><dd>${esc(r.ubicacion)}</dd></div><div><dt>Responsable</dt><dd>${r.responsable ? esc(r.responsable) : pend('Sin asignar')}</dd></div>
             <div><dt>Última inspección</dt><dd>${fd(r.ultimaInspeccion) || pend('Sin registro')}</dd></div>${r.proximaAccion ? `<div><dt>Próxima acción</dt><dd>${esc(r.proximaAccion)}</dd></div>` : ''}</dl>

@@ -57,7 +57,7 @@ export function maquinasHtml(S) {
   const todas = MT.maquinas(), lista = maquinasFiltradas(S), filtrado = !!(S.mtCat || S.mtCond || String(S.mtBusca || '').trim());
   const vista = S.mtVista === 'tabla' ? 'tabla' : 'tarjetas';
   return `${cabeceraMant('maquinas')}
-    <p class="nota mt-alcance" aria-live="polite">${filtrado ? `<b>Mostrando ${lista.length} de ${plural(todas.length, 'máquina', 'máquinas')}.</b>` : `<b>${plural(todas.length, 'máquina censada', 'máquinas censadas')} en Odoo.</b>`} Los registros generales de Odoo se listan aparte y no cuentan como máquinas.</p>
+    <p class="nota mt-alcance" aria-live="polite">${filtrado ? `<b>Mostrando ${lista.length} de ${plural(todas.length, 'máquina', 'máquinas')}.</b>` : (() => { const d = todas.filter(e => e.origenDashboard).length; return `<b>${plural(todas.length, 'máquina censada', 'máquinas censadas')}: ${todas.length - d} en Odoo${d ? ` y ${d} registradas en el dashboard` : ''}.</b>`; })()} Los registros generales de Odoo se listan aparte y no cuentan como máquinas.</p>
     <div class="mq-barra">
       <label class="mq-filtro"><span class="sr-only">Buscar máquina</span><input type="search" data-act="mt-busca" value="${esc(S.mtBusca || '')}" placeholder="Código, nombre, serial, modelo…" autocomplete="off"></label>
       <label class="mq-filtro"><span class="sr-only">Categoría</span><select data-act="mt-cat"><option value="">Todas las categorías</option>${MT.categorias().map(c => `<option ${c === S.mtCat ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
@@ -116,15 +116,16 @@ export function fichaMaquinaHtml(e) {
   const otras = MT.solicitudesDe(e).filter(s => s.clase !== 'real');
   return `<div class="dlg-head"><div><p class="dlg-kicker">${esc(e.codigo || 'Sin código')} · ${esc(e.categoria)}</p><h2 id="dlg-titulo">${esc(e.nombreCorto)}</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cerrar">×</button></div>
     <div class="dlg-body mq-ficha mt-ficha">
-      <p class="mt-fuente-mini">Datos de Odoo al ${esc(fdt(MT.T.fuente.capturado))} (captura, no en vivo).</p>
+      <p class="mt-fuente-mini">${e.origenDashboard ? 'Máquina registrada en el dashboard (no está en Odoo).' : `Datos de Odoo al ${esc(fdt(MT.T.fuente.capturado))} (captura, no en vivo).`}</p>
       <h3 class="rp-h">Información general</h3>
       <dl class="org-dl">
         ${fila('Identificador interno', `<code>${esc(e.id)}</code>`)}
-        ${fila('Referencia de Odoo', `Equipo #${e.odooId} · <a href="${esc(MT.urlOdooEquipo(e))}" target="_blank" rel="noopener noreferrer">Abrir en Odoo</a> <small class="nota">(requiere sesión)</small>`)}
+        ${e.origenDashboard ? fila('Referencia de Odoo', '<span class="mt-aviso-txt">No está en Odoo: registrada en el dashboard el 18/11/2026 por indicación de Cristian. Su ficha técnica es la misma de MV01.</span>')
+          + fila('Chapa · escalera', `${esc(e.chapa)} · escalera ${esc(e.escalera.toLowerCase())}`) : fila('Referencia de Odoo', `Equipo #${e.odooId} · <a href="${esc(MT.urlOdooEquipo(e))}" target="_blank" rel="noopener noreferrer">Abrir en Odoo</a> <small class="nota">(requiere sesión)</small>`)}
         ${fila('Código · nombre', `${esc(e.codigo || '—')} · ${esc(e.nombreCorto)}`)}
         ${fila('Marca', pend('Pendiente: Odoo no tiene este dato'))}
         ${fila('Modelo', val(e.modelo))}
-        ${fila('Serial', val(e.serial))}
+        ${fila('Serial', `${val(e.serial, 'Pendiente')}${e.notaSerial ? `<br><small class="nota">${esc(e.notaSerial)}</small>` : ''}`)}
         ${fila('Proveedor', `${val(e.proveedor)}${e.refProveedor ? ` <small class="nota">referencia del proveedor en Odoo: «${esc(e.refProveedor)}»</small>` : ''}`)}
         ${fila('Categoría', esc(e.categoria))}
         ${fila('Ubicación', (() => { const u = MT.ubicacion(e); return u.valor ? `${esc(u.valor)} <small class="nota">${esc(u.fuente)}</small>` : pend(); })())}

@@ -287,8 +287,13 @@ function kitsHtml(ks, vista, est) {
   const estimacion = `<aside class="mq-estim"><b>Estimación (no son kits registrados):</b> con las unidades sueltas en stock se podrían armar <b>${est.kits}</b> kit(s) más.
     <small>${plural(est.pares, 'pareja', 'parejas')} de máquinas con escaleras opuestas · ${plural(est.soportes, 'soporte libre', 'soportes libres')}${est.soportes < 2 ? ' (faltan soportes)' : ''}.</small></aside>`;
   if (!act.length) return `${estimacion}<p class="vacio">No hay kits registrados. Usa «Nuevo kit» para crear uno y asignarle unidades existentes.</p>`;
-  const lista = act.sort((a, b) => a.codigo.localeCompare(b.codigo, 'es', { numeric: true }));
-  const cuerpo = vista === 'tabla'
+  return `${estimacion}${kitsListaHtml(act, vista, true)}${inact.length ? `<p class="nota">${plural(inact.length, 'kit desactivado', 'kits desactivados')} (se conservan con su historial).</p>` : ''}`;
+}
+/* Lista de kits en tarjetas o tabla. Con editable=false (Equipos en operación) no se asignan ni quitan unidades:
+   la composición del kit se gestiona en Stock. */
+export function kitsListaHtml(kits, vista, editable = true) {
+  const lista = [...kits].sort((a, b) => a.codigo.localeCompare(b.codigo, 'es', { numeric: true }));
+  return vista === 'tabla'
     ? `<div class="tabla-wrap"><table class="map-tabla mq-tabla"><thead><tr><th>Kit</th><th>Composición</th>${D.POSICIONES.map(p => `<th>${esc(p.titulo)}</th>`).join('')}<th>Disponibilidad</th></tr></thead><tbody>
       ${lista.map(k => { const e = D.evaluarKit(k); return `<tr><td><button type="button" class="mq-link" data-act="maq-ver-kit" data-kit="${esc(k.id)}"><b>${esc(k.codigo)}</b></button></td>
         <td><span class="mq-chip ${e.completo ? 'c-stock' : 'c-falta'}">${e.completo ? 'Completo' : `Incompleto · ${e.asignadas}/4`}</span></td>
@@ -298,14 +303,13 @@ function kitsHtml(ks, vista, est) {
       return `<li class="mq-kit ${e.completo ? 'completo' : ''}" id="kit-${esc(k.id)}">
         <div class="mq-kit-head"><h3>Kit ${esc(k.codigo)}</h3><span class="mq-chip ${e.completo ? 'c-stock' : 'c-falta'}">${e.completo ? 'Completo' : `Incompleto · ${e.asignadas} de 4`}</span></div>
         <p class="nota">Disponibilidad: ${esc(e.disponibilidad)}</p>
-        <ul class="mq-pos-lista">${D.POSICIONES.map(p => posicionHtml(k, p, e.unidades[p.id], true)).join('')}</ul>
+        <ul class="mq-pos-lista">${D.POSICIONES.map(p => posicionHtml(k, p, e.unidades[p.id], editable)).join('')}</ul>
         ${e.avisos.length ? `<ul class="conf-list">${e.avisos.map(a => `<li>${esc(a)}</li>`).join('')}</ul>` : ''}
         <details class="mas" data-keep="kit-${esc(k.id)}"><summary>Detalle e historial</summary>
           <div class="mas-body">${k.origen ? `<p class="nota">${esc(k.origen)}</p>` : ''}${k.observaciones ? `<p>${esc(k.observaciones)}</p>` : ''}
             <ol class="hist">${[...k.historial].reverse().map(h => `<li><span class="nota">${esc(fdt(h.fecha))}</span> ${esc(h.nota)}</li>`).join('')}</ol>
-            <button type="button" class="btn btn-sm btn-ghost fu-borrar" data-act="maq-desactivar-kit" data-kit="${esc(k.id)}">Desactivar kit (libera sus unidades)</button></div></details>
+            ${editable ? `<button type="button" class="btn btn-sm btn-ghost fu-borrar" data-act="maq-desactivar-kit" data-kit="${esc(k.id)}">Desactivar kit (libera sus unidades)</button>` : '<p class="nota">La composición del kit se gestiona en Stock → Kits.</p>'}</div></details>
       </li>`; }).join('')}</ul>`;
-  return `${estimacion}${cuerpo}${inact.length ? `<p class="nota">${plural(inact.length, 'kit desactivado', 'kits desactivados')} (se conservan con su historial).</p>` : ''}`;
 }
 
 /* ═════════ Fichas y formularios (ventana de diálogo) ═════════ */

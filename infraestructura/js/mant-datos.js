@@ -46,6 +46,26 @@ function normSolicitud(s, etapas) {
   };
 }
 
+/* ── Máquinas registradas en el dashboard (no están en Odoo; nada se escribe en Odoo) ──
+   Indicación de Cristian (18/11/2026): dos máquinas de simulación nuevas del taller, con la misma ficha que MV01/MV02
+   (categoría, modelo, descripción, manual, sistemas y componentes) y la misma imagen de referencia.
+   La con chapa tiene la escalera a la derecha; su serial se tomó de la placa (foto enviada por Cristian). */
+const NUEVAS_DASHBOARD = [
+  { codigo: 'MV03', nombre: 'MV03 Maquina de simulacion 3', serial: 'YYJ20250201008-1', chapa: 'Con chapa', escalera: 'Derecha',
+    notaSerial: 'Serial de la placa (YYJ20250201008, foto enviada por Cristian el 18/11/2026) con «-1»: igual que MV01 y MV02, la pareja comparte el serial y el final indica cuál es. Placa: modelo DL-4.5YYJ, 4500 kg, 220 V, fecha 2025.2.' },
+  { codigo: 'MV04', nombre: 'MV04 Maquina de simulacion 4', serial: 'YYJ20250201008-2', chapa: 'Sin chapa', escalera: 'Izquierda',
+    notaSerial: 'Pareja sin chapa de MV03: mismo serial de la placa con «-2», igual que MV01 y MV02.' }
+];
+function equiposDashboard(equiposOdoo) {
+  const base = equiposOdoo.find(e => /^MV01\b/.test(e.nombre || '')) || {};
+  return NUEVAS_DASHBOARD.map(n => ({
+    ...normEquipo({ ...base, odooId: `dashboard-${n.codigo}`, nombre: n.nombre, serial: n.serial, ubicacion: '',
+      creado: '2026-11-18', actualizado: '2026-11-18' }),
+    id: `EQ-DASH-${n.codigo}`, origenDashboard: true, fotoDe: 'MV01', chapa: n.chapa, escalera: n.escalera, notaSerial: n.notaSerial,
+    conciliacion: ''
+  }));
+}
+
 export async function cargar() {
   if (T.estado === 'cargando' || T.estado === 'listo') return;
   T.estado = 'cargando';
@@ -54,7 +74,7 @@ export async function cargar() {
     const c = await r.json();
     T.etapas = c.etapas || [];
     T.fuente = { nombre: c.fuente, url: c.url, cuenta: c.cuenta, capturado: c.capturado, tipo: c.tipo };
-    T.equipos = (c.equipos || []).map(normEquipo);
+    T.equipos = [...(c.equipos || []).map(normEquipo), ...equiposDashboard(c.equipos || [])];
     T.solicitudes = (c.solicitudes || []).map(s => normSolicitud(s, T.etapas));
     T.estado = 'listo';
   } catch (e) { T.estado = 'error'; T.error = e.message; }
@@ -202,7 +222,7 @@ export function estadoRutina(r) {
    Son las imágenes cargadas en cada equipo de Odoo; algunas parecen de catálogo. Tres pares de máquinas comparten
    exactamente la misma imagen (comparación de archivos): probablemente son imágenes de referencia del modelo. */
 const FOTO_COMPARTIDA = { EH01: 'EH02', EH02: 'EH01', EH04: 'EH05', EH05: 'EH04', MV01: 'MV02', MV02: 'MV01' };
-export const foto = e => (e.tieneFoto && e.codigo ? { src: `img/maquinas-taller/${e.codigo}.jpg`, compartidaCon: FOTO_COMPARTIDA[e.codigo] || '' } : null);
+export const foto = e => (e.tieneFoto && e.codigo ? { src: `img/maquinas-taller/${e.fotoDe || e.codigo}.jpg`, compartidaCon: e.fotoDe || FOTO_COMPARTIDA[e.codigo] || '' } : null);
 
 /* ── Trabajos del dashboard ──
    Los trabajos se crean, editan, cierran y eliminan directamente en el dashboard, independientes de Odoo (no se
