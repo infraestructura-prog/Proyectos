@@ -79,7 +79,7 @@ export function normResultado(x = {}) {
 function tareasIniciales() {
   const at = new Date().toISOString();
   return [...HABILITADOS].flatMap(pid => REGISTROS[pid].actividades.map((a, i) => normTarea({
-    id: `${pid}-a${i + 1}`, proyecto: pid, titulo: a.texto.replace(/\.$/, ''), destacada: a.destacada, estado: 'todo', porConfirmar: true,
+    id: `${pid}-a${i + 1}`, proyecto: pid, titulo: a.texto.replace(/\.$/, ''), descripcion: a.descripcion || '', destacada: a.destacada, estado: 'todo', porConfirmar: true,
     origen: 'Lista definitiva de macroobjetivos', orden: i + 1,
     historial: [{ fecha: at, tipo: 'carga', nota: 'Actividad de la lista definitiva. Entra en To do con «Estado por confirmar»; sin responsable asignado.' }]
   }, i)));
@@ -110,7 +110,14 @@ export const almacen = {
     // Las tareas que el usuario eliminó no vuelven a cargarse desde la lista definitiva.
     const borradas = new Set(this.eliminadas().map(x => x.tarea.id));
     const faltan = tareasIniciales().filter(x => !lista.some(y => y.id === x.id) && !borradas.has(x.id));
-    if (faltan.length || !Array.isArray(v)) { lista.push(...faltan); escribir(K.tareas, lista); }
+    // Títulos condensados: si una tarea conserva el título largo original (nadie lo editó), pasa al título corto y el desglose va a la descripción.
+    let condensadas = 0;
+    tareasIniciales().forEach(ini => {
+      const t = lista.find(y => y.id === ini.id), act = REGISTROS[ini.proyecto].actividades[ini.orden - 1];
+      if (!t || !act || !act.antes || t.titulo !== act.antes) return;
+      t.titulo = ini.titulo; if (!t.descripcion) t.descripcion = ini.descripcion; condensadas++;
+    });
+    if (faltan.length || condensadas || !Array.isArray(v)) { lista.push(...faltan); escribir(K.tareas, lista); }
     return lista;
   },
   // Tareas eliminadas: se apartan con su fecha (recuperables); la migración tampoco las recrea (solo actúa sobre tareas existentes).

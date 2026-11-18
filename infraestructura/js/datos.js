@@ -61,7 +61,8 @@ export const MACROOBJETIVOS = [
 
 /* tipo: proyecto | investigacion | tarea-directa | condicionado.  condicion: texto de la condición de inicio (solo condicionados).
    actividades: [texto, destacada]. relaciones: [{ id, texto }] (el vínculo se muestra en ambos registros). */
-const a = (texto, destacada = false) => ({ texto, destacada });
+/* a(título corto, destacada, desglose para la descripción de la tarea, título anterior que se reemplaza si nadie lo editó) */
+const a = (texto, destacada = false, descripcion = '', antes = '') => ({ texto, destacada, descripcion, antes });
 export const REGISTROS = {
   'pi-canales': { tipo: 'proyecto', slug: 'reparacion-canales', nombre: 'Reparación de las canales', macro: 'mi-taller',
     actividades: [a('Recibir y revisar el presupuesto del herrero.'), a('Obtener aprobación y coordinar la reparación.'), a('Verificar y documentar el resultado.')] },
@@ -115,9 +116,13 @@ export const REGISTROS = {
     actividades: [a('Estructurar esta cascada de objetivos y proyectos.', true), a('Diseñar el sidebar y presentar la arquitectura.', true), a('Integrar Seguimiento, calendario, Kanban y filtros.'), a('Definir fuentes de datos, accesos y responsables técnicos.'), a('Preparar la demostración y coordinar apoyo.', true)] },
 
   'pi-extintores': { tipo: 'proyecto', slug: 'implementacion-extintores', nombre: 'Implementación de extintores', macro: 'mi-extintores',
-    actividades: [a('Inspeccionar todos los locales e identificar cuáles carecen de extintores.', true),
-      a('Investigar opciones del mercado, priorizando sistemas automáticos y extintores portátiles según corresponda a cada local (no necesariamente un mismo equipo reúne ambas características).', true),
-      a('Presentar las opciones a la gerencia para revisarlas antes de cualquier compra o gasto.')] }
+    actividades: [
+      a('Inspeccionar los locales.', true, 'Recorrer todos los locales e identificar cuáles carecen de extintores.',
+        'Inspeccionar todos los locales e identificar cuáles carecen de extintores'),
+      a('Investigar opciones del mercado.', true, 'Priorizar sistemas automáticos y extintores portátiles, según corresponda a cada local. No necesariamente un mismo equipo reúne ambas características.',
+        'Investigar opciones del mercado, priorizando sistemas automáticos y extintores portátiles según corresponda a cada local (no necesariamente un mismo equipo reúne ambas características)'),
+      a('Presentar opciones a la gerencia.', false, 'Revisar las opciones con la gerencia antes de cualquier compra. Por ahora no se realizan compras ni se comprometen gastos.',
+        'Presentar las opciones a la gerencia para revisarlas antes de cualquier compra o gasto')] }
 };
 Object.entries(REGISTROS).forEach(([id, r]) => { r.id = id; r.relaciones = r.relaciones || []; });
 
