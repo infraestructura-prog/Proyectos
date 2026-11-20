@@ -313,7 +313,8 @@ export function mount(root, ctx) {
     if (p.estado === 'Pendiente') out.push(b('approve', 'Aprobar', 'btn-primary', small(ICON.ok)));
     if (p.estado === 'Aprobado') out.push(b('unapprove', 'Retirar aprobación'), b('buy', 'Marcar comprado', 'btn-primary', small(ICON.ok)));
     if (p.estado === 'Comprado' && where === 'detail') out.push(b('correct', 'Corregir compra', '', small(ICON.history)));
-    if (where === 'detail') out.push(b('edit', 'Editar', 'btn-ghost', small(ICON.edit)), b('delete', 'Quitar', 'btn-ghost pp-del', small(ICON.trash)));
+    if (where === 'detail') out.push(b('edit', 'Editar', 'btn-ghost', small(ICON.edit)), b('delete', 'Eliminar', 'btn-ghost pp-del', small(ICON.trash)));
+    else if (p.estado !== 'Comprado') out.push(b('delete', 'Eliminar', 'btn-ghost pp-del', small(ICON.trash)));
     return out.join('');
   }
 
@@ -647,14 +648,14 @@ export function mount(root, ctx) {
 
   async function remove(id) {
     const p = find(S.data, id); if (!p) return;
-    if (p.estado === 'Comprado') { explain('No se puede quitar', '<p>Es una compra realizada. Usa primero «Corregir compra» para dejar constancia del cambio.</p>'); return; }
-    const ok = await confirmDialog({ title: 'Quitar producto', confirm: 'Quitar', danger: true,
-      body: `<p>Se quitará «<b>${esc(p.nombre)}</b>» de este navegador.${p.estado === 'Aprobado' ? ` Está aprobado: se liberarán ${esc(money(budgetAmount(p, B()).cents))}.` : ''}</p>` });
+    if (p.estado === 'Comprado') { explain('No se puede eliminar', '<p>Es una compra realizada. Usa primero «Corregir compra» para dejar constancia del cambio.</p>'); return; }
+    const ok = await confirmDialog({ title: 'Eliminar equipo', confirm: 'Eliminar', danger: true,
+      body: `<p>Se eliminará «<b>${esc(p.nombre)}</b>» de este navegador.${p.estado === 'Aprobado' ? ` Está aprobado: se liberarán ${esc(money(budgetAmount(p, B()).cents))}.` : ''}</p>` });
     if (!ok) return;
     const res = mutate(d => { const q = find(d, id); if (q && q.estado === 'Comprado') return { error: 'Ahora figura como comprado.' }; d.productos = d.productos.filter(x => x.id !== id); });
-    if (res.error) { explain('No se pudo quitar', `<p>${esc(res.error)}</p>`); return; }
+    if (res.error) { explain('No se pudo eliminar', `<p>${esc(res.error)}</p>`); return; }
     if (p.imagen && p.imagen.tipo === 'archivo') idb.del(p.imagen.valor).catch(() => {});
-    toast(`«${p.nombre}» se quitó.`);
+    toast(`«${p.nombre}» se eliminó.`);
   }
 
   function setImportance(id, v) {

@@ -743,3 +743,4 @@ body[data-area="neotropya"] .ik-neo .ik-dist-legend .c-confirm { --col: var(--ne
 body[data-area="neotropya"] .ik-neo .ik-obj { color: var(--neo-text-2); }
 body[data-area="neotropya"] .ik-neo .ik-detail-stats { color: var(--neo-text); }
 body[data-area="neotropya"] .ik-neo .ik-objgrp .ik-block span, body[data-area="neotropya"] .ik-neo .ik-detail .ik-block span { color: var(--neo-text); }
+.pp-foot .pp-del { margin-left: auto; }

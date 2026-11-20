@@ -31,8 +31,8 @@
   "observacionesGenerales": [
     "La conclusión afirma que el Acrolon 218 HS ofrece una reflectividad (SRI) ligeramente superior, pero en la tabla el control (A) y el vinilo (B) tienen el mismo rango: 75–80. Pendiente de validar.",
     "La recomendación del estudio considera la viabilidad global: las alternativas C (pigmentos fríos) y D (microesferas) tienen rangos SRI superiores en la tabla (100–105).",
-    "Los costos del estudio son totales por lote de material y excluyen envío y, en los sistemas de taller, mano de obra. No se calcula costo por maleta mientras los totales y componentes pendientes no estén validados.",
-    "La columna «Imagen» del archivo está vacía: las muestras de las tarjetas son ilustrativas."
+    "El costo por maleta se calculó dividiendo el costo total del lote del estudio entre las maletas que rinde. Es aproximado: no incluye envío y, en los sistemas de taller, tampoco mano de obra ni catalizador. Pendiente de validar.",
+    "Fotos de producto entregadas por Cristian Carvalhais (20/11/2026). Las alternativas A, C y D usan la misma base Acrolon 218 HS, por eso comparten imagen."
   ],
   "costoNivelCriterio": "Clasificación relativa entre las alternativas del estudio según su costo total consignado por lote: Bajo = la de menor costo; Medio = costo intermedio; Alto = las de mayor costo. Se puede ajustar al editar cada alternativa.",
   "recomendadaId": "B",
@@ -52,11 +52,12 @@
       "limitaciones": ["Pérdida leve de brillo tras años al sol."],
       "materiales": ["Acrolon 218 HS", "Catalizador", "Reductor", "Plastic Primer"],
       "costoNivel": "Alto",
-      "imagenUrl": "",
+      "imagenUrl": "/assets/img/pinturas/acrolon-218-hs.jpg", "imagenFuente": "Foto entregada por Cristian Carvalhais (Infraestructura), 20/11/2026",
       "costoTotal": "USD 395,11",
       "costoExclusiones": "más envío y mano de obra",
       "costoDesglose": "277.99$ (Acrolon)\n+ Catalizador (a definir)\n+(4 x 19.78$) (4 Primer)\n+38$ (Thinner)\n-------------------------\n395.11$ + envio + mano de obra",
       "rendimiento": "8–10 maletas",
+      "costoMaleta": "USD 39,51–49,39", "costoMaletaCalculo": "USD 395,11 ÷ 8–10 maletas. No incluye catalizador, envío ni mano de obra.",
       "observaciones": ["Catalizador: costo por definir en el estudio; el total consignado no lo incluye. Pendiente de validar."],
       "muestra": "satinado",
       "original": {
@@ -86,11 +87,12 @@
       "limitaciones": ["Sensible a raspones o cortes con objetos filosos.", "Posible desprendimiento en bordes por humedad y calor."],
       "materiales": ["Vinilo 2080", "Primer 94"],
       "costoNivel": "Bajo",
-      "imagenUrl": "",
+      "imagenUrl": "/assets/img/pinturas/3m-2080-gloss-white.jpg", "imagenFuente": "Foto entregada por Cristian Carvalhais (Infraestructura), 20/11/2026",
       "costoTotal": "USD 73,99–93,99",
       "costoExclusiones": "más envío",
       "costoDesglose": "30$-60$ (Vinil 2080)\n+ 43.99$ (Primer)\n...........................\n73.99$  --   93.99$ + envio",
       "rendimiento": "4–5 maletas",
+      "costoMaleta": "USD 14,80–23,50", "costoMaletaCalculo": "USD 73,99–93,99 ÷ 4–5 maletas. No incluye envío.",
       "observaciones": ["El desglose indica USD 30–60 (vinilo) + USD 43,99 (primer), pero el total escrito termina en USD 93,99. Pendiente de validar."],
       "muestra": "brillo",
       "original": {
@@ -119,11 +121,12 @@
       "limitaciones": ["Desgaste estético mínimo con el tiempo."],
       "materiales": ["Acrolon 218 HS Cool Pigments", "Promotor", "Reductor"],
       "costoNivel": "Alto",
-      "imagenUrl": "",
+      "imagenUrl": "/assets/img/pinturas/acrolon-218-hs.jpg", "imagenFuente": "Foto entregada por Cristian Carvalhais (Infraestructura), 20/11/2026",
       "costoTotal": "USD 396,89",
       "costoExclusiones": "más envío y mano de obra",
       "costoDesglose": "277.99$ (Acrolon)\n+ Catalizador (a definir)\n+ 19.78$ (Primer)\n+38$ (Thinner)\n+ Pigmentos frios\n-------------------------\n396.89$ + envio + mano de obra",
       "rendimiento": "8–10 maletas",
+      "costoMaleta": "USD 39,69–49,61", "costoMaletaCalculo": "USD 396,89 ÷ 8–10 maletas. No incluye catalizador, envío ni mano de obra.",
       "observaciones": [
         "Catalizador: costo por definir en el estudio. Pendiente de validar.",
         "Los pigmentos fríos figuran en el desglose sin importe; los importes listados (277,99 + 19,78 + 38) no explican por sí solos el total de 396,89. Pendiente de validar.",
@@ -156,11 +159,12 @@
       "limitaciones": ["Acabado poroso que puede acumular poco polvo.", "Ligera pérdida de blancura."],
       "materiales": ["Acrolon 218 HS", "3M K37", "Plastic Primer", "Reductor"],
       "costoNivel": "Medio",
-      "imagenUrl": "",
+      "imagenUrl": "/assets/img/pinturas/acrolon-218-hs.jpg", "imagenFuente": "Foto entregada por Cristian Carvalhais (Infraestructura), 20/11/2026",
       "costoTotal": "USD 354,07",
       "costoExclusiones": "más envío y mano de obra",
       "costoDesglose": "277.99$ (Acrolon)\n+ Catalizador (a definir)\n+ 19.78$ (Primer)\n+38$ (Thinner)\n+ 16.52 (micro-esferas)\n-------------------------\n354.07$ + envio + mano de obra",
       "rendimiento": "8–10 maletas",
+      "costoMaleta": "USD 35,41–44,26", "costoMaletaCalculo": "USD 354,07 ÷ 8–10 maletas. No incluye catalizador, envío ni mano de obra.",
       "observaciones": [
         "Catalizador: costo por definir en el estudio. Pendiente de validar.",
         "Los importes listados (277,99 + 19,78 + 38 + 16,52 = 352,29) difieren del total escrito de 354,07. Pendiente de validar."

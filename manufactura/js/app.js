@@ -8,7 +8,7 @@ import * as C from './componentes.js';
 import * as P from './proyecto.js';
 import * as KM from './kanban-macro.js';
 import { leerRuta, rutaProyecto, rutaMacro, rutaObjetivo } from './rutas.js';
-import { FUENTES, RESULTADOS } from './resultados.js';
+import { FUENTES, RESULTADOS, elegirMarca, elegirParrilla } from './resultados.js';
 import * as NUBE from './nube.js';
 import * as NUBEUI from './nube-ui.js';
 
@@ -363,6 +363,8 @@ document.addEventListener('change', e => {
   const el = e.target; if (dlg.contains(el) || dlg2.contains(el) || panel.contains(el)) return;
   if (el.dataset.act === 'estado-mk') moverMacro(el.dataset.mk, el.value);
   if (el.dataset.act === 'estado') moverTarea(el.dataset.tk, el.value);
+  if (el.dataset.act === 'moto-marca') { elegirMarca(el.value); render({ foco: '#rs-f-marca' }); }
+  if (el.dataset.act === 'moto-parrilla') { elegirParrilla(el.value); render({ foco: '#rs-f-parrilla' }); }
   if (el.dataset.act === 'solo-destacadas') { S.soloDestacadas = el.checked; render({ foco: '[data-act="solo-destacadas"]' }); }
 });
 
