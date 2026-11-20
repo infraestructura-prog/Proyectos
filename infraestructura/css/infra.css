@@ -439,12 +439,14 @@ input[type=date] { color-scheme: dark; }
 .op-card { border-top: 3px solid var(--in-olive); }
 .dlg-foot { flex-wrap: wrap; }
 /* Resumen de Máquinas: tarjetas flotantes (cada apartado es una tarjeta elevada; sus cifras, mini-tarjetas que se levantan al pasar el ratón) */
-.rs-grid { columns: 2 420px; column-gap: 16px; }
+.rs-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+@media (max-width: 760px) { .rs-grid { grid-template-columns: 1fr; } }
 .rs-sec { margin-bottom: 14px; }
-.rs-grid .rs-sec { break-inside: avoid; display: inline-block; width: 100%; margin: 0 0 16px; border-radius: var(--r-md, 12px);
+.rs-grid .rs-sec { display: flex; flex-direction: column; min-height: 340px; margin: 0; border-radius: var(--r-md, 12px);
   box-shadow: 0 10px 28px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.25); transition: transform .2s ease, box-shadow .2s ease; }
 .rs-grid .rs-sec:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(0,0,0,.45), 0 3px 8px rgba(0,0,0,.3); }
 .rs-cifras { margin-bottom: 6px; }
+.rs-grid .rs-cifras { grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); }
 .rs-cifras li { padding: 0; }
 .rs-grid .rs-cifras li { box-shadow: 0 4px 12px rgba(0,0,0,.28); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
 .rs-grid .rs-cifras li:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,.4); border-color: rgba(242,140,40,.45); }
