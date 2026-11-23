@@ -19,11 +19,26 @@ const rxPlantilla = /AQUI SE INTRODUCE|AQUI AGREGAR|^\[MODO DE FALLA/i;
 const rxPrueba = /^prueba\s*[:\-]/i;
 const rxResuelta = /se solucion[oó]|se repar[oó]|volvi[oó] a su funcionamiento|se recuper[oó] el puente/i;
 
+/* Copias en Drive de los manuales adjuntos en Odoo (carpeta «MANUALES DE MÁQUINAS DEL TALLER» dentro de
+   INFRAESTRUCTURA Y MANTENIMIENTO, subidos el 23/11/2026; mismo contenido que en Odoo). Clave: nombre del archivo en Odoo. */
+export const CARPETA_MANUALES = 'https://drive.google.com/drive/folders/1DNJtrftT3mRwYcm6HcyFpGu_dJ0SX4RM';
+const drive = id => `https://drive.google.com/file/d/${id}/view`;
+const MANUALES_DRIVE = {
+  'ELEVADOR DOS BARRAS.pdf': drive('1V7g3-tuTZpFztZ6QQ2UfHFfdgKc2QI4S'),
+  'ELEVADOR CUATRO BARRAS.pdf': drive('1vekSEt7VamthZ-5Fs2lh4ESu6-Pg_eaC'),
+  'ELEVADOR DE TIJERA 2.pdf': drive('1BF4TB1LrN-Sh1k0eMk1alzhGxUiGnv2f'),
+  'MAQUINA DE SIMULACION DE TERRENO.pdf': drive('1PUdL9e4NA3eM32RFBYKkBidHmBynpxyJ'),
+  'TORRE DE ALINEACION.pdf': drive('1BJMrWUCVbk2H-Gz5_e56zi5bG5jiqmlh'),
+  'TIRE CHANGER.pdf': drive('1tluDTvwC3UeF5m1Ibvh6nBfTuC8zn4r4'),
+  'MANUEL DE USUARIO GENERADOR DE NITROGENO.pdf': drive('18QNrklZpL4cg1KuWi-UPcmzJ16krpYnC')
+};
+
 function normEquipo(e) {
   const m = String(e.nombre || '').match(rxCodigo);
   const general = !e.categoria;
   return {
-    ...e, id: `EQ-ODOO-${e.odooId}`, codigo: m ? m[1] : '', nombreCorto: m ? m[2] : e.nombre,
+    ...e, id: `EQ-ODOO-${e.odooId}`,
+    manuales: (e.manuales || []).map(x => ({ ...x, url: MANUALES_DRIVE[x.nombre] || '' })), codigo: m ? m[1] : '', nombreCorto: m ? m[2] : e.nombre,
     tipoRegistro: general ? 'general' : 'maquina',
     motivoRegistro: general ? 'Registro de Odoo sin categoría, usado como agrupador general. No se cuenta como máquina.' : '',
     responsable: e.tecnico && e.tecnico !== GENERICO ? e.tecnico : '',

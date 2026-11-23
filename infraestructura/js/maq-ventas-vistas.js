@@ -120,10 +120,12 @@ function tarjetasVentas(l) {
       <h3><button type="button" class="mq-link" data-act="vt-ficha" data-vid="${esc(v.id)}">${esc(v.nombre)}</button></h3>
       <dl class="vt-dl">
         <div><dt>Ciudad o zona</dt><dd>${esc(lugar(v)) || pend(PENDLEV)}</dd></div>
-        <div><dt>Serial consignado</dt><dd><code>${esc(v.origen.serial) || '—'}</code></dd></div>
-        <div><dt>Fecha de venta</dt><dd>${fd(v.origen.fechaVenta) || pend('Sin fecha')}</dd></div>
         <div><dt>Garantía</dt><dd>${chipGar(v.garantia)}${v.garantia.fin ? ` <small class="nota">hasta ${fd(v.garantia.fin)}${v.garantia.confirmada ? '' : ' · estimada'}</small>` : ''}</dd></div>
       </dl>
+      <details class="mas mq-mas" data-keep="vtc-${esc(v.id)}"><summary>Ver datos</summary><dl class="vt-dl">
+        <div><dt>Serial consignado</dt><dd><code>${esc(v.origen.serial) || '—'}</code></dd></div>
+        <div><dt>Fecha de venta</dt><dd>${fd(v.origen.fechaVenta) || pend('Sin fecha')}</dd></div>
+      </dl></details>
     </div></li>`).join('')}</ul>`;
 }
 function tablaVentas(l) {
@@ -168,7 +170,13 @@ export function fichaVentaHtml(v) {
   return `<div class="dlg-head"><div><p class="dlg-kicker">Registro de venta · ${esc(v.id)}${o.filaOrigen ? ` · fila ${o.filaOrigen} de la fuente` : ''}</p><h2 id="dlg-titulo">${esc(v.nombre)}</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cerrar">×</button></div>
     <div class="dlg-body mq-ficha vt-ficha">
       ${v.alertas.length ? `<p class="vt-alertas">${v.alertas.map(chipAlerta).join(' ')}</p>` : ''}
-      <h3 class="rp-h">1 · Cliente y establecimiento</h3>
+      <dl class="mt-clave vt-clave">
+        <div><dt>Ciudad o zona</dt><dd>${esc(lugar(v)) || pend(PENDLEV)}</dd></div>
+        <div><dt>Fecha de venta</dt><dd>${fd(o.fechaVenta) || pend('Sin fecha')}</dd></div>
+        <div><dt>Garantía</dt><dd>${chipGar(g)}${g.fin ? ` <small class="nota">hasta ${fd(g.fin)}</small>` : ''}</dd></div>
+        <div><dt>Servicios</dt><dd><b>${sv.length}</b>${sv.filter(s => s.estado === 'Abierto').length ? ` <small class="nota">· ${sv.filter(s => s.estado === 'Abierto').length} abiertos</small>` : ''}</dd></div>
+      </dl>
+      <details class="mas mt-grupo" data-keep="vt-1"><summary>Cliente y establecimiento</summary><div class="mt-grupo-c">
       <dl class="org-dl">
         ${fila('Dueño / cliente', val(d.dueno))}
         ${fila('Empresa (razón social)', val(d.empresa))}
@@ -179,7 +187,8 @@ export function fichaVentaHtml(v) {
         ${fila('Ciudad o zona', val(d.ciudad, PENDLEV))}
         ${ubicacionFilas(v)}
       </dl>
-      <h3 class="rp-h">2 · Equipo y venta</h3>
+      </div></details>
+      <details class="mas mt-grupo" data-keep="vt-2"><summary>Equipo y venta <span class="mt-cuenta">serial ${esc(o.serial) || '—'}</span></summary><div class="mt-grupo-c">
       <dl class="org-dl">
         ${fila('Serial consignado', `<code>${esc(o.serial) || '—'}</code>${v.dup ? ` <span class="mq-chip c-falta vt-alta">${esc(V.DUP)}</span>` : d.serialConciliado ? ' <span class="mq-chip c-stock">Conciliado</span>' : ''}`)}
         ${v.dup ? fila('Otros registros con el mismo serial', V.ventas().filter(x => x.id !== v.id && x.origen.serial === o.serial).map(x => `<button type="button" class="mq-link" data-act="vt-ficha" data-vid="${esc(x.id)}">${esc(x.id)} · ${esc(x.nombre)}</button>`).join(', ')) : ''}
@@ -196,14 +205,16 @@ export function fichaVentaHtml(v) {
         ${fila('Precio', precioTxt(v))}
         ${fila('Observaciones de la fuente', o.observaciones ? `«${esc(o.observaciones)}»` : pend(SININFO))}
       </dl>
-      <h3 class="rp-h">3 · Garantía</h3>
+      </div></details>
+      <details class="mas mt-grupo" data-keep="vt-3"><summary>Garantía</summary><div class="mt-grupo-c">
       <dl class="org-dl">
         ${fila('Estado', `${chipGar(g)}${g.estado === 'No calculable' ? ` <small class="nota">${esc(g.motivo)}</small>` : ''}`)}
         ${g.inicio ? fila('Base del cálculo', `${esc(g.base)}${g.confirmada ? '' : ' · <span class="vt-txt-alerta">Inicio de garantía pendiente de confirmar</span>'}`) : ''}
         ${fila('Duración', `${g.meses ? `${g.meses} meses` : '—'} <small class="nota">${d.garantiaMeses !== null ? 'según el registro' : `predeterminada (${p.garantiaMeses} meses)`}</small>`)}
         ${g.inicio ? fila('Desde', fd(g.inicio)) + fila('Hasta', fd(g.fin)) + fila('Días restantes', `${g.dias < 0 ? `vencida hace ${-g.dias}` : g.dias} <small class="nota">calculados hoy; «Por vencer» con ${p.diasPorVencer} días o menos</small>`) : ''}
       </dl>
-      <h3 class="rp-h">4 · Documentación</h3>
+      </div></details>
+      <details class="mas mt-grupo" data-keep="vt-4"><summary>Documentación <span class="mt-cuenta">${esc(d.docEstado)}</span></summary><div class="mt-grupo-c">
       <dl class="org-dl">
         ${fila('Estado', `${esc(d.docEstado)}${d.docEstado === 'Completa según la fuente' ? ' <small class="nota">(no auditada por la aplicación)</small>' : ''}`)}
         ${o.documentacion.legible ? fila('Resumen', esc(o.documentacion.legible)) : ''}
@@ -211,24 +222,27 @@ export function fichaVentaHtml(v) {
         ${fila('Nota original', o.observaciones ? `«${esc(o.observaciones)}»` : pend(SININFO))}
         ${d.docNota ? fila('Nota', esc(d.docNota)) : ''}
       </dl>
-      <h3 class="rp-h">5 · Evidencias</h3>
+      </div></details>
+      <details class="mas mt-grupo" data-keep="vt-5"><summary>Evidencias <span class="mt-cuenta">${ev.length}</span></summary><div class="mt-grupo-c">
       ${ev.length ? `<p class="nota">${Object.entries(porTipo).map(([t, n]) => plural(n, { Video: 'video', Foto: 'foto', 'Documento PDF': 'documento PDF' }[t] || 'archivo', { Video: 'videos', Foto: 'fotos', 'Documento PDF': 'documentos PDF' }[t] || 'archivos')).join(' · ')}. Asociadas por estar en la carpeta del cliente. Un video o una foto no prueban por sí solos una instalación, una reparación ni una prueba.</p>
         <details class="mas" ${ev.length <= 6 ? 'open' : ''}><summary>Ver archivos (${ev.length})</summary><ul class="vt-evid">${ev.sort((a, b) => (a.tipo + a.nombre).localeCompare(b.tipo + b.nombre, 'es', { numeric: true })).map(e => `<li>
           <span class="mq-chip c-otra">${esc(e.tipo)}</span> <b>${esc(e.nombre)}</b> <small class="nota">${[mb(e.tam), e.fechaEnNombre ? `fecha en el nombre: ${fd(e.fechaEnNombre)}` : '', e.asociacion].filter(Boolean).map(esc).join(' · ')}</small>
           ${e.descripcion ? `<br><small>${esc(e.descripcion)}</small>` : ''}<br><small class="nota">${esc(e.carpeta)}</small>
           · <a href="${driveUrl(e.id)}" target="_blank" rel="noopener noreferrer">Abrir original</a></li>`).join('')}</ul></details>`
         : `<p class="vacio">${SININFO}.</p>`}
-      <h3 class="rp-h">6 · Servicios e incidencias</h3>
+      </div></details>
+      <details class="mas mt-grupo" data-keep="vt-6"${sv.some(s => s.estado === 'Abierto') ? ' open' : ''}><summary>Servicios e incidencias <span class="mt-cuenta">${sv.length}</span></summary><div class="mt-grupo-c">
       ${sv.length ? `<ul class="pv-serv">${sv.map(s => `<li class="${s.estado === 'Abierto' ? 'abierto' : ''}"><span class="mq-chip ${s.tipo === 'Incidencia' ? 'c-falta' : 'c-otra'}">${esc(s.tipo)}</span> <b>${esc(fd(s.fecha) || 'Sin fecha')}</b> · ${esc(s.estado)}
         <p>${esc(s.descripcion)}</p>${s.proximaAccion ? `<p class="nota">Próxima acción: ${esc(s.proximaAccion)}</p>` : ''}${s.responsable ? `<p class="nota">Responsable: ${esc(s.responsable)}</p>` : ''}
         <button type="button" class="btn btn-sm btn-ghost" data-vt="editar-servicio" data-sid="${esc(s.id)}">Editar</button></li>`).join('')}</ul>` : `<p class="vacio">${SININFO}.</p>`}
-      ${d.notas ? `<h3 class="rp-h">Notas internas</h3><p class="pre">${esc(d.notas)}</p>` : ''}
-      <details class="mas"><summary>Datos originales de la fuente</summary><dl class="org-dl vt-orig">
+      </div></details>
+      ${d.notas ? `<details class="mas mt-grupo" data-keep="vt-7"><summary>Notas internas</summary><div class="mt-grupo-c"><p class="pre">${esc(d.notas)}</p></div></details>` : ''}
+      <details class="mas mt-grupo"><summary>Datos originales de la fuente</summary><dl class="org-dl vt-orig">
         ${fila('Dueño', esc(o.dueno) || '—')}${fila('Empresa', esc(o.empresa) || '—')}${fila('Teléfono', telefonosVisibles() ? (esc(o.telefono) || '—') : 'Protegido')}${fila('Ciudad', esc(o.ciudad) || '—')}
         ${fila('Forma de pago', esc(o.formaPago) || '—')}${fila('Vendedor', esc(o.vendedor) || '—')}${fila('Precio', o.precio === null ? 'vacío' : esc(String(o.precio)))}
         ${fila('Garantía', o.garantiaMeses ? `${o.garantiaMeses} meses` : 'vacío')}${o.alertaOrigen ? fila('Alerta en la fuente', esc(o.alertaOrigen)) : ''}
       </dl><p class="nota">La fecha de fin de garantía y los días restantes guardados en la fuente no se copian: se calculan aquí.</p></details>
-      <details class="mas"><summary>Historial de cambios (${cambios.length})</summary>${cambios.length || v.historial.length ? `<ol class="hist">${[...v.historial].reverse().map(h => `<li><span class="nota">${esc(fdt(h.fecha))}</span> ${h.campo
+      <details class="mas mt-grupo"><summary>Historial de cambios (${cambios.length})</summary>${cambios.length || v.historial.length ? `<ol class="hist">${[...v.historial].reverse().map(h => `<li><span class="nota">${esc(fdt(h.fecha))}</span> ${h.campo
         ? `<b>${esc(V.CAMPOS[h.campo] || h.campo)}</b>: ${(['telefono', 'contactos'].includes(h.campo) && !telefonosVisibles()) ? '(protegido)' : `${esc(fmt(h.antes))} → ${esc(fmt(h.despues))}`}${h.motivo ? ` <small class="nota">(${esc(h.motivo)})</small>` : ''}` : esc(h.nota)}</li>`).join('')}</ol>` : '<p class="vacio">Sin cambios.</p>'}</details>
     </div>
     <div class="dlg-foot"><button type="button" class="btn btn-ghost" data-vt="servicio">+ Servicio o incidencia</button><button type="button" class="btn btn-ghost" data-vt="entregar">+ Equipos entregados</button><span class="sp"></span>

@@ -658,3 +658,43 @@ input[type=date] { color-scheme: dark; }
   .pr-desglose > div { flex-direction: column; gap: 2px; }
   .pr-desglose dd { text-align: left; }
 }
+
+/* Informe fijo de una investigación (extintores) */
+.inf { display: grid; gap: 10px; margin-bottom: 14px; }
+.inf h3 { font-size: 15px; margin-top: 6px; }
+.inf-resumen { font-size: 15px; line-height: 1.5; }
+.inf-locales { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+.inf-local { border: 1px solid var(--line); border-left: 4px solid var(--text-3); border-radius: var(--r-sm); padding: 12px; display: grid; gap: 8px; align-content: start; background: rgba(0,0,0,.12); }
+.inf-local.inf-falta { border-left-color: #e5534b; }
+.inf-local.inf-tiene { border-left-color: #57ab5a; }
+.inf-local.inf-pend { border-left-color: var(--in-warn); }
+.inf-lhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.inf-lhead b { display: block; font-size: 15px; }
+.inf-lhead small { color: var(--text-3); font-size: 12px; }
+.inf-chip { flex-shrink: 0; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(255,255,255,.08); }
+.inf-falta .inf-chip { color: #ff938a; }
+.inf-tiene .inf-chip { color: #8ddb8c; }
+.inf-pend .inf-chip { color: var(--in-warn); }
+.inf-local dl { margin: 0; display: grid; gap: 6px; }
+.inf-local dt { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--text-3); }
+.inf-local dd { margin: 0; font-size: 14px; color: var(--text-2); }
+.inf-compra { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.inf-compra li { display: grid; grid-template-columns: minmax(90px, 130px) 1fr; gap: 10px; padding: 8px 10px; border-radius: var(--r-xs); background: rgba(0,0,0,.12); font-size: 14px; }
+@media (max-width: 520px) { .inf-compra li { grid-template-columns: 1fr; gap: 2px; } }
+.inf-notas { padding: 8px 10px; border-left: 3px solid var(--in-warn); background: rgba(232,194,74,.06); border-radius: var(--r-xs); font-size: 14px; }
+
+/* Ficha de máquina de taller: resumen arriba y grupos desplegables */
+.mt-top { display: grid; grid-template-columns: minmax(0, 150px) 1fr; gap: 14px; align-items: start; }
+@media (max-width: 560px) { .mt-top { grid-template-columns: 1fr; } }
+.mt-top .mt-foto-ficha { max-width: 150px; }
+.mt-sinfoto { display: grid; place-items: center; aspect-ratio: 1; color: var(--text-3); font-size: 13px; border: 1px dashed var(--line); border-radius: var(--r-sm); }
+.mt-clave { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); gap: 10px 16px; }
+.mt-clave dt { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--text-3); }
+.mt-clave dd { margin: 2px 0 0; font-size: 14px; }
+.mt-acciones { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+.mt-grupo { border: 1px solid var(--line); border-radius: var(--r-sm); padding: 0 12px; margin-top: 8px; }
+.mt-grupo > summary { padding: 10px 0; font-weight: 800; cursor: pointer; }
+.mt-grupo[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.mt-grupo-c { padding-bottom: 10px; display: grid; gap: 8px; }
+.mt-cuenta { font-weight: 600; font-size: 12px; color: var(--text-3); margin-left: 6px; }
+.mq-mas > summary { font-size: 13px; }

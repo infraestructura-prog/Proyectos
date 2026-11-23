@@ -112,51 +112,70 @@ function solicitudItem(s) {
       ${fila('Registro original', `<a href="${esc(MT.urlOdooSolicitud(s))}" target="_blank" rel="noopener noreferrer">Abrir en Odoo</a> <small class="nota">(requiere sesión)</small>`)}
     </dl><p><button type="button" class="btn btn-sm" data-act="mt-trabajo" data-sid="${esc(s.id)}">Ver ficha del trabajo</button></p></details></li>`;
 }
+/* Ficha de máquina: a la vista solo lo esencial (foto, condición, ubicación, responsable, trabajos y manual);
+   el resto se agrupa en desplegables para que la ficha se lea de un vistazo. */
 export function fichaMaquinaHtml(e) {
   const otras = MT.solicitudesDe(e).filter(s => s.clase !== 'real');
+  const { abiertos, historial } = MT.trabajosDeEquipo(e);
+  const c = MT.condicionActual(e), u = MT.ubicacion(e), ft = MT.foto(e);
+  const rutinas = PREVENTIVOS_ACTIVOS ? MT.rutinasDe(e) : [];
+  const desp = (id, titulo, cuenta, cuerpo, abierto = false) => `<details class="mas mt-grupo" data-keep="mtf-${id}"${abierto ? ' open' : ''}><summary>${titulo}${cuenta ? ` <span class="mt-cuenta">${cuenta}</span>` : ''}</summary><div class="mt-grupo-c">${cuerpo}</div></details>`;
+  const manualLink = m => (m.url ? `<a href="${esc(m.url)}" target="_blank" rel="noopener noreferrer">${esc(m.nombre)}</a>` : esc(m.nombre));
+  const manualUrl = (e.manuales.find(m => m.url) || {}).url;
   return `<div class="dlg-head"><div><p class="dlg-kicker">${esc(e.codigo || 'Sin código')} · ${esc(e.categoria)}</p><h2 id="dlg-titulo">${esc(e.nombreCorto)}</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cerrar">×</button></div>
     <div class="dlg-body mq-ficha mt-ficha">
-      <p class="mt-fuente-mini">${e.origenDashboard ? 'Máquina registrada en el dashboard (no está en Odoo).' : `Datos de Odoo al ${esc(fdt(MT.T.fuente.capturado))} (captura, no en vivo).`}</p>
-      <h3 class="rp-h">Información general</h3>
-      <dl class="org-dl">
-        ${fila('Identificador interno', `<code>${esc(e.id)}</code>`)}
+      <div class="mt-top">
+        ${ft ? fotoHtml(e, 'mt-foto mt-foto-ficha') : '<div class="mt-foto-ficha mt-sinfoto">Sin foto</div>'}
+        <dl class="mt-clave">
+          <div><dt>Condición</dt><dd>${chipCond(c.condicion)} ${c.verificada ? '<span class="mq-chip c-stock">Confirmada</span>' : '<span class="mq-chip c-otra">Sin confirmar</span>'}</dd></div>
+          <div><dt>Ubicación</dt><dd>${u.valor ? esc(u.valor) : pend()}</dd></div>
+          <div><dt>Responsable</dt><dd>${val(e.responsable, 'Pendiente de definir')}</dd></div>
+          <div><dt>Trabajos abiertos</dt><dd><b>${abiertos.length}</b>${historial.length ? ` <small class="nota">· ${historial.length} en el historial</small>` : ''}</dd></div>
+        </dl>
+      </div>
+      <div class="mt-acciones">
+        <button type="button" class="btn btn-sm btn-primary" data-act="mt-orden-nuevo" data-eid="${esc(e.id)}">+ Nuevo trabajo</button>
+        <button type="button" class="btn btn-sm" data-mt="verificar">Registrar verificación</button>
+        ${manualUrl ? `<a class="btn btn-sm" href="${esc(manualUrl)}" target="_blank" rel="noopener noreferrer">Abrir manual</a>` : ''}
+        ${!e.origenDashboard && MT.urlOdooEquipo(e) ? `<a class="btn btn-sm btn-ghost" href="${esc(MT.urlOdooEquipo(e))}" target="_blank" rel="noopener noreferrer">Abrir en Odoo</a>` : ''}
+      </div>
+      ${MT.avisosCondicion(e).map(a => `<p class="mt-aviso">⚠ ${esc(a)}</p>`).join('')}
+      ${desp('mant', 'Mantenimientos', `${abiertos.length} abiertos · ${historial.length} cerrados`, `${mantMaquinaHtml(e, false)}
+        ${otras.length ? `<details class="mas"><summary>Registros de prueba o plantilla en Odoo (${otras.length}) · fuera de los indicadores</summary>
+          <ul class="mt-sols">${otras.map(s => `<li><b>${esc(s.asunto)}</b> <span class="nota">· ${esc(s.etapa)} · ${s.clase === 'prueba' ? 'prueba' : 'plantilla'}: ${esc(s.motivoClase)}</span></li>`).join('')}</ul></details>` : ''}`, abiertos.length > 0)}
+      ${PREVENTIVOS_ACTIVOS ? desp('prev', 'Preventivos', String(rutinas.length), preventivosMaquinaHtml(e)) : ''}
+      ${desp('cond', 'Condición y verificaciones', '', condicionHtml(e, false))}
+      ${desp('datos', 'Datos de la máquina', '', `<dl class="org-dl">
         ${e.origenDashboard ? fila('Referencia de Odoo', '<span class="mt-aviso-txt">No está en Odoo: registrada en el dashboard el 18/11/2026 por indicación de Cristian. Su ficha técnica es la misma de MV01.</span>')
-          + fila('Chapa · escalera', `${esc(e.chapa)} · escalera ${esc(e.escalera.toLowerCase())}`) : fila('Referencia de Odoo', `Equipo #${e.odooId} · <a href="${esc(MT.urlOdooEquipo(e))}" target="_blank" rel="noopener noreferrer">Abrir en Odoo</a> <small class="nota">(requiere sesión)</small>`)}
-        ${fila('Código · nombre', `${esc(e.codigo || '—')} · ${esc(e.nombreCorto)}`)}
+          + fila('Chapa · escalera', `${esc(e.chapa)} · escalera ${esc(e.escalera.toLowerCase())}`) : fila('Referencia de Odoo', `Equipo #${e.odooId} <small class="nota">(abrir en Odoo requiere sesión)</small>`)}
         ${fila('Marca', pend('Pendiente: Odoo no tiene este dato'))}
         ${fila('Modelo', val(e.modelo))}
         ${fila('Serial', `${val(e.serial, 'Pendiente')}${e.notaSerial ? `<br><small class="nota">${esc(e.notaSerial)}</small>` : ''}`)}
         ${fila('Proveedor', `${val(e.proveedor)}${e.refProveedor ? ` <small class="nota">referencia del proveedor en Odoo: «${esc(e.refProveedor)}»</small>` : ''}`)}
         ${fila('Categoría', esc(e.categoria))}
-        ${fila('Ubicación', (() => { const u = MT.ubicacion(e); return u.valor ? `${esc(u.valor)} <small class="nota">${esc(u.fuente)}</small>` : pend(); })())}
-        ${fila('Fotografía', (() => { const ft = MT.foto(e); return ft ? `${fotoHtml(e, 'mt-foto mt-foto-ficha')}<small class="nota">Imagen de Odoo, de referencia: puede no ser la unidad real${ft.compartidaCon ? `. Es la misma imagen que tiene ${esc(ft.compartidaCon)} en Odoo` : ''}.</small>` : pend('Sin foto en Odoo'); })())}
-        ${fila('Responsable', `${val(e.responsable, 'Pendiente de definir')}${e.notaResponsable ? `<br><small class="nota">${esc(e.notaResponsable)}</small>` : ''}`)}
+        ${u.valor ? fila('Origen de la ubicación', `<small class="nota">${esc(u.fuente)}</small>`) : ''}
+        ${e.notaResponsable ? fila('Sobre el responsable', `<small class="nota">${esc(e.notaResponsable)}</small>`) : ''}
         ${e.departamento ? fila('Departamento', esc(e.departamento)) : ''}
         ${e.equipoMantenimiento ? fila('Equipo de mantenimiento', esc(e.equipoMantenimiento)) : ''}
         ${e.conciliacion ? fila('Máquinas de simulación', `<span class="mt-aviso-txt">${esc(e.conciliacion)}</span>`) : ''}
-      </dl>
-      <h3 class="rp-h">Condición actual</h3>
-      ${condicionHtml(e)}
-      <h3 class="rp-h">Mantenimientos</h3>
-      ${mantMaquinaHtml(e)}
-      ${PREVENTIVOS_ACTIVOS ? `<h4 class="pv-h4">Preventivos (rutinas documentadas y aprobadas)</h4>${preventivosMaquinaHtml(e)}` : ''}
-      ${otras.length ? `<details class="mas"><summary>Registros de prueba o plantilla en Odoo (${otras.length}) · fuera de los indicadores</summary>
-        <ul class="mt-sols">${otras.map(s => `<li><b>${esc(s.asunto)}</b> <span class="nota">· ${esc(s.etapa)} · ${s.clase === 'prueba' ? 'prueba' : 'plantilla'}: ${esc(s.motivoClase)}</span></li>`).join('')}</ul></details>` : ''}
-      <h3 class="rp-h">Información técnica</h3>
-      <details class="mas"><summary>Descripción técnica en Odoo</summary>${e.descripcion ? `<p class="pre">${esc(e.descripcion)}</p>` : '<p class="vacio">Sin descripción.</p>'}</details>
-      <details class="mas"><summary>Sistemas (${e.sistemas.length}) y componentes (${e.componentes.length})</summary>
+        ${ft ? fila('Fotografía', `<small class="nota">Imagen de Odoo, de referencia: puede no ser la unidad real${ft.compartidaCon ? `. Es la misma imagen que tiene ${esc(ft.compartidaCon)} en Odoo` : ''}.</small>`) : ''}
+        ${fila('Identificador interno', `<code>${esc(e.id)}</code>`)}
+      </dl>`)}
+      ${desp('tec', 'Información técnica', '', `<h4 class="pv-h4">Descripción en Odoo</h4>${e.descripcion ? `<p class="pre">${esc(e.descripcion)}</p>` : '<p class="vacio">Sin descripción.</p>'}
+        <h4 class="pv-h4">Sistemas (${e.sistemas.length}) y componentes (${e.componentes.length})</h4>
         ${e.sistemas.length ? `<p><b>Sistemas:</b> ${e.sistemas.map(esc).join(' · ')}</p>` : '<p class="vacio">Sin sistemas registrados.</p>'}
-        ${e.componentes.length ? `<p><b>Componentes:</b> ${e.componentes.map(esc).join(' · ')}</p>` : '<p class="vacio">Sin componentes registrados.</p>'}</details>
-      <details class="mas"><summary>Manuales y documentos (${e.manuales.length})</summary>
-        ${e.manuales.length ? `<ul class="vt-evid">${e.manuales.map(m => `<li>${esc(m.nombre)} <small class="nota">${m.kb} KB · en Odoo</small></li>`).join('')}</ul>` : '<p class="vacio">Sin manual en Odoo.</p>'}
-        <p class="nota">Despieces y especificaciones: pendientes de documentar.</p></details>
+        ${e.componentes.length ? `<p><b>Componentes:</b> ${e.componentes.map(esc).join(' · ')}</p>` : '<p class="vacio">Sin componentes registrados.</p>'}`)}
+      ${desp('man', 'Manuales y documentos', String(e.manuales.length), `${e.manuales.length ? `<ul class="vt-evid">${e.manuales.map(m => `<li>${manualLink(m)} <small class="nota">${m.kb} KB · ${m.url ? 'en Drive' : 'solo en Odoo'}</small></li>`).join('')}</ul>` : '<p class="vacio">Sin manual en Odoo.</p>'}
+        <p class="nota"><a href="${esc(MT.CARPETA_MANUALES)}" target="_blank" rel="noopener noreferrer">Ver la carpeta de manuales en Drive</a></p>
+        <p class="nota">Despieces y especificaciones: pendientes de documentar.</p>`)}
+      <p class="mt-fuente-mini">${e.origenDashboard ? 'Máquina registrada en el dashboard (no está en Odoo).' : `Datos de Odoo al ${esc(fdt(MT.T.fuente.capturado))} (captura, no en vivo).`}</p>
     </div>`;
 }
 
 /* ── Condición actual (Etapa 3) ── */
 const condCorta = e => { const c = MT.condicionActual(e); return `${chipCond(c.condicion)}${c.verificacion && c.verificada ? ` <small class="nota">verificada el ${fd(c.verificacion.fecha)}</small>` : ''}`; };
 const ubiTxt = e => { const u = MT.ubicacion(e); return u.valor ? `<span title="${esc(u.fuente)}">${esc(u.valor)}</span>` : pend(); };
-function condicionHtml(e) {
+function condicionHtml(e, conBoton = true) {
   const c = MT.condicionActual(e), v = c.verificacion, avisos = MT.avisosCondicion(e), hist = MT.verificaciones(e).slice(1);
   return `<dl class="org-dl">
       ${fila('Condición operativa', `${chipCond(c.condicion)} ${c.verificada ? '<span class="mq-chip c-stock">Confirmada</span>' : '<span class="mq-chip c-otra">Sin confirmar</span>'}${c.motivo ? `<br><small class="nota">${esc(c.motivo)}</small>` : ''}`)}
@@ -166,7 +185,7 @@ function condicionHtml(e) {
       ${v && v.evidencia ? fila('Evidencia', /^https?:\/\//.test(v.evidencia) ? `<a href="${esc(v.evidencia)}" target="_blank" rel="noopener noreferrer">${esc(v.evidencia)}</a>` : esc(v.evidencia)) : ''}
     </dl>
     ${avisos.map(a => `<p class="mt-aviso">⚠ ${esc(a)}</p>`).join('')}
-    <p><button type="button" class="btn btn-sm btn-primary" data-mt="verificar">Registrar verificación</button></p>
+    ${conBoton ? '<p><button type="button" class="btn btn-sm btn-primary" data-mt="verificar">Registrar verificación</button></p>' : ''}
     <p class="nota">Las verificaciones se guardan para todo el equipo (piden el PIN y tu nombre). No se escriben en Odoo.</p>
     ${hist.length ? `<details class="mas"><summary>Verificaciones anteriores (${hist.length})</summary><ol class="hist">${hist.map(h => `<li><b>${esc(fd(h.fecha))}</b> · ${esc(h.condicion)} · ${esc(h.responsable)}${h.restricciones ? ` · restricciones: ${esc(h.restricciones)}` : ''}${h.observaciones ? `<br><small class="nota">${esc(h.observaciones)}</small>` : ''}</li>`).join('')}</ol></details>` : ''}`;
 }
@@ -362,12 +381,12 @@ export function fichaTrabajoHtml(s) {
 }
 
 /* Bloque «Mantenimientos» de la ficha de la máquina. */
-function mantMaquinaHtml(e) {
+function mantMaquinaHtml(e, conBoton = true) {
   const { abiertos, historial } = MT.trabajosDeEquipo(e);
   const item = t => `<li class="mt-sol ${t.abierta ? 'abierta' : ''}"><button type="button" class="mq-link" data-act="${t.act}" ${t.fuente === 'odoo' ? 'data-sid' : 'data-oid'}="${esc(t.id)}"><b>${esc(t.titulo)}</b></button>
     <span class="nota"> · ${esc(t.estado)} · ${esc(t.tipo)} · ${esc(t.prioridad)}</span> ${chipOrigen(t)}${t.avisos.length ? ' <span class="mt-aviso-ico">⚠</span>' : ''}
     <br><small class="nota">${t.abierta ? `Reportado ${fd(t.fechaReporte) || '—'}${t.proximaAccion ? ` · próxima acción: ${esc(t.proximaAccion)}` : ''}` : `Cerrado ${fd(t.fechaCierre) || '—'}${t.fechaEjecucion ? ` · ejecución según Odoo ${fd(t.fechaEjecucion)}` : ''}`}</small></li>`;
-  return `<p><button type="button" class="btn btn-sm btn-primary" data-act="mt-orden-nuevo" data-eid="${esc(e.id)}">+ Nuevo trabajo para esta máquina</button></p>
+  return `${conBoton ? `<p><button type="button" class="btn btn-sm btn-primary" data-act="mt-orden-nuevo" data-eid="${esc(e.id)}">+ Nuevo trabajo para esta máquina</button></p>` : ''}
     <h4 class="pv-h4">Trabajos abiertos (${abiertos.length})</h4>
     ${abiertos.length ? `<ul class="mt-sols">${abiertos.map(item).join('')}</ul>` : '<p class="vacio">Ningún trabajo abierto. Esto no confirma que la máquina esté operativa.</p>'}
     <h4 class="pv-h4">Historial (${historial.length})</h4>

@@ -8,6 +8,7 @@
 import { esc, plural, ICON, migasHtml, tipoEtiqueta, tipoTxt, macroDe } from './componentes.js';
 import { AREA, REGISTROS, COLUMNAS, PRIORIDADES, DEPARTAMENTOS, RELACION_DEPTOS, ESTADOS_CONCLUSION } from './datos.js';
 import { rutaRegistro, rutaMacro } from './rutas.js';
+import { informe } from './informes-datos.js';
 
 const fmtD = s => (/^\d{4}-\d{2}-\d{2}$/.test(s || '') ? s.split('-').reverse().join('/') : '');
 export const fmtDT = s => { const d = new Date(s); return isNaN(d) ? '' : d.toLocaleString('es', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); };
@@ -299,11 +300,32 @@ function listaTareasHtml(r, tareas) {
   </section>`;
 }
 
+/* Informe fijo de una investigación (informes-datos.js): resumen, tabla por local y lista preliminar de compra. */
+function informeHtml(id) {
+  const inf = informe(id); if (!inf) return '';
+  const est = { falta: ['Sin extintor', 'inf-falta'], tiene: ['Tiene 1 extintor', 'inf-tiene'], pendiente: ['Por inspeccionar', 'inf-pend'] };
+  return `<section class="pj-sec inf" aria-labelledby="inf-t">
+    <div class="sec-head"><h2 id="inf-t">${esc(inf.titulo)}</h2><span class="nota">${fmtD(inf.fecha)}</span></div>
+    <p class="inf-resumen">${esc(inf.resumen)}</p>
+    <h3>Resultados y acciones por local</h3>
+    <ul class="inf-locales">${inf.locales.map(l => { const [et, cls] = est[l.estado] || ['', '']; return `<li class="inf-local ${cls}">
+      <div class="inf-lhead"><div><b>${esc(l.espacio)}</b>${l.detalle ? `<small>${esc(l.detalle)}</small>` : ''}</div>${et ? `<span class="inf-chip">${et}</span>` : ''}</div>
+      <dl><div><dt>Resultado</dt><dd>${esc(l.resultado)}</dd></div><div><dt>Por hacer</dt><dd>${esc(l.porHacer)}</dd></div></dl>
+    </li>`; }).join('')}</ul>
+    <h3>Lista preliminar de compra</h3>
+    <p class="nota">Preliminar: por ahora no se realizan compras ni se comprometen gastos.</p>
+    <ul class="inf-compra">${inf.compra.map(c => `<li><b>${esc(c.espacio)}</b><span>${esc(c.texto)}</span></li>`).join('')}</ul>
+    ${inf.notasCompra ? `<p class="inf-notas">${esc(inf.notasCompra)}</p>` : ''}
+    <p class="nota">Base técnica y documental: ${inf.base.map(esc).join(' · ')}. Fuente: ${esc(inf.origen)}</p>
+  </section>`;
+}
+
 /* ── Resultados de una investigación: conclusión, hallazgos y fuentes; y a quién alimentan ── */
 export function resultadosHtml(r, ini, res) {
   const deps = dependientesDe(r.id);
   const host = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } };
   return `${cabecera(r, ini, 'resultados')}
+    ${informeHtml(r.id)}
     <div class="pj-ficha rs-ficha">
       <section class="pj-sec rs-conc" aria-labelledby="rs-conc-t">
         <div class="sec-head"><h2 id="rs-conc-t">Conclusión</h2>${concChip(res)}</div>

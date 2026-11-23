@@ -259,13 +259,15 @@ function individualHtml(us, vista, filtro) {
       <div class="mq-card-body">
         <p class="mq-tipo">${esc(tipoTxt(u))}</p>
         <h3><button type="button" class="mq-link" data-act="maq-ficha" data-uid="${esc(u.id)}">${esc(u.codigo || u.id)}</button></h3>
+        <p>${condChip(u.condicion)}${u.estadoOperativo ? ` <span class="mq-chip c-otra">${esc(u.estadoOperativo)}</span>` : ''}</p>
+        <details class="mas mq-mas" data-keep="uni-${esc(u.id)}"><summary>Ver datos</summary>
         <dl class="mq-dl">
           ${u.tipo !== 'soporte' ? `<div><dt>Escalera</dt><dd>${esc(u.escalera || '—')}</dd></div>` : ''}
           <div><dt>Serial</dt><dd>${u.serial ? `<code>${esc(u.serial)}</code>` : pend('Sin serial')}</dd></div>
           <div><dt>Kit</dt><dd>${kitTxt(u)}</dd></div>
           <div><dt>Ubicación</dt><dd>${u.ubicacion ? esc(u.ubicacion) : pend('Pendiente')}</dd></div>
         </dl>
-        <p>${condChip(u.condicion)}${u.estadoOperativo ? ` <span class="mq-chip c-otra">${esc(u.estadoOperativo)}</span>` : ''}</p>
+        </details>
       </div></li>`).join('')}</ul>`;
 }
 
@@ -303,7 +305,8 @@ export function kitsListaHtml(kits, vista, editable = true) {
       return `<li class="mq-kit ${e.completo ? 'completo' : ''}" id="kit-${esc(k.id)}">
         <div class="mq-kit-head"><h3>Kit ${esc(k.codigo)}</h3><span class="mq-chip ${e.completo ? 'c-stock' : 'c-falta'}">${e.completo ? 'Completo' : `Incompleto · ${e.asignadas} de 4`}</span></div>
         <p class="nota">Disponibilidad: ${esc(e.disponibilidad)}</p>
-        <ul class="mq-pos-lista">${D.POSICIONES.map(p => posicionHtml(k, p, e.unidades[p.id], editable)).join('')}</ul>
+        <details class="mas mq-mas" data-keep="kitpos-${esc(k.id)}"><summary>Unidades del kit (${e.asignadas} de 4)</summary>
+          <ul class="mq-pos-lista">${D.POSICIONES.map(p => posicionHtml(k, p, e.unidades[p.id], editable)).join('')}</ul></details>
         ${e.avisos.length ? `<ul class="conf-list">${e.avisos.map(a => `<li>${esc(a)}</li>`).join('')}</ul>` : ''}
         <details class="mas" data-keep="kit-${esc(k.id)}"><summary>Detalle e historial</summary>
           <div class="mas-body">${k.origen ? `<p class="nota">${esc(k.origen)}</p>` : ''}${k.observaciones ? `<p>${esc(k.observaciones)}</p>` : ''}
@@ -319,18 +322,22 @@ export function fichaHtml(u) {
     <div class="dlg-body mq-ficha">
       ${imagenHtml(u, 'mq-img mq-img-lg')}
       <dl class="org-dl">
-        <div><dt>Identificador interno</dt><dd><code>${esc(u.id)}</code></dd></div>
-        <div><dt>Tipo</dt><dd>${esc(tipoTxt(u))}</dd></div>
-        ${hoja ? `<div><dt>Categoría</dt><dd>${esc(u.categoria || '—')}</dd></div><div><dt>Lado de la escalera</dt><dd>${esc(u.escalera || '—')}</dd></div>` : ''}
-        <div><dt>Serial</dt><dd>${u.serial ? `<code>${esc(u.serial)}</code>` : (hoja ? pend('Sin serial') : '<span class="nota">Sin serial (se usa el identificador interno)</span>')}</dd></div>
         <div><dt>Condición comercial</dt><dd>${condChip(u.condicion)}</dd></div>
         <div><dt>Estado operativo</dt><dd>${u.estadoOperativo ? esc(u.estadoOperativo) : pend('Por confirmar')}</dd></div>
-        <div><dt>Marca / modelo</dt><dd>${u.marca || u.modelo ? esc([u.marca, u.modelo].filter(Boolean).join(' · ')) : pend('Sin datos')}</dd></div>
         <div><dt>Ubicación</dt><dd>${u.ubicacion ? esc(u.ubicacion) : pend('Ubicación pendiente')}</dd></div>
         <div><dt>Kit</dt><dd>${k ? `Kit ${esc(k.codigo)}` : '<span class="nota">Sin kit (unidad suelta)</span>'}</dd></div>
-        ${u.observaciones ? `<div><dt>Observaciones</dt><dd class="pre">${esc(u.observaciones)}</dd></div>` : ''}
       </dl>
-      ${hoja ? '<p class="nota">Categoría, serial, escalera, condición e imagen vienen de la hoja de máquinas; marca, modelo, ubicación, estado operativo y observaciones se guardan en esta aplicación.</p>' : ''}
+      <details class="mas mq-mas" data-keep="ficha-datos"><summary>Datos de la unidad</summary>
+        <dl class="org-dl">
+          <div><dt>Tipo</dt><dd>${esc(tipoTxt(u))}</dd></div>
+          ${hoja ? `<div><dt>Categoría</dt><dd>${esc(u.categoria || '—')}</dd></div><div><dt>Lado de la escalera</dt><dd>${esc(u.escalera || '—')}</dd></div>` : ''}
+          <div><dt>Serial</dt><dd>${u.serial ? `<code>${esc(u.serial)}</code>` : (hoja ? pend('Sin serial') : '<span class="nota">Sin serial (se usa el identificador interno)</span>')}</dd></div>
+          <div><dt>Marca / modelo</dt><dd>${u.marca || u.modelo ? esc([u.marca, u.modelo].filter(Boolean).join(' · ')) : pend('Sin datos')}</dd></div>
+          <div><dt>Identificador interno</dt><dd><code>${esc(u.id)}</code></dd></div>
+        </dl>
+        ${hoja ? '<p class="nota">Categoría, serial, escalera, condición e imagen vienen de la hoja de máquinas; marca, modelo, ubicación, estado operativo y observaciones se guardan en esta aplicación.</p>' : ''}
+      </details>
+      ${u.observaciones ? `<details class="mas mq-mas"><summary>Observaciones</summary><p class="pre">${esc(u.observaciones)}</p></details>` : ''}
       ${(u.historial || []).length ? `<details class="mas"><summary>Historial (${u.historial.length})</summary><ol class="hist">${[...u.historial].reverse().map(h => `<li><span class="nota">${esc(fdt(h.fecha))}</span> ${esc(h.nota)}</li>`).join('')}</ol></details>` : ''}
     </div>
     <div class="dlg-foot">

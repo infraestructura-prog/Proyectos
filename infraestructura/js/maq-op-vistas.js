@@ -46,8 +46,8 @@ export function operacionHtml(S) {
           <td>${ab ? `<span class="mq-chip c-falta">${ab}</span>` : '—'}</td></tr>`; }).join('')}</tbody></table></div>`
         : `<ul class="mq-grid op-grid">${lf.map(({ r, u }) => { const ab = PV.abiertos(PV.serviciosDe({ unidadId: u.id })).length; return `<li class="mq-card op-card"><div class="mq-card-body">
           <p class="mq-tipo">${esc(tipoTxt(u))}</p><h3><button type="button" class="mq-link" data-act="maq-ficha" data-uid="${esc(u.id)}">${esc(u.codigo || u.id)}</button></h3>
-          <dl class="mq-dl"><div><dt>Ubicación</dt><dd>${esc(r.ubicacion)}</dd></div><div><dt>Responsable</dt><dd>${r.responsable ? esc(r.responsable) : pend('Sin asignar')}</dd></div>
-            <div><dt>Última inspección</dt><dd>${fd(r.ultimaInspeccion) || pend('Sin registro')}</dd></div>${r.proximaAccion ? `<div><dt>Próxima acción</dt><dd>${esc(r.proximaAccion)}</dd></div>` : ''}</dl>
+          <details class="mas mq-mas" data-keep="op-${esc(u.id)}"><summary>Ver datos</summary><dl class="mq-dl"><div><dt>Ubicación</dt><dd>${esc(r.ubicacion)}</dd></div><div><dt>Responsable</dt><dd>${r.responsable ? esc(r.responsable) : pend('Sin asignar')}</dd></div>
+            <div><dt>Última inspección</dt><dd>${fd(r.ultimaInspeccion) || pend('Sin registro')}</dd></div>${r.proximaAccion ? `<div><dt>Próxima acción</dt><dd>${esc(r.proximaAccion)}</dd></div>` : ''}</dl></details>
           <p>${u.estadoOperativo ? `<span class="mq-chip c-otra">${esc(u.estadoOperativo)}</span>` : pend('Estado por confirmar')}${ab ? ` <span class="mq-chip c-falta">${plural(ab, 'pendiente', 'pendientes')}</span>` : ''}</p>
         </div></li>`; }).join('')}</ul>`}`;
 }
@@ -56,7 +56,7 @@ export function operacionHtml(S) {
 export function operacionUnidadHtml(u) {
   const r = OP.deUnidad(u.id), hist = OP.historialDe(u.id).filter(x => !x.activa);
   if (!r && !hist.length) return '';
-  return `<h3 class="rp-h">Operación en nuestro taller</h3>
+  return `<details class="mas mq-mas" data-keep="ficha-op"><summary>Operación en nuestro taller${r ? ` · ${esc(r.ubicacion)}` : ''}</summary>
     ${r ? `<dl class="org-dl">
       <div><dt>Ubicación en el taller</dt><dd>${esc(r.ubicacion)}</dd></div>
       <div><dt>Responsable</dt><dd>${r.responsable ? esc(r.responsable) : pend('Sin asignar')}</dd></div>
@@ -66,7 +66,7 @@ export function operacionUnidadHtml(u) {
       ${r.fichaTecnica ? `<div><dt>Ficha técnica</dt><dd class="pre">${/^https:\/\//.test(r.fichaTecnica) ? `<a href="${esc(r.fichaTecnica)}" target="_blank" rel="noopener noreferrer">${esc(r.fichaTecnica)}</a>` : esc(r.fichaTecnica)}</dd></div>` : ''}
     </dl>
     <details class="mas"><summary>Historial de operación (${r.historial.length})</summary><ol class="hist">${[...r.historial].reverse().map(h => `<li><span class="nota">${esc(fdt(h.fecha))}</span> ${esc(h.nota)}</li>`).join('')}</ol></details>` : ''}
-    ${hist.length ? `<p class="nota">Operaciones anteriores: ${hist.map(x => `${esc(x.ubicacion)} (${fd(x.desde) || 'sin fecha'} → ${fd(x.fin && x.fin.fecha) || 'sin fecha'})`).join('; ')}.</p>` : ''}`;
+    ${hist.length ? `<p class="nota">Operaciones anteriores: ${hist.map(x => `${esc(x.ubicacion)} (${fd(x.desde) || 'sin fecha'} → ${fd(x.fin && x.fin.fecha) || 'sin fecha'})`).join('; ')}.</p>` : ''}</details>`;
 }
 
 export function formOperacionHtml(r) {

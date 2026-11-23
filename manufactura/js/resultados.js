@@ -126,7 +126,7 @@ function pinturasHtml(d) {
       <h3>${esc(a.producto)}</h3>
       ${a.id === d.recomendadaId ? '<span class="pill rec-pill">Recomendada por el estudio</span>' : ''}
       <div class="rs-claves">
-        <div><span>Por maleta</span><strong>${a.costoMaleta ? esc(a.costoMaleta) : 'Por calcular'}</strong></div>
+        <div><span>Por maleta</span><strong>${a.costoMaleta ? `≈ ${esc(a.costoMaleta)}` : 'Por calcular'}</strong></div>
         <div><span>Duración</span><strong>${esc(a.vidaUtil)}</strong></div>
         <div><span>Aplicación</span><strong>${esc(a.tiempo)}</strong></div>
       </div>
@@ -140,7 +140,6 @@ function pinturasHtml(d) {
     <section class="pj-sec" aria-labelledby="rs-conc-t"><h2 id="rs-conc-t">Conclusiones del estudio</h2>
       ${String(d.conclusiones || '').split(/\n\n+/).map(p => `<p>${esc(p)}</p>`).join('')}
       ${d.motivosRecomendacion && d.motivosRecomendacion.length ? `<h3>Motivos de la recomendación</h3>${lista(d.motivosRecomendacion)}` : ''}
-      ${d.observacionesGenerales && d.observacionesGenerales.length ? `<h3>Observaciones</h3>${lista(d.observacionesGenerales)}` : ''}
       <p class="nota">La recomendación es del estudio: ninguna alternativa está validada sin pruebas.</p>
     </section>`;
 }

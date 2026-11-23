@@ -201,7 +201,7 @@ export function formRetiroHtml(u) {
 export function postventaUnidadHtml(u) {
   const act = PV.instalacionActiva(u.id), hist = PV.historialInstalaciones(u.id).filter(x => !x.activa), sv = PV.serviciosDe({ unidadId: u.id });
   const t = act && PV.tallerPorId(act.tallerId);
-  return `<h3 class="rp-h">Postventa</h3>
+  return `<details class="mas mq-mas" data-keep="ficha-pv"><summary>Postventa · ${act ? 'entregada a un cliente' : 'no entregada'}${sv.length ? ` · ${sv.length} servicio(s)` : ''}</summary>
     ${act ? `<dl class="org-dl">
         <div><dt>Entregada en</dt><dd>${act.ventaId ? `<button type="button" class="mq-link" data-act="vt-ficha" data-vid="${esc(act.ventaId)}">${esc(act.ventaId)} · ${esc((V.ventaPorId(act.ventaId) || {}).nombre || 'venta')}</button>` : t ? `<button type="button" class="mq-link" data-act="pv-taller" data-tid="${esc(t.id)}">${esc(t.nombre)}</button> <small class="nota">${esc(ubicTaller(t))}</small>` : '—'}</dd></div>
         <div><dt>Fecha de venta</dt><dd>${fd(act.fechaVenta) || '<span class="nota">No registrada</span>'}</dd></div>
@@ -210,5 +210,5 @@ export function postventaUnidadHtml(u) {
       </dl>${u.diferenciaHoja ? '<p class="aviso cond-aviso">La hoja de máquinas todavía la indica «En stock». La aplicación no la modifica: actualiza la condición en la hoja cuando corresponda.</p>' : ''}`
       : '<p class="nota">No está entregada a ningún cliente.</p>'}
     ${hist.length ? `<p class="nota">Entregas anteriores: ${hist.map(x => `${esc(x.ventaId ? `venta ${x.ventaId}` : (PV.tallerPorId(x.tallerId) || {}).nombre || 'taller')} (${fd(x.fechaInstalacion) || 'sin fecha'} → retiro ${fd(x.retiro && x.retiro.fecha) || 'sin fecha'})`).join('; ')}.</p>` : ''}
-    <h4 class="pv-h4">Servicios e incidencias</h4>${servListaHtml(sv)}`;
+    <h4 class="pv-h4">Servicios e incidencias</h4>${servListaHtml(sv)}</details>`;
 }

@@ -55,7 +55,7 @@ export const MACROOBJETIVOS = [
     notas: ['Inventario y postventa se enlazan con el mismo identificador de activo del censo y del historial técnico, sin copias independientes del mismo equipo.'] },
   { id: 'mi-gestion', numero: '09', titulo: 'Organizar la gestión de Infraestructura', corto: 'Gestión de Infraestructura', registros: ['pi-dashboard'] },
   { id: 'mi-extintores', numero: '10', titulo: 'Implementar extintores en todos los locales', corto: 'Extintores',
-    registros: ['pi-extintores'],
+    registros: ['ii-extintores', 'pi-extintores'],
     notas: ['Por ahora no se realizan compras ni se comprometen gastos: primero se revisan las opciones con la gerencia.'] }
 ];
 
@@ -115,7 +115,13 @@ export const REGISTROS = {
   'pi-dashboard': { tipo: 'proyecto', slug: 'reorganizacion-dashboard', nombre: 'Reorganización del dashboard', macro: 'mi-gestion',
     actividades: [a('Estructurar esta cascada de objetivos y proyectos.', true), a('Diseñar el sidebar y presentar la arquitectura.', true), a('Integrar Seguimiento, calendario, Kanban y filtros.'), a('Definir fuentes de datos, accesos y responsables técnicos.'), a('Preparar la demostración y coordinar apoyo.', true)] },
 
+  'ii-extintores': { tipo: 'investigacion', slug: 'levantamiento-extintores-locales', nombre: 'Levantamiento de extintores por local', macro: 'mi-extintores',
+    actividades: [a('Verificar los extintores de Tienda y Almacén 1.', true, 'Confirmar operatividad, potencial de extinción e intervalo de servicio de los dos equipos existentes.'),
+      a('Inspeccionar Almacenes 2 y 3.', true, 'Levantar inventario de extintores, riesgos, salidas y recorridos del Almacén 2 (local 27) y del Almacén 3 (local M1), y confirmar la superficie de M1.'),
+      a('Verificar cobertura de Oficinas.', false, 'Verificar extintores, recorridos y salidas en los locales 24 y 25 para definir cantidad y puntos.'),
+      a('Pedir fichas técnicas y certificación.', false, 'Solicitar ficha técnica, potencial completo y respaldo de certificación de los modelos a cotizar, y cotizar la inspección de los dos extintores existentes.')] },
   'pi-extintores': { tipo: 'proyecto', slug: 'implementacion-extintores', nombre: 'Implementación de extintores', macro: 'mi-extintores',
+    relaciones: [{ id: 'ii-extintores', texto: 'El levantamiento define dónde y qué extintores hacen falta.' }],
     actividades: [
       a('Inspeccionar los locales.', true, 'Recorrer todos los locales e identificar cuáles carecen de extintores.',
         'Inspeccionar todos los locales e identificar cuáles carecen de extintores'),
@@ -135,7 +141,7 @@ export const BLOQUES_ETAPA3 = [
   { id: 'bloque-4', titulo: 'Extintores en los locales', registros: ['pi-extintores'] }
 ];
 /* Etapa 4: las investigaciones tienen Inicio (con su lista de tareas, sin Kanban) y Resultados. */
-export const INVESTIGACIONES_ETAPA4 = ['ii-alternativas-termicas', 'ii-causas-goteras', 'ii-instrumentacion'];
+export const INVESTIGACIONES_ETAPA4 = ['ii-alternativas-termicas', 'ii-causas-goteras', 'ii-instrumentacion', 'ii-extintores'];
 export const HABILITADOS = new Set([...BLOQUES_ETAPA3.flatMap(b => b.registros), ...INVESTIGACIONES_ETAPA4]);
 /* Estados de la conclusión de una investigación (Resultados). */
 export const ESTADOS_CONCLUSION = [
