@@ -375,3 +375,40 @@ export function formUbicacionHtml(v, mapaListo) {
     <div class="dlg-foot"><button type="button" class="btn" data-dlg-close>Cancelar</button><button type="submit" class="btn btn-primary">Guardar ubicación</button></div>
   </form>`;
 }
+
+/* ── Registrar venta desde Stock: datos de la venta + unidades vendidas; al guardar pasan a Postventa ── */
+export function formVentaStockHtml(k, unidades, autor) {
+  const hoy = new Date().toISOString().slice(0, 10), p = V.parametros();
+  const inp = (n, t, extra = '') => `<label class="fld"><span>${t}</span><input name="${n}" autocomplete="off" ${extra}></label>`;
+  return `<form class="dlg-form" novalidate>
+    <div class="dlg-head"><div><p class="dlg-kicker">Kit ${esc(k.codigo)} · Stock</p><h2 id="dlg-titulo">Registrar venta</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cancelar">×</button></div>
+    <div class="dlg-body">
+      <p class="nota">Al guardar, la venta queda registrada, los equipos marcados salen de Stock y pasan a Postventa. La hoja de máquinas no se modifica: actualízala cuando corresponda.</p>
+      <fieldset class="fld"><legend>Equipos vendidos</legend>
+        ${unidades.map(u => `<label class="check"><input type="checkbox" name="unidad" value="${esc(u.id)}" checked> <b>${esc(u.codigo || u.id)}</b> <small class="nota">${esc(tipoTxt(u))}${u.serial ? ` · serial ${esc(u.serial)}` : ''}</small></label>`).join('')}
+      </fieldset>
+      <fieldset class="fld"><legend>Cliente</legend>
+        <div class="fld-row">${inp('dueno', 'Dueño / cliente', 'maxlength="160"')}${inp('empresa', 'Empresa (razón social)', 'maxlength="160"')}</div>
+        <div class="fld-row">${inp('establecimiento', 'Establecimiento (nombre comercial)', 'maxlength="160"')}${inp('telefono', 'Teléfono', 'maxlength="60" inputmode="tel"')}</div>
+        ${inp('ciudad', 'Ciudad o zona', 'maxlength="120"')}
+        <p class="nota">Escribe al menos el dueño, la empresa o el establecimiento.</p>
+      </fieldset>
+      <fieldset class="fld"><legend>Venta</legend>
+        <div class="fld-row">${inp('fechaVenta', 'Fecha de venta <b class="req">*</b>', `type="date" value="${hoy}" required`)}${inp('fechaEntrega', 'Fecha de entrega', 'type="date"')}</div>
+        <div class="fld-row">
+          <label class="fld"><span>Forma de pago</span><select name="formaPago"><option value="">Sin dato</option>${V.FORMAS_PAGO.map(f => `<option>${esc(f)}</option>`).join('')}</select></label>
+          ${inp('vendedor', 'Vendedor', 'maxlength="120"')}</div>
+        <div class="fld-row">${inp('precio', 'Precio', 'inputmode="decimal" placeholder="Vacío = no registrado"')}${inp('moneda', 'Moneda', 'maxlength="10" value="USD"')}</div>
+      </fieldset>
+      <fieldset class="fld"><legend>Garantía y documentación</legend>
+        <div class="fld-row">${inp('garantiaMeses', 'Garantía (meses)', `inputmode="numeric" value="${p.garantiaMeses}"`)}
+          <label class="fld"><span>Documentación</span><select name="docEstado">${V.ESTADOS_DOC.map(x => `<option>${esc(x)}</option>`).join('')}</select></label></div>
+        <p class="nota">La garantía empieza en la fecha de entrega; si aún no se entrega, se cuenta desde la fecha de venta.</p>
+      </fieldset>
+      <label class="fld"><span>Notas internas</span><textarea name="notas" rows="2" maxlength="1000"></textarea></label>
+      ${inp('autor', 'Tu nombre', `maxlength="120" value="${esc(autor || '')}"`)}
+      <div class="aviso err" data-err hidden></div>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn" data-dlg-close>Cancelar</button><button type="submit" class="btn btn-primary">Registrar venta</button></div>
+  </form>`;
+}

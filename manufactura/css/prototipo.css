@@ -589,3 +589,66 @@ body::before {
 .rs-claves strong { font-size: 14px; line-height: 1.25; }
 .rs-pros, .rs-contras { border-left: 3px solid var(--forest); padding-left: 10px; }
 .rs-contras { border-left-color: var(--peach, #e0915a); }
+
+/* Pinturas: filtro por tipo, etiquetas de evidencia y cuadro con criterios fijos al desplazar */
+.rs-tipos { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 6px; }
+.rs-tipo { min-height: 40px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line-hi); background: var(--surface); color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+.rs-tipo[aria-pressed="true"] { background: var(--forest); border-color: var(--forest); color: #fff; }
+.rs-tipo:focus-visible { outline: 3px solid var(--forest); outline-offset: 2px; }
+.rs-tipo-n { display: inline-block; min-width: 20px; margin-left: 4px; padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, currentColor 14%, transparent); font-size: 12px; text-align: center; }
+.rs-ev { display: inline-block; margin-top: 4px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 800; line-height: 1.5; white-space: normal; }
+.rs-tabla .rs-ev, .rs-claves .rs-ev { display: table; }
+.rs-ev.is-firme { background: var(--soft); color: var(--forest); }
+.rs-ev.is-prov { background: var(--peach-soft); color: #8A4B22; }
+.spray-pill { background: #DCEAF0; color: #2B5D78; justify-self: start; }
+.spray-pill.is-alt { background: #EEF3F6; }
+.rs-tabla thead .spray-pill { display: inline-block; margin-top: 6px; font-size: 11px; }
+.rs-celda-txt { display: block; font-size: 12.5px; color: var(--text-2); margin-top: 2px; }
+.rs-tabla-pin { min-width: calc(130px + var(--cols, 4) * 170px); }
+.rs-tabla-pin td { vertical-align: top; min-width: 150px; }
+.rs-tabla-pin tbody th, .rs-tabla-pin thead th:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); box-shadow: inset -1px 0 0 var(--line); }
+.rs-tabla-pin thead th:first-child { background: var(--bg); }
+.rs-compat { display: block; font-size: 12.5px; line-height: 1.4; }
+.rs-link { display: block; margin-top: 4px; padding: 0; border: 0; background: none; color: var(--forest); font: inherit; font-size: 12.5px; font-weight: 800; text-decoration: underline; cursor: pointer; }
+.rs-link:focus-visible { outline: 3px solid var(--forest); outline-offset: 2px; }
+.rs-costo { display: grid; gap: 6px; margin: 8px 0; }
+.rs-pre { white-space: pre-wrap; font-size: 12.5px; background: var(--bg); padding: 8px; border-radius: var(--r-sm); margin: 0; }
+.rs-fuentes a, .rs-partidas a { word-break: break-word; }
+@media (max-width: 640px) {
+  .rs-tabla-pin { min-width: calc(110px + var(--cols, 4) * 160px); }
+  .rs-tabla-pin tbody th, .rs-tabla-pin thead th:first-child { width: 110px; min-width: 110px; font-size: 12px; }
+  .rs-tipo { flex: 1 1 auto; }
+}
+
+/* Catálogo de parrillas y vínculos moto ↔ parrilla */
+.rs-pars { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+.rs-par { background: var(--surface); box-shadow: 0 0 0 1px var(--line); padding: 14px; }
+.rs-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.rs-rel-bloque { display: grid; gap: 2px; }
+.rs-rel-t { margin: 6px 0 0; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--text-3); }
+.rs-rel { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.rs-rel li { display: grid; gap: 2px; justify-items: start; }
+.rs-rel small { font-size: 12px; color: var(--text-2); }
+.rs-chip-btn { display: inline-block; margin: 2px 4px 2px 0; padding: 3px 10px; min-height: 30px; border-radius: 999px; border: 1px solid var(--line-hi); background: var(--soft); color: var(--forest); font: inherit; font-size: 12.5px; font-weight: 800; text-align: left; cursor: pointer; }
+.rs-chip-btn:hover { border-color: var(--forest); }
+.rs-chip-btn:focus-visible { outline: 3px solid var(--forest); outline-offset: 2px; }
+.rs-card.rs-destacar { box-shadow: 0 0 0 3px var(--forest); transition: box-shadow .3s; }
+
+/* Catálogos de motos y parrillas: agregar y editar tarjetas */
+.rs-agregar { align-self: end; }
+.rs-editar { margin-top: auto; justify-self: start; align-self: flex-start; }
+.rs-card-pie { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: auto; }
+.rs-card-pie .rs-editar { margin-top: 0; }
+.cat-motos { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px 14px; max-height: 220px; overflow: auto; padding: 4px 2px; }
+.cat-motos .check { font-weight: 500; }
+.cat-foto-prev { max-width: 220px; max-height: 150px; object-fit: contain; border-radius: var(--r-xs); border: 1px solid var(--line); background: #fff; }
+
+/* Parrillas: estado «Identificada en catálogo», foto de detalle y notas para el acople */
+.ok-pill { background: var(--forest-soft, #E3EFE6); color: var(--forest, #2F5D3A); }
+.rs-par-det { margin: 0; display: grid; gap: 4px; }
+.rs-par-det img { max-height: 140px; width: 100%; object-fit: contain; background: #fff; border-radius: var(--r-xs); border: 1px solid var(--line); }
+.rs-par-det figcaption { font-size: 12.5px; color: var(--text-3); }
+.rs-par-obs, .rs-par-acople .rs-ul { margin: 0; font-size: 13.5px; }
+.rs-par-acople { background: #fff; border-radius: var(--r-xs); padding: 8px 10px; }
+.rs-par-dets { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.rs-par-det figcaption a { color: var(--forest); font-weight: 700; }

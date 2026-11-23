@@ -289,3 +289,37 @@ export function indicadores() {
     noImportados: ((meta() || {}).noImportados || []).length
   };
 }
+
+/* ── Venta registrada desde Stock (indicación de Cristian, 23/11/2026) ──
+   Crea la venta (VT-siguiente) con sus datos y entrega en el mismo paso las unidades elegidas: dejan de contar en stock
+   y pasan a Postventa. No modifica la hoja de máquinas. Devuelve { error } o { id }. */
+export function registrarVenta(d, unidadIds, autor, origenTxt = '') {
+  const ids = [...new Set((unidadIds || []).filter(Boolean))];
+  if (!ids.length) return { error: 'Elige al menos una unidad vendida.' };
+  const us = ids.map(id => D.unidadPorId(id));
+  for (let i = 0; i < ids.length; i++) {
+    const u = us[i]; if (!u) return { error: `La unidad ${ids[i]} no existe.` };
+    if (PV.instalacionActiva(u.id)) return { error: `${u.codigo || u.id} ya está entregada en otra venta.` };
+    if (u.enOperacion) return { error: `${u.codigo || u.id} está en operación en nuestro taller. Retírala de operación primero.` };
+  }
+  const dueno = str(d.dueno, 160), empresa = str(d.empresa, 160), establecimiento = str(d.establecimiento, 160);
+  if (!dueno && !empresa && !establecimiento) return { error: 'Escribe el cliente: dueño, empresa o establecimiento.' };
+  const fv = fecha(d.fechaVenta); if (!fv) return { error: 'Indica la fecha de venta.' };
+  const fe = fecha(d.fechaEntrega); if (fe && fe < fv) return { error: 'La fecha de entrega no puede ser anterior a la de venta.' };
+  const meses = num(d.garantiaMeses); if (meses !== null && (meses <= 0 || meses > 120)) return { error: 'La garantía debe estar entre 1 y 120 meses.' };
+  const precio = num(d.precio); if (precio !== null && precio < 0) return { error: 'El precio no puede ser negativo.' };
+  const l = registros();
+  const n = Math.max(0, ...l.map(r => Number((r.id.match(/^VT-(\d+)$/) || [])[1]) || 0)) + 1, id = `VT-${String(n).padStart(3, '0')}`;
+  const seriales = us.filter(u => u.tipo !== 'soporte' && u.serial).map(u => u.serial);
+  const orig = normOrigen({ fechaVenta: fv, serial: seriales.join(' / '), dueno, empresa, telefono: d.telefono, ciudad: d.ciudad, precio, formaPago: d.formaPago,
+    vendedor: d.vendedor, garantiaMeses: meses, condicionComercial: 'Vendida', observaciones: '', documentacion: { estado: ESTADOS_DOC.includes(d.docEstado) ? d.docEstado : 'Pendiente' } });
+  const datos = { ...datosDesdeOrigen(orig), establecimiento, moneda: str(d.moneda, 10), notas: str(d.notas, 1000),
+    inicioGarantia: fe, inicioGarantiaConfirmado: !!fe, serialConciliado: true, conciliacionNota: `Equipos vinculados al registrar la venta: ${us.map(u => u.codigo || u.id).join(', ')}.` };
+  const quien = str(autor, 120);
+  l.push({ id, origen: { ...orig, registradaEn: 'app' }, datos, importado: ahora(),
+    historial: [{ fecha: ahora(), nota: `Venta registrada desde Stock${origenTxt ? ` (${origenTxt})` : ''}${quien ? ` por ${quien}` : ''}. Equipos: ${us.map(u => u.codigo || u.id).join(', ')}.` }] });
+  if (!escribir(K.ventas, l)) return { error: 'No se pudo guardar en este navegador.' };
+  const r = PV.registrarInstalacion(ids, { ventaId: id, fechaVenta: fv, fechaInstalacion: fe, garantia: meses ? `${meses} meses` : '', observaciones: 'Entrega registrada junto con la venta.' });
+  if (r.error) { escribir(K.ventas, registros().filter(x => x.id !== id)); return { error: r.error }; }
+  return { id };
+}

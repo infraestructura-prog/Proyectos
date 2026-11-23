@@ -141,7 +141,12 @@ export const POSICIONES = [
   { id: 's1', titulo: 'Soporte 1', tipo: 'soporte' },
   { id: 's2', titulo: 'Soporte 2', tipo: 'soporte' }
 ];
-const normKit = k => ({ id: str(k.id, 40), codigo: str(k.codigo, 40), activo: k.activo !== false, soportesSembrados: !!k.soportesSembrados, origen: str(k.origen, 300), observaciones: str(k.observaciones, 2000),
+/* Estado del kit (indicación de Cristian, 23/11/2026): si alguna de sus unidades necesita un trabajo (pintura, soldadura…). */
+export const ESTADOS_KIT = ['Requiere trabajo', 'En trabajo', 'No disponible'];
+export const TRABAJOS_KIT = ['Pintura', 'Soldadura', 'Mecánico', 'Eléctrico', 'Limpieza', 'Otro'];
+const normKit = k => ({ id: str(k.id, 40), codigo: str(k.codigo, 40), activo: k.activo !== false,
+  estado: ESTADOS_KIT.includes(k.estado) ? k.estado : '', trabajo: TRABAJOS_KIT.includes(k.trabajo) ? k.trabajo : '',
+  trabajoUnidad: str(k.trabajoUnidad, 60), trabajoDetalle: str(k.trabajoDetalle, 1000), estadoFecha: str(k.estadoFecha, 40), estadoPor: str(k.estadoPor, 120), soportesSembrados: !!k.soportesSembrados, origen: str(k.origen, 300), observaciones: str(k.observaciones, 2000),
   posiciones: Object.fromEntries(POSICIONES.map(p => [p.id, str((k.posiciones || {})[p.id], 60)])),
   creado: str(k.creado, 40), historial: (Array.isArray(k.historial) ? k.historial : []).slice(-200) });
 export const kits = () => { const v = leer(K.kits); return Array.isArray(v) ? v.map(normKit).filter(k => k.id) : []; };
@@ -315,4 +320,20 @@ export function renombrarUnidad(idViejo, idNuevo) {
   const l = kits(); let cambio = false;
   l.forEach(k => Object.keys(k.posiciones).forEach(p => { if (k.posiciones[p] === idViejo) { k.posiciones[p] = idNuevo; cambio = true; k.historial.push({ fecha: ahora(), nota: `Código actualizado: ${idViejo} → ${idNuevo}.` }); } }));
   if (cambio) guardarKits(l);
+}
+
+/* Cambiar el estado de un kit. Sin estado = sin trabajos pendientes. Queda en el historial con quién lo registró. */
+export function cambiarEstadoKit(id, datos, autor) {
+  const l = kits(), k = l.find(x => x.id === id); if (!k) return 'Kit no encontrado.';
+  const estado = ESTADOS_KIT.includes(datos.estado) ? datos.estado : '';
+  const trabajo = estado && TRABAJOS_KIT.includes(datos.trabajo) ? datos.trabajo : '';
+  if (estado && estado !== 'No disponible' && !trabajo) return 'Indica qué tipo de trabajo necesita.';
+  const unidad = estado && Object.values(k.posiciones).includes(datos.trabajoUnidad) ? datos.trabajoUnidad : '';
+  const detalle = estado ? str(datos.trabajoDetalle, 1000) : '';
+  const u = unidad ? unidadPorId(unidad) : null;
+  Object.assign(k, { estado, trabajo, trabajoUnidad: unidad, trabajoDetalle: detalle, estadoFecha: ahora(), estadoPor: str(autor, 120) });
+  k.historial.push({ fecha: ahora(), nota: estado
+    ? `Estado: ${estado}${trabajo ? ` · trabajo de ${trabajo.toLowerCase()}` : ''}${u ? ` en ${u.codigo || u.id}` : ''}${detalle ? ` · ${detalle}` : ''}${autor ? ` (registrado por ${str(autor, 120)})` : ''}.`
+    : `Sin trabajos pendientes${autor ? ` (registrado por ${str(autor, 120)})` : ''}.` });
+  guardarKits(l); return '';
 }

@@ -1156,6 +1156,42 @@ function repDatos(id) {
   });
 }
 
+/* Registrar venta desde un kit en Stock: crea la venta, entrega sus unidades y salta a Postventa con la ficha abierta. */
+function maqVenderKit(id) {
+  if (!NUBE.telefonosVisibles()) { toast('Para registrar una venta escribe tu nombre y el PIN.'); NUBEUI.abrir(); return; }
+  const k = MD.kits().find(x => x.id === id); if (!k) return;
+  const us = MD.POSICIONES.map(p => k.posiciones[p.id] ? MD.unidadPorId(k.posiciones[p.id]) : null).filter(u => u && !u.instalada && !u.enOperacion);
+  if (!us.length) { toast('Este kit no tiene unidades disponibles para vender.'); return; }
+  abrirDialogo(dlg, VTV.formVentaStockHtml(k, us, NUBE.autor()), `[data-act="maq-vender-kit"][data-kit="${CSS.escape(id)}"]`);
+  const form = dlg.querySelector('form'), err = form.querySelector('[data-err]');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const g = n => form.elements[n].value.trim();
+    const ids = [...form.querySelectorAll('input[name="unidad"]:checked')].map(c => c.value);
+    const datos = Object.fromEntries(['dueno', 'empresa', 'establecimiento', 'telefono', 'ciudad', 'fechaVenta', 'fechaEntrega', 'formaPago', 'vendedor', 'precio', 'moneda', 'garantiaMeses', 'docEstado', 'notas'].map(n => [n, g(n)]));
+    const r = VT.registrarVenta(datos, ids, g('autor'), `kit ${k.codigo}`);
+    if (r.error) { err.textContent = r.error; err.hidden = false; err.scrollIntoView({ block: 'nearest' }); return; }
+    dlgRetorno = null; dlg.close();
+    location.hash = '#/maquinas/postventa';
+    toast(`Venta ${r.id} registrada. El kit ${k.codigo} pasó a Postventa.`);
+    setTimeout(() => vtFicha(r.id), 150);
+  });
+}
+
+function maqEstadoKit(id) {
+  const k = MD.kits().find(x => x.id === id); if (!k) return;
+  abrirDialogo(dlg, MQ.formEstadoKitHtml(k, NUBE.autor()), `[data-act="maq-estado-kit"][data-kit="${CSS.escape(id)}"]`);
+  const form = dlg.querySelector('form');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const g = n => form.elements[n].value.trim();
+    const err = MD.cambiarEstadoKit(id, { estado: g('estado'), trabajo: g('trabajo'), trabajoUnidad: g('trabajoUnidad'), trabajoDetalle: g('trabajoDetalle') }, g('autor'));
+    const er = form.querySelector('.err');
+    if (err) { er.textContent = err; er.hidden = false; return; }
+    dlgRetorno = null; dlg.close(); render(); toast(`Estado del kit ${k.codigo} guardado.`);
+  });
+}
+
 function maqFormKit() {
   abrirDialogo(dlg, MQ.formKitHtml(), '[data-act="maq-nuevo-kit"]');
   const form = dlg.querySelector('form');
@@ -1251,6 +1287,8 @@ document.addEventListener('click', e => {
       setTimeout(() => irA(document.getElementById('kit-' + b.dataset.kit), { block: 'center' }), 80);
       break;
     case 'maq-quitar': { const er = MD.asignar(b.dataset.kit, b.dataset.pos, ''); render(); toast(er || 'Unidad quitada del kit; queda suelta.'); break; }
+    case 'maq-estado-kit': maqEstadoKit(b.dataset.kit); break;
+    case 'maq-vender-kit': maqVenderKit(b.dataset.kit); break;
     case 'maq-desactivar-kit':
       confirmar('Desactivar kit', '<p>El kit se conserva con su historial y sus unidades quedan sueltas, disponibles para otro kit.</p>', 'Desactivar', () => { MD.desactivarKit(b.dataset.kit); render(); toast('Kit desactivado.'); });
       break;

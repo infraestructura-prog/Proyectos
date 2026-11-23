@@ -3,22 +3,41 @@
   "id": "pinturas-maleta",
   "titulo": "Pinturas y recubrimientos para la maleta",
   "descripcion": "Comparación de alternativas de protección superficial y comportamiento térmico para el proyecto NODO",
+  "actualizado": "2026-11-23",
   "fuente": {
     "archivo": "Cuadro comparativo de pinturas - VF",
     "hoja": "Sheet1",
     "extraido": "2026-10-26",
-    "nota": "Investigación proporcionada por el equipo. Los valores provienen del estudio: no son resultados de ensayos propios ni especificaciones verificadas del fabricante."
+    "nota": "Las alternativas A–D vienen del estudio original del equipo. Las alternativas E y F (pinturas en aerosol) se agregaron el 23/11/2026 con datos de fichas técnicas y precios de referencia. Ningún valor es resultado de ensayos propios."
   },
+  "tipos": [
+    { "id": "2k", "nombre": "Pinturas 2K" },
+    { "id": "vinilo", "nombre": "Vinilo" },
+    { "id": "spray", "nombre": "Pinturas en spray" }
+  ],
   "criterios": [
     { "nombre": "Respuesta solar (Índice SRI)", "descripcion": "Capacidad del material para reflejar la radiación solar y evitar la acumulación térmica en el interior." },
-    { "nombre": "Durabilidad mecánica (1 a 5)", "descripcion": "Resistencia de la superficie a impactos, rayones y desgaste físico por manipulación." },
-    { "nombre": "Resistencia ambiental (1 a 5)", "descripcion": "Comportamiento frente a la degradación por intemperie, rayos UV y ambientes salinos." },
-    { "nombre": "Viabilidad de aplicación (1 a 5)", "descripcion": "Complejidad técnica y accesibilidad del proceso de instalación sobre el sustrato." }
+    { "nombre": "Golpes y rayaduras (1 a 5)", "descripcion": "Resistencia de la superficie a impactos, rayones y desgaste físico por manipulación." },
+    { "nombre": "Sol, lluvia y salitre (1 a 5)", "descripcion": "Comportamiento frente a la degradación por intemperie, rayos UV y ambientes salinos." },
+    { "nombre": "Facilidad y lugar de aplicación (1 a 5)", "descripcion": "Complejidad técnica y accesibilidad del proceso de aplicación sobre la maleta, y si se hace en casa o en un taller." },
+    { "nombre": "Compatibilidad con la carcasa", "descripcion": "Qué dicen las fichas sobre la adherencia al plástico de la maleta y qué queda por comprobar." }
   ],
-  "leyenda": [
-    { "sri": "SRI ≥ 100 · Excelente", "durabilidad": "5/5 · Dureza y máxima resistencia al impacto.", "ambiental": "5/5 · Resistencia salina e insensible a radiación UV.", "viabilidad": "5/5 · Muy alta / In-House directo" },
-    { "sri": "SRI 60 - 80 · Aceptable", "durabilidad": "3/5 · Acabados flexibles propensos a rayones leves.", "ambiental": "3/5 · Resistencia a intemperie de 3 a 7 años, pero sensible en bordes expuestos.", "viabilidad": "3/5 · Media / Taller de pintura." },
-    { "sri": "SRI < 50 · Deficiente", "durabilidad": "1/5 · Superficies blandas, de fácil raspado o que acumulan suciedad.", "ambiental": "1/5 · Degradación rápida en menos de 1 año.", "viabilidad": "1/5 · Taller especializado / Muy alta complejidad." }
+  "etiquetasEvidencia": {
+    "Estudio original": "Valor tomado del cuadro comparativo original del equipo.",
+    "Escenario de cálculo": "Valor calculado con supuestos, no medido.",
+    "Provisional": "Valoración inicial pendiente de comprobar sobre la maleta.",
+    "Según ficha": "Dato declarado en la ficha técnica del fabricante.",
+    "Pendiente de ensayo": "Solo se sabrá con pruebas sobre la carcasa real.",
+    "Histórico · por conciliar": "Valor del estudio original con una diferencia de suma por aclarar."
+  },
+  "notaSri": "En E y F el SRI ≈80 es un escenario de cálculo: se obtuvo con la ecuación de la norma ASTM E1980, con una reflectancia solar supuesta de 0,66, una emisividad térmica supuesta de 0,90 y convección media. Ambos valores usan los mismos supuestos. Quedan pendientes las mediciones de los acabados y de la temperatura interior del nodo.",
+  "notaPuntuaciones": "El 3/5 de E y F en golpes y rayaduras y en sol, lluvia y salitre es una valoración provisional para uso exterior moderado, pendiente de comprobar sobre la maleta. SEM documenta flexibilidad, adherencia y resistencia a la pérdida de color. Rust-Oleum declara uso exterior sobre PP. Quedan por ensayar el impacto, el rayado, el roce y la exposición salina de ambas opciones.",
+  "supuestosSpray": [
+    "Maleta de aproximadamente 45 × 40 × 35 cm.",
+    "Se presupuesta pintar la tapa y los cuatro laterales, sin el fondo. Área estimada: 0,78 m².",
+    "El plástico PP (polipropileno) es la hipótesis de trabajo. Falta confirmar el material de la tapa y del cuerpo por separado.",
+    "Los precios son referencias en USD de comercios consultados. Los enlaces de Amazon sirven para identificar y cotizar los productos. Precio de carrito, stock y envío a Venezuela quedan por verificar.",
+    "Almohadilla gris, cinta, papel, paños y equipo de protección van en la partida de taller. El costo de materiales por maleta tampoco incluye flete, impuestos ni mano de obra."
   ],
   "conclusiones": "Aunque el Acrolon 218 HS ofrece un rendimiento ligeramente superior en reflectividad térmica (SRI), el Vinil 3M 2080 (Gloss White) se consolida como la opción óptima para el proyecto NODO. Su principal ventaja radica en su excepcional viabilidad de aplicación (In-House directo), permitiendo una ejecución limpia, rápida y controlada sin depender de talleres externos.\n\nEn contraste, el sistema de pintura penaliza fuertemente la viabilidad debido a su alta complejidad técnica, costos operativos elevados y el alto riesgo de un acabado manual deficiente: es un proceso propenso a escurrimientos en las esquinas y relieves complejos de la maleta, texturas de piel de naranja por variaciones en la presión o viscosidad de la pistola, y contaminación por partículas de polvo. El vinil ofrece una relación costo-resultado sumamente eficiente, garantizando un escudo térmico adecuado (SRI 75-80) con un estándar estético y profesional totalmente predecible.",
   "motivosRecomendacion": [
@@ -28,38 +47,60 @@
     "Relación costo–resultado favorable según la investigación.",
     "SRI consignado de 75–80."
   ],
-  "observacionesGenerales": [
-    "La conclusión afirma que el Acrolon 218 HS ofrece una reflectividad (SRI) ligeramente superior, pero en la tabla el control (A) y el vinilo (B) tienen el mismo rango: 75–80. Pendiente de validar.",
-    "La recomendación del estudio considera la viabilidad global: las alternativas C (pigmentos fríos) y D (microesferas) tienen rangos SRI superiores en la tabla (100–105).",
-    "El costo por maleta es el punto medio entre el mínimo y el máximo que resultan de dividir el costo total del lote del estudio entre las maletas que rinde. Es aproximado: no incluye envío y, en los sistemas de taller, tampoco mano de obra ni catalizador. Pendiente de validar.",
-    "Fotos de producto entregadas por Cristian Carvalhais (20/11/2026). Las alternativas A, C y D usan la misma base Acrolon 218 HS, por eso comparten imagen."
-  ],
-  "costoNivelCriterio": "Clasificación relativa entre las alternativas del estudio según su costo total consignado por lote: Bajo = la de menor costo; Medio = costo intermedio; Alto = las de mayor costo. Se puede ajustar al editar cada alternativa.",
   "recomendadaId": "B",
+  "recomendacionActual": {
+    "primeraSpray": "F",
+    "alternativaSpray": "E",
+    "texto": [
+      "El estudio original recomienda la alternativa B (vinilo 3M 2080 con Primer 94).",
+      "Entre las pinturas en aerosol, la primera opción es F (Rust-Oleum Specialty Paint for Plastic) por su menor costo inicial y porque su ficha indica aplicación directa sobre PP, sin promotor aparte.",
+      "La alternativa en aerosol es E (SEM Color Coat con promotor 39863): se acerca a USD 50 por maleta si una lata de blanco cubre cada unidad y el juego de preparación alcanza para tres maletas.",
+      "Los SRI de E y F son estimaciones con los mismos supuestos: no permiten elegir una ganadora térmica. Eso se decide con las mediciones."
+    ],
+    "validacion": [
+      "Confirmar el plástico de la tapa y del cuerpo de la maleta.",
+      "Probar adherencia y desgaste en muestras de la carcasa.",
+      "Registrar el consumo real de pintura por maleta.",
+      "Medir la temperatura interior frente a la maleta negra original, en condiciones comparables."
+    ]
+  },
+  "fuentesGenerales": [
+    { "t": "Cuadro comparativo original (Google Sheets)", "url": "https://docs.google.com/spreadsheets/d/1U2S6TfGLDIGiCOOoilJWbBSLF-AaaGtDFHI3ls4F2ts/edit" },
+    { "t": "ASTM E1980 (cálculo del SRI)", "url": "https://store.astm.org/standards/e1980" }
+  ],
   "alternativas": [
     {
       "id": "A",
-      "categoria": "Control (PU 2K)",
-      "producto": "Sherwin-Williams Acrolon 218 HS",
+      "tipo": "2k",
+      "categoria": "Pintura 2K Sherwin-Williams · base sin agregados",
+      "producto": "Acrolon 218 HS",
       "sri": "75–80",
       "durabilidad": 5,
       "ambiental": 5,
       "viabilidad": 1,
       "modalidad": "Taller especializado",
-      "tiempo": "24–48 horas",
-      "vidaUtil": "10 años",
+      "tiempo": "24–48 h según el estudio",
+      "tiempoHoras": 24,
+      "vidaUtil": "10 años estimados",
+      "vidaAnios": 10,
+      "etiquetas": { "sri": "Estudio original", "durabilidad": "Estudio original", "ambiental": "Estudio original", "viabilidad": "Estudio original", "tiempo": "Estudio original", "vidaUtil": "Estudio original", "costo": "Estudio original", "compat": "Pendiente de ensayo" },
+      "compatCorta": "Su ficha no documenta un sistema para este plástico. Por confirmar.",
+      "compatibilidad": "Acrolon 218 HS es un acabado industrial. Su ficha documenta sistemas para acero, aluminio, galvanizado y mampostería. En las fuentes revisadas queda pendiente un sistema documentado de preparación, imprimación y acabado para el plástico de esta maleta.",
       "ventajas": ["Capa dura contra golpes y rayones.", "Superficie lisa y lavable que repele la mugre."],
-      "limitaciones": ["Pérdida leve de brillo tras años al sol."],
+      "limitaciones": ["Pérdida leve de brillo tras años al sol.", "Falta un sistema documentado para aplicarla sobre el plástico de la maleta."],
       "materiales": ["Acrolon 218 HS", "Catalizador", "Reductor", "Plastic Primer"],
-      "costoNivel": "Alto",
       "imagenUrl": "/assets/img/pinturas/acrolon-218-hs.jpg", "imagenFuente": "Foto entregada por Cristian Carvalhais (Infraestructura), 20/11/2026",
       "costoTotal": "USD 395,11",
       "costoExclusiones": "más envío y mano de obra",
       "costoDesglose": "277.99$ (Acrolon)\n+ Catalizador (a definir)\n+(4 x 19.78$) (4 Primer)\n+38$ (Thinner)\n-------------------------\n395.11$ + envio + mano de obra",
       "rendimiento": "8–10 maletas",
-      "costoMaleta": "USD 44,45", "costoMaletaRango": "USD 39,51–49,39", "costoMaletaCalculo": "Punto medio entre el mínimo y el máximo (USD 39,51–49,39), que salen de USD 395,11 ÷ 8–10 maletas. No incluye catalizador, envío ni mano de obra.",
+      "costoMaleta": "USD 44,45", "costoMaletaNum": 44.45, "costoMaletaNota": "estimación original",
+      "costoMaletaRango": "USD 39,51–49,39",
+      "costoMaletaCalculo": "Punto medio entre el mínimo y el máximo (USD 39,51–49,39), que salen de USD 395,11 ÷ 8–10 maletas. No incluye catalizador, envío ni mano de obra.",
       "observaciones": ["Catalizador: costo por definir en el estudio; el total consignado no lo incluye. Pendiente de validar."],
-      "muestra": "satinado",
+      "fuentes": [
+        { "t": "Sherwin-Williams, ficha de Acrolon 218 HS", "url": "https://www.paintdocs.com/docs/webPDF.jsp?SITEID=SWPCGPROT&doctype=PDS&lang=2&prodno=035777363485" }
+      ],
       "original": {
         "categoria": "A. Control (PU 2K)",
         "sri": "SRI: 75-80",
@@ -73,28 +114,38 @@
     },
     {
       "id": "B",
+      "tipo": "vinilo",
       "categoria": "Vinilo de fundición",
-      "producto": "Wrap Film Series 2080 (Gloss White)",
-      "alias": "Identificado como 3M 2080 (Gloss White) en las conclusiones.",
+      "producto": "Vinilo 3M Wrap Film 2080 Gloss White + Primer 94",
       "sri": "75–80",
       "durabilidad": 3,
       "ambiental": 4,
       "viabilidad": 5,
-      "modalidad": "Interna / hecha en casa",
-      "tiempo": "2–4 horas",
-      "vidaUtil": "3–5 años",
+      "modalidad": "Aplicación interna",
+      "tiempo": "2–4 h estimadas",
+      "tiempoHoras": 2,
+      "vidaUtil": "3–5 años estimados",
+      "vidaAnios": 3,
+      "etiquetas": { "sri": "Estudio original", "durabilidad": "Estudio original", "ambiental": "Estudio original", "viabilidad": "Estudio original", "tiempo": "Estudio original", "vidaUtil": "Estudio original", "costo": "Histórico · por conciliar", "compat": "Pendiente de ensayo" },
+      "compatCorta": "El Primer 94 está hecho para dar adherencia sobre plásticos como PP, PE y ABS. Se confirmará con una prueba en la maleta.",
+      "compatibilidad": "El Primer 94 documenta promoción de adherencia sobre PP, PE y ABS. El boletín del vinilo 2080 identifica pintura automotriz de fábrica como sustrato. La combinación debe ensayarse sobre la textura y los bordes reales de la maleta.",
       "ventajas": ["Aplicación interna, sin depender de talleres externos.", "Ejecución limpia, rápida y controlada según el estudio."],
       "limitaciones": ["Sensible a raspones o cortes con objetos filosos.", "Posible desprendimiento en bordes por humedad y calor."],
       "materiales": ["Vinilo 2080", "Primer 94"],
-      "costoNivel": "Bajo",
       "imagenUrl": "/assets/img/pinturas/3m-2080-gloss-white.jpg", "imagenFuente": "Foto entregada por Cristian Carvalhais (Infraestructura), 20/11/2026",
       "costoTotal": "USD 73,99–93,99",
       "costoExclusiones": "más envío",
       "costoDesglose": "30$-60$ (Vinil 2080)\n+ 43.99$ (Primer)\n...........................\n73.99$  --   93.99$ + envio",
       "rendimiento": "4–5 maletas",
-      "costoMaleta": "USD 19,15", "costoMaletaRango": "USD 14,80–23,50", "costoMaletaCalculo": "Punto medio entre el mínimo y el máximo (USD 14,80–23,50), que salen de USD 73,99–93,99 ÷ 4–5 maletas. No incluye envío.",
-      "observaciones": ["El desglose indica USD 30–60 (vinilo) + USD 43,99 (primer), pero el total escrito termina en USD 93,99. Pendiente de validar."],
-      "muestra": "brillo",
+      "costoMaleta": "USD 19,15", "costoMaletaNum": 19.15, "costoMaletaNota": "estimación original",
+      "costoMaletaRango": "USD 14,80–23,50",
+      "costoMaletaCalculo": "Punto medio entre el mínimo y el máximo (USD 14,80–23,50), que salen de USD 73,99–93,99 ÷ 4–5 maletas. No incluye envío. Se presenta como valor histórico mientras se verifica la suma del lote.",
+      "costoNotaConciliar": "USD 60 de vinilo + USD 43,99 de Primer 94 dan USD 103,99 en el extremo alto del lote. El total publicado de USD 93,99 queda por conciliar.",
+      "observaciones": [],
+      "fuentes": [
+        { "t": "3M, boletín Wrap Film 2080", "url": "https://multimedia.3m.com/mws/media/1711255O/2080-bulletin-rc-pdf.pdf" },
+        { "t": "3M, Primer 94", "url": "https://www.3m.com/3M/en_US/p/d/b40065491/" }
+      ],
       "original": {
         "categoria": "B. Vinilo de Fundición",
         "sri": "SRI: 75 - 80",
@@ -108,31 +159,40 @@
     },
     {
       "id": "C",
-      "categoria": "NIR Reflective",
+      "tipo": "2k",
+      "categoria": "Pintura 2K Sherwin-Williams · base + pigmentos fríos",
       "producto": "Acrolon 218 HS + Sher-Color Cool Pigments",
       "sri": "100–105",
       "durabilidad": 5,
       "ambiental": 5,
       "viabilidad": 1,
       "modalidad": "Taller especializado",
-      "tiempo": "24–48 horas",
-      "vidaUtil": "10 años",
+      "tiempo": "24–48 h según el estudio",
+      "tiempoHoras": 24,
+      "vidaUtil": "10 años estimados",
+      "vidaAnios": 10,
+      "etiquetas": { "sri": "Estudio original", "durabilidad": "Estudio original", "ambiental": "Estudio original", "viabilidad": "Estudio original", "tiempo": "Estudio original", "vidaUtil": "Estudio original", "costo": "Estudio original", "compat": "Pendiente de ensayo" },
+      "compatCorta": "Igual que A. Fórmula y SRI por confirmar con el proveedor.",
+      "compatibilidad": "Comparte la limitación de A. Quedan por confirmar con el proveedor la formulación exacta, la compatibilidad y el SRI.",
       "ventajas": ["Máxima dureza contra fricción y uso rudo.", "Repele aceites y polvo sin mancharse."],
-      "limitaciones": ["Desgaste estético mínimo con el tiempo."],
+      "limitaciones": ["Desgaste estético mínimo con el tiempo.", "Falta un sistema documentado para aplicarla sobre el plástico de la maleta."],
       "materiales": ["Acrolon 218 HS Cool Pigments", "Promotor", "Reductor"],
-      "costoNivel": "Alto",
       "imagenUrl": "/assets/img/pinturas/acrolon-218-hs.jpg", "imagenFuente": "Foto entregada por Cristian Carvalhais (Infraestructura), 20/11/2026",
       "costoTotal": "USD 396,89",
       "costoExclusiones": "más envío y mano de obra",
       "costoDesglose": "277.99$ (Acrolon)\n+ Catalizador (a definir)\n+ 19.78$ (Primer)\n+38$ (Thinner)\n+ Pigmentos frios\n-------------------------\n396.89$ + envio + mano de obra",
       "rendimiento": "8–10 maletas",
-      "costoMaleta": "USD 44,65", "costoMaletaRango": "USD 39,69–49,61", "costoMaletaCalculo": "Punto medio entre el mínimo y el máximo (USD 39,69–49,61), que salen de USD 396,89 ÷ 8–10 maletas. No incluye catalizador, envío ni mano de obra.",
+      "costoMaleta": "USD 44,65", "costoMaletaNum": 44.65, "costoMaletaNota": "estimación original",
+      "costoMaletaRango": "USD 39,69–49,61",
+      "costoMaletaCalculo": "Punto medio entre el mínimo y el máximo (USD 39,69–49,61), que salen de USD 396,89 ÷ 8–10 maletas. No incluye catalizador, envío ni mano de obra.",
       "observaciones": [
         "Catalizador: costo por definir en el estudio. Pendiente de validar.",
         "Los pigmentos fríos figuran en el desglose sin importe; los importes listados (277,99 + 19,78 + 38) no explican por sí solos el total de 396,89. Pendiente de validar.",
         "Los materiales mencionan «Promotor», mientras el desglose menciona Catalizador y Primer. Pendiente de validar."
       ],
-      "muestra": "frio",
+      "fuentes": [
+        { "t": "Sherwin-Williams, ficha de Acrolon 218 HS", "url": "https://www.paintdocs.com/docs/webPDF.jsp?SITEID=SWPCGPROT&doctype=PDS&lang=2&prodno=035777363485" }
+      ],
       "original": {
         "categoria": "C. NIR Reflective",
         "sri": "SRI:  100-105",
@@ -146,30 +206,41 @@
     },
     {
       "id": "D",
-      "categoria": "Aditivado en taller",
-      "producto": "Acrolon 218 HS + Glass Bubbles",
+      "tipo": "2k",
+      "categoria": "Pintura 2K Sherwin-Williams · base + microesferas",
+      "producto": "Acrolon 218 HS + microesferas 3M Glass Bubbles K37",
       "sri": "100–105",
       "durabilidad": 4,
       "ambiental": 5,
       "viabilidad": 1,
       "modalidad": "Taller especializado",
-      "tiempo": "24–48 horas",
-      "vidaUtil": "8–10 años",
+      "tiempo": "24–48 h según el estudio",
+      "tiempoHoras": 24,
+      "vidaUtil": "8–10 años estimados",
+      "vidaAnios": 8,
+      "etiquetas": { "sri": "Estudio original", "durabilidad": "Estudio original", "ambiental": "Estudio original", "viabilidad": "Estudio original", "tiempo": "Estudio original", "vidaUtil": "Estudio original", "costo": "Estudio original", "compat": "Pendiente de ensayo" },
+      "compatCorta": "Igual que A. La mezcla con K37 no tiene ensayos publicados.",
+      "compatibilidad": "Comparte la limitación de A. 3M documenta K37 como carga para recubrimientos. Sus ensayos solares publicados usaron otros grados de microesferas. El desempeño de la mezcla Acrolon + K37 queda pendiente.",
       "ventajas": ["Buena resistencia a impactos y raspones."],
-      "limitaciones": ["Acabado poroso que puede acumular poco polvo.", "Ligera pérdida de blancura."],
+      "limitaciones": ["Acabado poroso que puede acumular poco polvo.", "Ligera pérdida de blancura.", "Falta un sistema documentado para aplicarla sobre el plástico de la maleta."],
       "materiales": ["Acrolon 218 HS", "3M K37", "Plastic Primer", "Reductor"],
-      "costoNivel": "Medio",
       "imagenUrl": "/assets/img/pinturas/acrolon-218-hs.jpg", "imagenFuente": "Foto entregada por Cristian Carvalhais (Infraestructura), 20/11/2026",
       "costoTotal": "USD 354,07",
       "costoExclusiones": "más envío y mano de obra",
       "costoDesglose": "277.99$ (Acrolon)\n+ Catalizador (a definir)\n+ 19.78$ (Primer)\n+38$ (Thinner)\n+ 16.52 (micro-esferas)\n-------------------------\n354.07$ + envio + mano de obra",
       "rendimiento": "8–10 maletas",
-      "costoMaleta": "USD 39,84", "costoMaletaRango": "USD 35,41–44,26", "costoMaletaCalculo": "Punto medio entre el mínimo y el máximo (USD 35,41–44,26), que salen de USD 354,07 ÷ 8–10 maletas. No incluye catalizador, envío ni mano de obra.",
+      "costoMaleta": "USD 39,84", "costoMaletaNum": 39.84, "costoMaletaNota": "estimación original",
+      "costoMaletaRango": "USD 35,41–44,26",
+      "costoMaletaCalculo": "Punto medio entre el mínimo y el máximo (USD 35,41–44,26), que salen de USD 354,07 ÷ 8–10 maletas. No incluye catalizador, envío ni mano de obra.",
       "observaciones": [
         "Catalizador: costo por definir en el estudio. Pendiente de validar.",
         "Los importes listados (277,99 + 19,78 + 38 + 16,52 = 352,29) difieren del total escrito de 354,07. Pendiente de validar."
       ],
-      "muestra": "poroso",
+      "fuentes": [
+        { "t": "Sherwin-Williams, ficha de Acrolon 218 HS", "url": "https://www.paintdocs.com/docs/webPDF.jsp?SITEID=SWPCGPROT&doctype=PDS&lang=2&prodno=035777363485" },
+        { "t": "3M, microesferas K37", "url": "https://www.3m.com/3M/en_US/p/d/b40064628/" },
+        { "t": "3M, ensayos de recubrimientos reflectivos con microesferas", "url": "https://multimedia.3m.com/mws/media/1454990O/3m-glass-bubbles-for-solar-reflective-coatings.pdf" }
+      ],
       "original": {
         "categoria": "D. Aditivado en Taller",
         "sri": "SRI: 100 - 105",
@@ -180,6 +251,94 @@
         "costo": "277.99$ (Acrolon)                + Catalizador (a definir)         + 19.78$ (Primer)               +38$ (Thinner)                  + 16.52 (micro-esferas)       -------------------------                  354.07$ + envio + mano de obra",
         "rendimiento": "8-10 maletas"
       }
+    },
+    {
+      "id": "E",
+      "tipo": "spray",
+      "categoria": "Pintura en spray con promotor",
+      "producto": "SEM Color Coat White 15313 + promotor SEM 39863",
+      "sri": "≈80",
+      "durabilidad": 3,
+      "ambiental": 3,
+      "viabilidad": 5,
+      "modalidad": "Aplicación interna en aerosol con promotor para PP",
+      "tiempo": "1–2 h estimadas",
+      "tiempoHoras": 1,
+      "tiempoNota": "Tiempo de aplicación. La ficha de la línea original indica 24 h de curado a 21 °C.",
+      "vidaUtil": "Pendiente de validar",
+      "vidaAnios": null,
+      "etiquetas": { "sri": "Escenario de cálculo", "durabilidad": "Provisional", "ambiental": "Provisional", "viabilidad": "Provisional", "tiempo": "Provisional", "vidaUtil": "Pendiente de ensayo", "costo": "Escenario de cálculo", "compat": "Pendiente de ensayo" },
+      "compatCorta": "Sistema completo para plástico: el promotor SEM 39863 está indicado para PP y TPO. Se confirmará con una prueba en la maleta.",
+      "compatibilidad": "La ficha del SEM Color Coat original documenta el promotor 39863 para PP/TPO. La referencia seleccionada para cotizar y ensayar es 15313, blanco mate.",
+      "ventajas": ["Se aplica en casa, en aerosol.", "Sistema con promotor de adherencia documentado para PP/TPO.", "SEM documenta flexibilidad, adherencia y resistencia a la pérdida de color."],
+      "limitaciones": ["Lleva más pasos y productos de preparación que F.", "Impacto, rayado, roce y salitre sin ensayar."],
+      "materiales": ["SEM Color Coat White 15313", "Promotor SEM 39863", "Jabón SEM Soap 39362", "Limpiador SEM Plastic & Leather Prep 38353"],
+      "imagenUrl": "/assets/img/pinturas/sem-color-coat-15313.png", "imagenFuente": "Foto entregada por Cristian Carvalhais (Infraestructura), 23/11/2026",
+      "costoTotal": "USD 153,94–228,91 para 3 maletas",
+      "costoMaleta": "USD 51,31–76,30", "costoMaletaNum": 51.31, "costoMaletaNota": "estimación para lote de 3",
+      "costoMaletaCalculo": "Juego de preparación (USD 78,97) que se supone alcanza para tres maletas, más una o dos latas de color por maleta. Con una lata: USD 153,94 ÷ 3 = USD 51,31. Con dos latas: USD 228,91 ÷ 3 = USD 76,30.",
+      "costoPartidas": [
+        { "t": "Pintura SEM Color Coat White 15313", "precio": "USD 24,99 por aerosol", "url": "https://www.amazon.com/dp/B000HDE7DQ" },
+        { "t": "Promotor de adherencia SEM 39863", "precio": "USD 34,99 por aerosol", "url": "https://www.amazon.com/dp/B007VTSRZ8" },
+        { "t": "Jabón SEM Soap 39362", "precio": "USD 21,99 por envase", "url": "https://www.amazon.com/dp/B000I1DJDG" },
+        { "t": "Limpiador SEM Plastic & Leather Prep 38353", "precio": "USD 21,99 por aerosol", "url": "https://www.amazon.com/dp/B00B3HXWFO" }
+      ],
+      "costoEscenarios": [
+        "Juego de preparación (promotor + jabón + limpiador): USD 78,97. Para el cálculo preliminar se supone que alcanza para tres maletas.",
+        "Tres maletas con una lata de color cada una: USD 78,97 + 3 × USD 24,99 = USD 153,94, o USD 51,31 por maleta.",
+        "Tres maletas con dos latas de color cada una: USD 78,97 + 6 × USD 24,99 = USD 228,91, o USD 76,30 por maleta.",
+        "Una sola maleta comprando todos los envases: USD 103,96 con una lata de color o USD 128,95 con dos."
+      ],
+      "observaciones": [
+        "La ficha de la línea original declara unos 0,93 m² de cobertura por aerosol y 24 h de curado a 21 °C. Una lata puede alcanzar para 0,78 m², pero el poder cubriente del blanco sobre negro y el consumo real deben comprobarse.",
+        "Para el piloto, contemplar una segunda lata de respaldo."
+      ],
+      "fuentes": [
+        { "t": "SEM 15313 (producto)", "url": "https://semproducts.com/product/color-coattm-aerosols/15313" },
+        { "t": "Ficha técnica de la línea SEM Color Coat original", "url": "https://images.oreillyauto.com/parts/img/documents/sem/sem_tds_color_coat.pdf" }
+      ]
+    },
+    {
+      "id": "F",
+      "tipo": "spray",
+      "categoria": "Pintura en spray directa sobre plástico",
+      "producto": "Rust-Oleum Specialty Paint for Plastic White 211339",
+      "sri": "≈80",
+      "durabilidad": 3,
+      "ambiental": 3,
+      "viabilidad": 5,
+      "modalidad": "Aplicación interna en aerosol, directa sobre PP según ficha",
+      "tiempo": "45–90 min estimados",
+      "tiempoHoras": 0.75,
+      "tiempoNota": "Tiempo de aplicación. Aparte, el tiempo de espera: la máxima adherencia se alcanza a los 5–7 días según la ficha.",
+      "vidaUtil": "Pendiente de validar",
+      "vidaAnios": null,
+      "etiquetas": { "sri": "Escenario de cálculo", "durabilidad": "Provisional", "ambiental": "Provisional", "viabilidad": "Según ficha", "tiempo": "Provisional", "vidaUtil": "Pendiente de ensayo", "costo": "Escenario de cálculo", "compat": "Según ficha · pendiente de ensayo" },
+      "compatCorta": "Pintura hecha para plástico: según la ficha, va directo sobre PP, sin imprimación, y sirve para exterior. Se confirmará con una prueba en la maleta.",
+      "compatibilidad": "La ficha incluye aplicación directa sobre PP y uso exterior. La adherencia sobre la carcasa específica queda pendiente de ensayo.",
+      "ventajas": ["Se aplica en casa, en aerosol, directo sobre PP según la ficha.", "Menor costo inicial: un piloto en muestra pequeña cuesta USD 25,29.", "Pocos productos: pintura y detergente."],
+      "limitaciones": ["Hay que esperar 5–7 días para la máxima adherencia.", "Impacto, rayado, roce y salitre sin ensayar."],
+      "materiales": ["Rust-Oleum Specialty Paint for Plastic White 211339", "Detergente para limpieza"],
+      "imagenUrl": "/assets/img/pinturas/rust-oleum-plastic-white.png", "imagenFuente": "Foto entregada por Cristian Carvalhais (Infraestructura), 23/11/2026",
+      "costoTotal": "USD 145,29 para 3 maletas",
+      "costoMaleta": "USD 48,43", "costoMaletaNum": 48.43, "costoMaletaNota": "estimación para lote de 3",
+      "costoMaletaCalculo": "Seis aerosoles (dos por maleta) y un envase de detergente: 6 × USD 24,00 + USD 1,29 = USD 145,29 ÷ 3 = USD 48,43 por maleta.",
+      "costoPartidas": [
+        { "t": "Pintura Rust-Oleum Specialty Paint for Plastic White 211339", "precio": "USD 24,00 por aerosol (referencia externa)", "url": "https://www.amazon.com/dp/B0002YPHG6" },
+        { "t": "Detergente para limpieza", "precio": "USD 1,29 por envase (referencia)" }
+      ],
+      "costoEscenarios": [
+        "Piloto en una muestra pequeña: un aerosol y detergente, USD 25,29.",
+        "Una maleta completa: dos aerosoles de color y detergente, USD 49,29.",
+        "Tres maletas: seis aerosoles y un envase de detergente, USD 145,29 en total o USD 48,43 por maleta."
+      ],
+      "observaciones": [
+        "La ficha señala 8–10 pies² (unos 0,74–0,93 m²) de cobertura práctica por aerosol al espesor recomendado, con dos o más manos ligeras. Se usan dos latas por maleta como previsión; hay que registrar el consumo real.",
+        "Separar el tiempo de aplicación del tiempo de espera: la máxima adherencia se alcanza a los 5–7 días según la ficha."
+      ],
+      "fuentes": [
+        { "t": "Ficha Rust-Oleum SPC-25 (Specialty Paint for Plastic)", "url": "https://www.testors.com/-/media/DigitalEncyclopedia/Documents/RustoleumUSA/TDS/English/CBG/Specialty/SPC-25_Specialty_Paint_for_Plastic_TDS_1.ashx" }
+      ]
     }
   ]
 }

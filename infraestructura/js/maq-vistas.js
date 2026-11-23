@@ -285,11 +285,14 @@ function posicionHtml(k, p, u, editable) {
   </li>`;
 }
 function kitsHtml(ks, vista, est) {
-  const act = ks.filter(k => k.activo), inact = ks.filter(k => !k.activo);
+  // Los kits ya vendidos salen de Stock: se consultan en Postventa.
+  const vendido = k => D.evaluarKit(k).disponibilidad === 'Vendida';
+  const vend = ks.filter(k => k.activo && vendido(k)), act = ks.filter(k => k.activo && !vendido(k)), inact = ks.filter(k => !k.activo);
+  const notaVend = vend.length ? `<p class="nota">${plural(vend.length, 'kit vendido', 'kits vendidos')} (${vend.map(k => esc(k.codigo)).join(', ')}): se ven en <a href="#/maquinas/postventa">Postventa</a>.</p>` : '';
   const estimacion = `<aside class="mq-estim"><b>Estimación (no son kits registrados):</b> con las unidades sueltas en stock se podrían armar <b>${est.kits}</b> kit(s) más.
     <small>${plural(est.pares, 'pareja', 'parejas')} de máquinas con escaleras opuestas · ${plural(est.soportes, 'soporte libre', 'soportes libres')}${est.soportes < 2 ? ' (faltan soportes)' : ''}.</small></aside>`;
-  if (!act.length) return `${estimacion}<p class="vacio">No hay kits registrados. Usa «Nuevo kit» para crear uno y asignarle unidades existentes.</p>`;
-  return `${estimacion}${kitsListaHtml(act, vista, true)}${inact.length ? `<p class="nota">${plural(inact.length, 'kit desactivado', 'kits desactivados')} (se conservan con su historial).</p>` : ''}`;
+  if (!act.length) return `${estimacion}<p class="vacio">No hay kits en stock. Usa «Nuevo kit» para crear uno y asignarle unidades existentes.</p>${notaVend}`;
+  return `${estimacion}${kitsListaHtml(act, vista, true)}${notaVend}${inact.length ? `<p class="nota">${plural(inact.length, 'kit desactivado', 'kits desactivados')} (se conservan con su historial).</p>` : ''}`;
 }
 /* Lista de kits en tarjetas o tabla. Con editable=false (Equipos en operación) no se asignan ni quitan unidades:
    la composición del kit se gestiona en Stock. */
@@ -305,6 +308,8 @@ export function kitsListaHtml(kits, vista, editable = true) {
       return `<li class="mq-kit ${e.completo ? 'completo' : ''}" id="kit-${esc(k.id)}">
         <div class="mq-kit-head"><h3>Kit ${esc(k.codigo)}</h3><span class="mq-chip ${e.completo ? 'c-stock' : 'c-falta'}">${e.completo ? 'Completo' : `Incompleto · ${e.asignadas} de 4`}</span></div>
         <p class="nota">Disponibilidad: ${esc(e.disponibilidad)}</p>
+        ${kitEstadoHtml(k)}
+        ${k.activo ? `<p class="kit-acciones">${editable && e.disponibilidad !== 'Vendida' && Object.values(e.unidades).some(u => u && !u.instalada && !u.enOperacion) ? `<button type="button" class="btn btn-sm btn-primary" data-act="maq-vender-kit" data-kit="${esc(k.id)}">Registrar venta</button>` : ''}<button type="button" class="btn btn-sm" data-act="maq-estado-kit" data-kit="${esc(k.id)}">${k.estado ? 'Cambiar estado' : 'Indicar trabajo pendiente'}</button></p>` : ''}
         <details class="mas mq-mas" data-keep="kitpos-${esc(k.id)}"><summary>Unidades del kit (${e.asignadas} de 4)</summary>
           <ul class="mq-pos-lista">${D.POSICIONES.map(p => posicionHtml(k, p, e.unidades[p.id], editable)).join('')}</ul></details>
         ${e.avisos.length ? `<ul class="conf-list">${e.avisos.map(a => `<li>${esc(a)}</li>`).join('')}</ul>` : ''}
@@ -400,5 +405,34 @@ export function formKitHtml() {
       <label class="fld"><span>Observaciones</span><textarea name="observaciones" rows="2" maxlength="2000"></textarea></label>
     </div>
     <div class="dlg-foot"><button type="button" class="btn" data-dlg-close>Cancelar</button><button type="submit" class="btn btn-primary">Crear kit</button></div>
+  </form>`;
+}
+
+/* ── Estado del kit: trabajo pendiente (pintura, soldadura…) ── */
+const CLS_ESTADO_KIT = { 'Requiere trabajo': 'c-falta', 'En trabajo': 'c-otra', 'No disponible': 'c-falta' };
+function kitEstadoHtml(k) {
+  if (!k.estado) return '';
+  const u = k.trabajoUnidad ? D.unidadPorId(k.trabajoUnidad) : null;
+  return `<div class="kit-estado ${k.estado === 'En trabajo' ? 'en-curso' : ''}">
+    <span class="mq-chip ${CLS_ESTADO_KIT[k.estado] || 'c-otra'}">${esc(k.estado)}${k.trabajo ? ` · ${esc(k.trabajo.toLowerCase())}` : ''}</span>
+    ${u ? `<small>En ${esc(u.codigo || u.id)}</small>` : ''}
+    ${k.trabajoDetalle ? `<p>${esc(k.trabajoDetalle)}</p>` : ''}
+    ${k.estadoFecha ? `<small class="nota">${esc(fdt(k.estadoFecha))}${k.estadoPor ? ` · ${esc(k.estadoPor)}` : ''}</small>` : ''}
+  </div>`;
+}
+export function formEstadoKitHtml(k, autor) {
+  const us = D.POSICIONES.map(p => k.posiciones[p.id] ? D.unidadPorId(k.posiciones[p.id]) : null).filter(Boolean);
+  const o = (v, sel, t = v) => `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(t)}</option>`;
+  return `<form class="dlg-form" novalidate>
+    <div class="dlg-head"><div><p class="dlg-kicker">Kit ${esc(k.codigo)}</p><h2 id="dlg-titulo">Estado del kit</h2></div><button type="button" class="icon-btn" data-dlg-close aria-label="Cancelar">×</button></div>
+    <div class="dlg-body">
+      <label class="fld"><span>Estado</span><select name="estado">${o('', k.estado, 'Sin trabajos pendientes')}${D.ESTADOS_KIT.map(x => o(x, k.estado)).join('')}</select></label>
+      <label class="fld"><span>Tipo de trabajo</span><select name="trabajo">${o('', k.trabajo, 'Elegir…')}${D.TRABAJOS_KIT.map(x => o(x, k.trabajo)).join('')}</select></label>
+      <label class="fld"><span>Unidad que lo necesita</span><select name="trabajoUnidad">${o('', k.trabajoUnidad, 'Todo el kit o sin precisar')}${us.map(u => o(u.id, k.trabajoUnidad, u.codigo || u.id)).join('')}</select></label>
+      <label class="fld"><span>Detalle</span><textarea name="trabajoDetalle" rows="2" maxlength="1000" placeholder="Ej.: pintura de la base por óxido">${esc(k.trabajoDetalle)}</textarea></label>
+      <label class="fld"><span>Tu nombre</span><input name="autor" maxlength="120" value="${esc(autor || '')}" autocomplete="name"></label>
+      <small class="err" hidden></small>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn" data-dlg-close>Cancelar</button><button type="submit" class="btn btn-primary">Guardar estado</button></div>
   </form>`;
 }

@@ -8,9 +8,10 @@ import * as C from './componentes.js';
 import * as P from './proyecto.js';
 import * as KM from './kanban-macro.js';
 import { leerRuta, rutaProyecto, rutaMacro, rutaObjetivo } from './rutas.js';
-import { FUENTES, RESULTADOS, elegirMarca, elegirParrilla } from './resultados.js';
+import { FUENTES, RESULTADOS, elegirMarca, elegirParrilla, elegirTipoPintura, elegirFiltroParrilla, limpiarFiltrosCatalogo } from './resultados.js';
 import * as NUBE from './nube.js';
 import * as NUBEUI from './nube-ui.js';
+import * as CAT from './catalogo-acople.js';
 
 /* Resultados de investigación: cada archivo fuente se lee una vez (copia local) y se vuelve a pintar al llegar. */
 const cacheFuentes = {};
@@ -55,7 +56,12 @@ const ctx = {
   get proyectos() { return proyectos; },
   proyectosDe: oid => proyectos.filter(p => p.objetivos.includes(oid)),
   tareasDe: pid => tareas.filter(t => t.proyecto === pid),
-  resultadoDe: pid => { const r = RESULTADOS[pid] || null; return { r, estado: r ? estadoFuente(r.fuente) : null }; }
+  resultadoDe: pid => {
+    const r = RESULTADOS[pid] || null; let estado = r ? estadoFuente(r.fuente) : null;
+    // Catálogos de motos y parrillas: datos del estudio + lo agregado o editado en el dashboard.
+    if (r && r.fuente === 'acople' && estado && estado.estado === 'ok') estado = { ...estado, datos: CAT.mezclar(estado.datos) };
+    return { r, estado };
+  }
 };
 const proyectoPorSlug = slug => proyectos.find(p => p.slug === slug);
 const tareaPorId = id => tareas.find(t => t.id === id);
@@ -110,7 +116,7 @@ function render({ foco } = {}) {
 
 /* Cambio de ruta: pantalla nueva desde arriba, foco en su título; los parámetros de un solo uso se consumen. */
 function alCambiarRuta() {
-  cerrarMenu(false); cerrarResultados();
+  cerrarMenu(false); cerrarResultados(); elegirTipoPintura('todas');   // al entrar, el estudio de pinturas muestra «Todas»
   if (dlg.open) { dlgRetorno = null; dlg.close(); }
   if (panel.open) panel.close();
   const r = leerRuta();
@@ -331,6 +337,28 @@ document.addEventListener('click', e => {
   switch (act) {
     case 'toggle-macro': if (S.abiertos.has(macro)) S.abiertos.delete(macro); else abrirMacro(macro); render(); break;
     case 'ir-macro': irMacro(macro); break;
+    case 'pin-tipo': elegirTipoPintura(b.dataset.tipo); render({ foco: `[data-act="pin-tipo"][data-tipo="${b.dataset.tipo}"]` }); break;
+    case 'ir-moto': case 'ir-parrilla': {   // de una moto a su parrilla y al revés (si un filtro la oculta, se quitan los filtros de ese catálogo)
+      const pre = act === 'ir-moto' ? 'rs-moto-' : 'rs-par-';
+      render({ foco: null }); let el = document.getElementById(pre + b.dataset.id);
+      if (!el) { limpiarFiltrosCatalogo(act === 'ir-moto' ? 'moto' : 'parrilla'); render({ foco: null }); el = document.getElementById(pre + b.dataset.id); }
+      if (!el) break;
+      const desp = el.closest('details.rs-desp'); if (desp) desp.open = true;
+      irA(el); el.classList.add('rs-destacar'); setTimeout(() => el.classList.remove('rs-destacar'), 2000); break;
+    }
+    case 'cat-moto-nueva': case 'cat-moto-editar': case 'cat-par-nueva': case 'cat-par-editar': {
+      const fuente = cacheFuentes.acople; if (!fuente || fuente.estado !== 'ok') break;
+      const ui = { dlg, abrirDialogo: (html, retorno) => abrirDialogo(dlg, html, retorno), cerrar: () => { dlgRetorno = null; dlg.close(); },
+        confirmar, render, toast, autor: NUBE.autor };
+      const id = act.endsWith('editar') ? b.dataset.id : '';
+      if (act.startsWith('cat-moto')) CAT.editarMoto(fuente.datos, id, ui); else CAT.editarParrilla(fuente.datos, id, ui);
+      break;
+    }
+    case 'pin-desglose': {   // del cuadro a la ficha: abre «Ver detalles» y lleva al desglose del costo
+      const card = document.getElementById('rs-alt-' + b.dataset.id); if (!card) break;
+      const det = card.querySelector('details.rs-mas'); if (det) det.open = true;
+      irA(card.querySelector('.rs-costo') || card); break;
+    }
     case 'ir-objetivo': irObjetivo(ob); break;
     case 'expandir': MACROOBJETIVOS.forEach(m => S.abiertos.add(m.id)); render(); toast('Macroobjetivos expandidos.'); break;
     case 'contraer': S.abiertos.clear(); render(); toast('Macroobjetivos contraídos.'); break;
@@ -365,6 +393,7 @@ document.addEventListener('change', e => {
   if (el.dataset.act === 'estado') moverTarea(el.dataset.tk, el.value);
   if (el.dataset.act === 'moto-marca') { elegirMarca(el.value); render({ foco: '#rs-f-marca' }); }
   if (el.dataset.act === 'moto-parrilla') { elegirParrilla(el.value); render({ foco: '#rs-f-parrilla' }); }
+  if (el.dataset.act === 'par-filtro') { elegirFiltroParrilla(el.dataset.k, el.value); render({ foco: '#rs-fp-' + el.dataset.k }); }
   if (el.dataset.act === 'solo-destacadas') { S.soloDestacadas = el.checked; render({ foco: '[data-act="solo-destacadas"]' }); }
 });
 
@@ -542,7 +571,8 @@ window.addEventListener('resize', ajustarMarco);
 const PREF = 'ccs-manufactura-v1:';
 const COLECCIONES_NUBE = [
   ['proyectos', 'proyectos', 'lista'], ['tareas', 'tareas', 'lista'], ['kanban', 'kanban-macroobjetivos', 'mapa'],
-  ['eliminadas', 'tareas-eliminadas', 'lista', x => x && x.tarea && x.tarea.id]
+  ['eliminadas', 'tareas-eliminadas', 'lista', x => x && x.tarea && x.tarea.id],
+  ['acople-motos', 'acople-motos', 'lista'], ['acople-parrillas', 'acople-parrillas', 'lista']   // catálogos: tarjetas agregadas o editadas
 ].map(([col, k, forma, idDe]) => ({ col, key: PREF + k, forma, idDe }));
 let repintadoRemoto = null;
 function recibirCambiosNube() {
@@ -555,4 +585,4 @@ function recibirCambiosNube() {
   }, 250);
 }
 NUBE.iniciar({ app: 'manu', prefijo: PREF, colecciones: COLECCIONES_NUBE, alRecibir: recibirCambiosNube });
-NUBEUI.montar({ proyectos: 'Proyecto', tareas: 'Tarea', kanban: 'Kanban general', eliminadas: 'Tarea eliminada' });
+NUBEUI.montar({ proyectos: 'Proyecto', tareas: 'Tarea', kanban: 'Kanban general', eliminadas: 'Tarea eliminada', 'acople-motos': 'Moto del catálogo', 'acople-parrillas': 'Parrilla del catálogo' });
